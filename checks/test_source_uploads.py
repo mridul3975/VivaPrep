@@ -1,3 +1,4 @@
+from checks.auth_fixtures import authenticated_client
 import io
 import unittest
 from unittest.mock import patch
@@ -32,7 +33,7 @@ def pdf_bytes(pages, encrypted=False):
 class SourceUploadTests(unittest.TestCase):
     def setUp(self):
         sources.clear()
-        self.client = app.test_client()
+        self.client = authenticated_client(app)
 
     def tearDown(self):
         sources.clear()
@@ -56,7 +57,7 @@ class SourceUploadTests(unittest.TestCase):
 
     def test_browser_sessions_cannot_read_or_delete_each_others_upload(self):
         first = self.upload(b'first = 1').get_json()
-        other = app.test_client()
+        other = authenticated_client(app)
         self.assertEqual(other.get('/sources/' + first['source_id']).status_code, 404)
         self.assertEqual(other.delete('/sources/' + first['source_id']).status_code, 404)
         second = self.upload(b'second = 2', client=other).get_json()
@@ -114,7 +115,7 @@ class SourceUploadTests(unittest.TestCase):
     def test_storage_capacity_is_bounded(self):
         self.upload(b'first = 1')
         with patch('backend.evidence.uploads.MAX_SOURCES', 1):
-            self.assertEqual(self.upload(b'second = 2', client=app.test_client()).status_code, 503)
+            self.assertEqual(self.upload(b'second = 2', client=authenticated_client(app)).status_code, 503)
             self.assertEqual(self.upload(b'replacement = 3').status_code, 201)
 
 
