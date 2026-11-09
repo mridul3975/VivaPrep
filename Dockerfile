@@ -16,4 +16,4 @@ COPY --from=frontend-build /build/frontend/dist frontend/dist
 RUN useradd --system --uid 10001 app
 USER app
 EXPOSE 10000
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "backend.app:app"]
+CMD ["python", "-m", "backend.start"]
