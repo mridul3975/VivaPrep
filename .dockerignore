@@ -1,0 +1,17 @@
+.git
+.venv
+.env
+.env.*
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+frontend/node_modules
+frontend/dist
+checks
+.vscode
+.agents
+.codex
+samples/*.wav
+samples/*.md
+*.log

@@ -1,0 +1,16 @@
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+.env.*
+!/.env.example
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local editor state and recorded audio
+.vscode/
+samples/*.wav
+*.log

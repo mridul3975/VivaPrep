@@ -1,0 +1,4 @@
+How are snippet records created?
+How does user login validation work?
+How does the program split files into snippets?
+Ans: Snippet 1 Line 11-36 relevant words : ["split", "files", "snippets"]

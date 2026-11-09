@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: repoviva
+    runtime: docker
+    plan: free
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: VACHANA_API_KEY
+        sync: false
