@@ -1,6 +1,17 @@
 # RepoViva — Proposed Architecture
 
-Status: design only. Version 0.3, October 30, 2026 (IST). Read with [PRD.md](PRD.md), [readme.md](readme.md) and [trd.md](trd.md). Nothing in this document implies implemented or tested behavior.
+Original design: version 0.3, October 30, 2026 (IST). Read with [PRD.md](PRD.md), [readme.md](readme.md) and [trd.md](trd.md). The roadmap below is historical; current persistence is documented in [POSTGRES.md](POSTGRES.md).
+
+**Implemented November 10:** Flask uses psycopg 3 connection pooling and versioned
+SQL migrations for PostgreSQL users, hashed login sessions, extracted sources,
+practice sets, turns and scored attempts. Queries enforce verified Google
+ownership. One source is active per identity; replacement archives old sources,
+while explicit removal cascades to linked practice. The current-source API
+restores public questions and submitted feedback/answers after reload, and
+`GET /history` exposes owned attempts. Configured database failures return 503;
+only a blank `DATABASE_URL` selects temporary memory development storage.
+Production startup migrates before Gunicorn. The remaining sections describe the
+original learning plan rather than the complete current implementation.
 
 ## 1. Core design
 
@@ -46,7 +57,9 @@ The diagram shows responsibilities, not a claim that every component runs on eve
 | Session storage | In memory for the first demo | Simple; sessions disappear on restart and cannot span independent workers |
 | Deployment | One backend process + one frontend deployment | Matches storage assumptions; no multiworker deployment until storage changes |
 
-No PostgreSQL, Redis, vector database, graph database, agent framework or task queue is required for the core release. Add infrastructure only after an observed need. This is a scope choice, not a claim that those tools are unsuitable generally.
+The original demo deferred PostgreSQL. It is now implemented for restart recovery
+and saved study progress; see the current note above. Redis, a vector database,
+graph database, agent framework and task queue remain outside this design.
 
 Use a small Python provider adapter for each external HTTP API; verify its official contract at implementation time. Validate required strings, lists, allowed labels and citation fields with explicit Python functions. A valid JSON parse does not establish a valid schema. Use Flask multipart upload handling with a server-side upload-size limit and request cleanup. Keep dependencies in `backend/requirements.txt` and install them in `.venv`; no mandatory Pydantic, LangChain or LlamaIndex.
 
