@@ -1,3 +1,4 @@
+from checks.auth_fixtures import authenticated_client
 import io
 import unittest
 from unittest.mock import patch
@@ -6,13 +7,14 @@ from backend.app import app, turns
 from backend.evidence.uploads import sources, SOURCE_TTL_SECONDS
 from checks.test_source_uploads import pdf_bytes
 from checks.quiz_fixtures import fake_question_set, fake_grade
+from backend.interview.question_generator import QuestionGenerationError
 
 
 class UploadedQuestionTests(unittest.TestCase):
     def setUp(self):
         sources.clear()
         turns.clear()
-        self.client = app.test_client()
+        self.client = authenticated_client(app)
 
     def tearDown(self):
         sources.clear()
@@ -44,6 +46,23 @@ class UploadedQuestionTests(unittest.TestCase):
             self.assertEqual(self.client.post('/retrieve', json={'question': 'test'}).status_code, 400)
             generate.assert_not_called()
 
+    def test_generation_failure_returns_specific_safe_error(self):
+        self.upload('Study material.')
+        error = QuestionGenerationError('The AI service is rate-limited. Please retry.', 'provider_rate_limit', 503)
+        with patch('backend.app.generate_question_set', side_effect=error):
+            response = self.client.post('/questions')
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.get_json()['error_code'], 'provider_rate_limit')
+        self.assertFalse(turns)
+
+    def test_blank_chunks_are_skipped_without_losing_original_line_numbers(self):
+        self.upload('\n' * 40 + 'Gravity attracts masses.')
+        with patch('backend.app.generate_question_set', side_effect=fake_question_set) as generate:
+            response = self.client.post('/questions')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(generate.call_args.args[0]), 1)
+        self.assertEqual(generate.call_args.args[0][0]['start_line'], 41)
+
     def test_active_source_is_used_without_explicit_id(self):
         source = self.upload('Gravity attracts masses.')
         with patch('backend.app.generate_question_set', side_effect=fake_question_set) as generate:
@@ -68,7 +87,7 @@ class UploadedQuestionTests(unittest.TestCase):
     def test_missing_expired_and_foreign_uploads_never_fall_back(self):
         source = self.upload('Private notes.')
         with patch('backend.app.generate_question_set') as generate:
-            self.assertEqual(app.test_client().post('/questions', json={'source_id': source['source_id']}).status_code, 404)
+            self.assertEqual(authenticated_client(app).post('/questions', json={'source_id': source['source_id']}).status_code, 404)
             self.assertEqual(self.client.post('/questions', json={'source_id': 'missing'}).status_code, 404)
             sources[source['source_id']]['created'] -= SOURCE_TTL_SECONDS
             self.assertEqual(self.client.post('/questions').status_code, 404)
@@ -91,7 +110,7 @@ class UploadedQuestionTests(unittest.TestCase):
         with patch('backend.app.generate_question_set', side_effect=fake_question_set):
             question = self.client.post('/questions', json={'source_id': source['source_id']}).get_json()['questions'][0]
         with patch('backend.app.grade_answer') as grade:
-            self.assertEqual(app.test_client().post('/answers', json={'turn_id': question['turn_id'], 'answer': 'x'}).status_code, 404)
+            self.assertEqual(authenticated_client(app).post('/answers', json={'turn_id': question['turn_id'], 'answer': 'x'}).status_code, 404)
             grade.assert_not_called()
 
     def test_current_source_restoration_and_multiple_chunks(self):
