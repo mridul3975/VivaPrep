@@ -1,3 +1,4 @@
+from checks.auth_fixtures import authenticated_client
 import io
 import os
 import unittest
@@ -22,7 +23,7 @@ def wav_bytes(seconds=0.01):
 
 class TranscriptionTests(unittest.TestCase):
     def setUp(self):
-        self.client = app.test_client()
+        self.client = authenticated_client(app)
 
     def upload(self, data, filename="recording.wav"):
         response = self.client.post("/transcriptions", data={"audio_file": (io.BytesIO(data), filename)})
