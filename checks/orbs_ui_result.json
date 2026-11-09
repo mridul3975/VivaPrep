@@ -1,0 +1,45 @@
+{
+  "date_ist": "2026-11-10",
+  "references": [
+    "https://dribbble.com/shots/27042362-Finora-scrolling-page",
+    "https://dribbble.com/shots/27592314-Meridial-Fintesh-Management-Landing-Page",
+    "https://libraries.dev/orbs"
+  ],
+  "reference_scope": "Actual Finora and Meridial artwork; not the Dribbble hosting interface",
+  "palette": "silver and charcoal",
+  "orb_library": "thinking-orbs@0.3.2",
+  "frontend_build": "passed",
+  "frontend_lint": "passed with zero warnings and errors",
+  "production_serving_tests_passed": 4,
+  "browser_widths": [1440, 768, 390, 360],
+  "ui_matrix": {
+    "provider_responses": "Simulated for UI state coverage; uploads and cleanup use the real Flask API",
+    "microphone": "Fake browser microphone device; no live STT provider call in this matrix",
+    "checks": [
+      "real upload, preview pagination, replacement failure, removal, drag and drop, reload restoration",
+      "question generation, loading, and failure recovery",
+      "editable transcript and explicit answer submission",
+      "failed evaluation preserves answer; successful score, reference, and evidence display",
+      "next question reset and evidence disclosure",
+      "keyboard focus and no horizontal viewport overflow",
+      "composing, listening, weaving, solving, and paused completed orb states",
+      "failed request followed by microphone permission, recording, and cancellation; stale errors do not mask active recording"
+    ],
+    "runtime_errors": [],
+    "all_passed": true
+  },
+  "canvas_pixel_checks": {
+    "idle_frame_stays_static": true,
+    "active_frame_changes": true,
+    "active_frame_static_with_reduced_motion": true,
+    "active_animation_pauses_offscreen": true
+  },
+  "finish_review": {
+    "disposition": "ship",
+    "scope": "Verdict pass on the two previously reported material fixes",
+    "recording_activity_over_stale_errors": "resolved",
+    "design_documentation_matches_current_ui": "resolved"
+  },
+  "verification_boundary": "This UI pass does not establish real microphone, live STT, live Groq, or public deployment behavior. Earlier live-provider checks are recorded separately.",
+  "development_evidence": ".impeccable/review/orbs/ (ignored screenshots and browser reports)"
+}
