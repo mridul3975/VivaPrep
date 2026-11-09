@@ -3,11 +3,12 @@ import uuid
 from copy import deepcopy
 from threading import Lock
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, g, jsonify, request, session
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
 from backend.evidence.documents import DocumentError, MAX_FILE_BYTES, extract_document
+from backend.database import database_enabled, get_database
 
 
 uploads = Blueprint("sources", __name__)
@@ -32,19 +33,27 @@ def _expire_sources():
 
 def owned_source(source_id):
     """Return a snapshot only when this browser session owns the live upload."""
+    if database_enabled():
+        return get_database().source(g.user["id"], source_id)
     with sources_lock:
         _expire_sources()
         source = sources.get(source_id)
-        if source is None or source["owner"] != session.get("source_owner"):
+        if source is None or source["owner"] != g.user["id"]:
             return None
         return deepcopy(source["document"])
 
 
 def next_source_snippet(source_id):
+    if database_enabled():
+        def select_one(document, start):
+            snippets = document["snippets"]
+            return [snippets[start % len(snippets)]], start + 1
+        result = get_database().next_evidence(g.user["id"], source_id, select_one)
+        return (result[0][0], result[1]) if result else None
     with sources_lock:
         _expire_sources()
         source = sources.get(source_id)
-        if source is None or source["owner"] != session.get("source_owner"):
+        if source is None or source["owner"] != g.user["id"]:
             return None
         document = source["document"]
         index = source.get("next_snippet", 0) % len(document["snippets"])
@@ -54,28 +63,35 @@ def next_source_snippet(source_id):
 
 def next_source_evidence(source_id):
     """Select a bounded packet of real uploaded chunks, rotating across sets."""
+    if database_enabled():
+        return get_database().next_evidence(g.user["id"], source_id, _select_packet)
     with sources_lock:
         _expire_sources()
         source = sources.get(source_id)
-        if source is None or source["owner"] != session.get("source_owner"):
+        if source is None or source["owner"] != g.user["id"]:
             return None
         document = source["document"]
-        snippets = document["snippets"]
-        start = source.get("next_snippet", 0) % len(snippets)
-        selected, used = [], 0
-        for offset in range(len(snippets)):
-            index = (start + offset) % len(snippets)
-            size = len("\n".join(snippets[index]["content"]))
-            if size > 12000 or used + size > 12000:
-                continue
-            selected.append(deepcopy(snippets[index]))
-            used += size
-            source["next_snippet"] = index + 1
-            if len(selected) == 5:
-                break
-        if not selected:
-            raise DocumentError("The evidence sections are too long. Upload material with shorter sections or lines.", 422)
+        selected, source["next_snippet"] = _select_packet(document, source.get("next_snippet", 0))
         return selected, document["revision"]
+
+
+def _select_packet(document, start):
+    snippets = document["snippets"]
+    start %= len(snippets)
+    selected, used, next_index = [], 0, start
+    for offset in range(len(snippets)):
+        index = (start + offset) % len(snippets)
+        text = "\n".join(snippets[index]["content"])
+        if not text.strip() or len(text) > 12000 or used + len(text) > 12000:
+            continue
+        selected.append(deepcopy(snippets[index]))
+        used += len(text)
+        next_index = index + 1
+        if len(selected) == 5:
+            break
+    if not selected:
+        raise DocumentError("The evidence sections are too long. Upload material with shorter sections or lines.", 422)
+    return selected, next_index
 
 
 @uploads.post("/sources")
@@ -101,7 +117,15 @@ def upload_source():
     except DocumentError as error:
         return jsonify({"error": str(error)}), error.status
 
-    owner = session.setdefault("source_owner", uuid.uuid4().hex)
+    owner = g.user["id"]
+    source_id = uuid.uuid4().hex
+    for number, snippet in enumerate(document["snippets"], 1):
+        snippet["id"] = f"{source_id}:{number}"
+    document.update({"source_id": source_id, "expires_in_seconds": SOURCE_TTL_SECONDS})
+    if database_enabled():
+        document = get_database().replace_source(owner, document)
+        session["active_source_id"] = source_id
+        return jsonify(document), 201
     with sources_lock:
         _expire_sources()
         previous = [key for key, item in sources.items() if item["owner"] == owner]
@@ -109,10 +133,6 @@ def upload_source():
             return jsonify({"error": "Upload storage is full. Please retry later."}), 503
         for key in previous:
             del sources[key]
-        source_id = uuid.uuid4().hex
-        for number, snippet in enumerate(document["snippets"], 1):
-            snippet["id"] = f"{source_id}:{number}"
-        document.update({"source_id": source_id, "expires_in_seconds": SOURCE_TTL_SECONDS})
         sources[source_id] = {"owner": owner, "created": time.monotonic(), "document": document}
     session["active_source_id"] = source_id
     return jsonify(document), 201
@@ -120,9 +140,23 @@ def upload_source():
 
 @uploads.get("/sources/current")
 def current_source():
+    if database_enabled():
+        store = get_database()
+        document = store.source(g.user["id"])
+        if document is None:
+            session.pop("active_source_id", None)
+            return "", 204
+        if session.get("active_source_id") != document["source_id"]:
+            session["active_source_id"] = document["source_id"]
+        return jsonify({**document, "saved_practice": store.current_practice(g.user["id"], document["source_id"])})
     source_id = session.get("active_source_id")
     if not source_id:
-        return "", 204
+        with sources_lock:
+            _expire_sources()
+            source_id = next((key for key, value in sources.items() if value["owner"] == g.user["id"]), None)
+        if not source_id:
+            return "", 204
+        session["active_source_id"] = source_id
     document = owned_source(source_id)
     if document is None:
         return jsonify({"error": "Your upload expired or was replaced. Upload the file again."}), 404
@@ -131,20 +165,31 @@ def current_source():
 
 @uploads.get("/sources/<source_id>")
 def get_source(source_id):
+    if database_enabled():
+        document = get_database().source(g.user["id"], source_id)
+        if document is None:
+            return jsonify({"error": "Upload not found."}), 404
+        return jsonify(document)
     with sources_lock:
         _expire_sources()
         source = sources.get(source_id)
-        if source is None or source["owner"] != session.get("source_owner"):
+        if source is None or source["owner"] != g.user["id"]:
             return jsonify({"error": "Upload not found or expired. Please upload the file again."}), 404
         return jsonify(source["document"])
 
 
 @uploads.delete("/sources/<source_id>")
 def delete_source(source_id):
+    if database_enabled():
+        if not get_database().remove_source(g.user["id"], source_id):
+            return jsonify({"error": "Upload not found."}), 404
+        if session.get("active_source_id") == source_id:
+            session.pop("active_source_id", None)
+        return "", 204
     with sources_lock:
         _expire_sources()
         source = sources.get(source_id)
-        if source is None or source["owner"] != session.get("source_owner"):
+        if source is None or source["owner"] != g.user["id"]:
             return jsonify({"error": "Upload not found or expired."}), 404
         del sources[source_id]
     if session.get("active_source_id") == source_id:
