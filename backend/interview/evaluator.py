@@ -10,6 +10,11 @@ MODEL = "openai/gpt-oss-120b"
 class EvaluationError(RuntimeError):
     """Raised when a grounded evaluation cannot be generated."""
 
+    def __init__(self, message, code="invalid_evaluation", http_status=502):
+        super().__init__(message)
+        self.code = code
+        self.http_status = http_status
+
 
 def quote_in_source(quote: str, source_text: str) -> bool:
     """Require a verbatim, contiguous quote from the supplied text."""
