@@ -1,0 +1,18 @@
+{
+  "date_ist": "2026-11-09",
+  "mode": "Live Groq calls through the running Flask development server",
+  "file": "guide.pdf",
+  "pages": 3,
+  "layout_snippets": 5,
+  "generated_questions": 3,
+  "selected_evidence_pages": [1, 2, 3],
+  "reference_answers_hidden_before_submission": true,
+  "correct_answer_percentage": 100,
+  "incorrect_answer_percentage": 0,
+  "incorrect_claim_labels": ["contradicted", "contradicted"],
+  "all_returned_quotes_checked_against_original_extracted_text": true,
+  "original_pdf_page_numbers_preserved": true,
+  "regression_tests_passed": 50,
+  "browser_verification_completed": false,
+  "public_deployment_verified": false
+}
