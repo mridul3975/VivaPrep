@@ -1,0 +1,42 @@
+{
+  "date_ist": "2026-11-09",
+  "reference": "https://speakspin-nine.vercel.app/",
+  "palette": "silver and charcoal",
+  "frontend_build": "passed",
+  "frontend_lint": "passed with zero warnings and errors",
+  "backend_regression_tests_passed": 50,
+  "production_serving_tests_passed_after_final_build": 4,
+  "browser_widths": [360, 390, 768, 1440],
+  "ui_matrix": {
+    "provider_responses": "Simulated for deterministic state coverage; uploads use the real Flask API",
+    "microphone": "Fake browser microphone device; no live STT provider call in this matrix",
+    "checks": [
+      "upload, preview pagination, replacement failure, removal, drag and drop, and reload restoration",
+      "question generation, loading, and failure recovery",
+      "recording into an editable transcript without automatic evaluation",
+      "answer failure preserves draft; successful score and reference display",
+      "criterion and claim evidence, next question reset, evidence show/hide",
+      "keyboard focus, reduced motion, and horizontal overflow",
+      "long filenames, expanded material details, accessible status, and single-row mobile navigation"
+    ],
+    "runtime_errors": [],
+    "all_passed": true
+  },
+  "live_groq_browser_flow": {
+    "source": "guide.pdf",
+    "upload_status": 201,
+    "questions_status": 200,
+    "question_count": 3,
+    "answer_status": 200,
+    "unknown_answer_percentage": 0,
+    "source_binding_valid": true,
+    "reference_hidden_before_submission": true
+  },
+  "visual_review": {
+    "compact_practice_tray": "resolved",
+    "single_row_navigation_at_360px": "resolved",
+    "final_disposition": "ship",
+    "scope": "The two requested material fixes, checked against refreshed desktop and mobile captures"
+  },
+  "public_deployment_verified": false
+}
