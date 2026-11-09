@@ -29,7 +29,7 @@ Product success: a fresh user completes a session, sees actual source references
 | R9 | Show source citations and clear failure/retry states in the deployed UI | Required |
 | R10 | Publish a working video, explain Gnani usage and nominate post links | Submission requirement; user performs publication/submission |
 
-No automatic repo execution, private repo access, arbitrary URL ingestion, speech fluency grading, professional seniority labels, account system, multiplayer, key-pool scheduler, self-hosted Evon or complex graph retrieval in this release.
+No automatic repo execution, private repo access, arbitrary URL ingestion, speech fluency grading, professional seniority labels, password account system, multiplayer, key-pool scheduler, self-hosted Evon or complex graph retrieval in this release. Google-only sign-in is now implemented; see AUTHENTICATION.md. Persistent student records and history remain separate work.
 
 ## 3. Functional requirements and acceptance
 
