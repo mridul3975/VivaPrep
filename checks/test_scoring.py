@@ -14,8 +14,8 @@ SNIPPETS = [{'id': 'source:1', 'path': 'biology.txt', 'citation_type': 'lines', 
              'content': ['Photosynthesis converts light energy into chemical energy in chloroplasts.']}]
 PACKAGE = {'question': 'Describe the energy conversion and where it occurs.',
            'reference_answer': 'Light energy becomes chemical energy inside chloroplasts.',
-           'rubric': [{'id': 'c1', 'description': 'Explains the energy conversion.', 'snippet_id': 'source:1', 'quote': 'light energy into chemical energy'},
-                      {'id': 'c2', 'description': 'Identifies chloroplasts.', 'snippet_id': 'source:1', 'quote': 'in chloroplasts'}]}
+           'rubric': [{'id': 'c1', 'description': 'Explains the energy conversion.', 'snippet_id': 'source:1', 'line_start': 1, 'line_end': 1, 'quote': SNIPPETS[0]['content'][0]},
+                      {'id': 'c2', 'description': 'Identifies chloroplasts.', 'snippet_id': 'source:1', 'line_start': 1, 'line_end': 1, 'quote': SNIPPETS[0]['content'][0]}]}
 
 
 def result_for(first, second, claims=None):
@@ -48,7 +48,7 @@ class ScoringTests(unittest.TestCase):
     def test_invalid_criteria_and_quotes_fail_instead_of_inventing_grade(self):
         invalid = [result_for('invalid', 'met'), {'criteria': [], 'claims': []},
                    {'criteria': [{'id': 'c1', 'status': 'met', 'explanation': 'x'}] * 2, 'claims': []},
-                   result_for('met', 'met', [{'claim': 'c', 'label': 'supported', 'explanation': 'e', 'snippet_id': 'source:1', 'quote': 'invented quote'}])]
+                   result_for('met', 'met', [{'claim': 'c', 'label': 'supported', 'explanation': 'e', 'snippet_id': 'source:1', 'line_start': 99, 'line_end': 100}])]
         for response in invalid:
             with self.subTest(response=response), patch('backend.interview.grading.json_completion', return_value=response):
                 with self.assertRaises(EvaluationError):
@@ -67,7 +67,8 @@ class ScoringTests(unittest.TestCase):
             generated = generate_question_set(SNIPPETS)
         self.assertEqual(generated[0]['reference_answer'], PACKAGE['reference_answer'])
         invalid = deepcopy(PACKAGE)
-        invalid['rubric'][0]['quote'] = 'not in the uploaded source'
+        invalid['rubric'][0]['line_start'] = 99
+        invalid['rubric'][0]['line_end'] = 100
         with patch('backend.interview.question_generator.json_completion', return_value={'questions': [invalid]}):
             with self.assertRaises(QuestionGenerationError):
                 generate_question_set(SNIPPETS)
