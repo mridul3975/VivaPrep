@@ -1,3 +1,4 @@
+from checks.auth_fixtures import authenticated_client
 import io
 import json
 import os
@@ -14,7 +15,7 @@ class AnswerFlowTests(unittest.TestCase):
     def setUp(self):
         turns.clear()
         sources.clear()
-        self.client = app.test_client()
+        self.client = authenticated_client(app)
         response = self.client.post('/sources', data={'source_file': (io.BytesIO(b'The limit is 40 lines.'), 'notes.txt')})
         self.source_id = response.get_json()['source_id']
         response.close()
@@ -60,6 +61,15 @@ class AnswerFlowTests(unittest.TestCase):
                     self.assertEqual(self.client.post('/answers', json=payload).status_code, 400)
             self.assertEqual(self.client.post('/answers', data='{', content_type='application/json').status_code, 400)
             grade.assert_not_called()
+
+    def test_rate_limit_returns_clear_retryable_error_and_releases_turn(self):
+        turn_id = self.new_turn()['turn_id']
+        error = EvaluationError('The AI service is rate-limited. Please retry.', 'provider_rate_limit', 503)
+        with patch('backend.app.grade_answer', side_effect=error):
+            response = self.client.post('/answers', json={'turn_id': turn_id, 'answer': '40 lines'})
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.get_json()['error_code'], 'provider_rate_limit')
+        self.assertFalse(turns[turn_id]['busy'])
 
     def test_expired_turn_is_rejected(self):
         turn_id = self.new_turn()['turn_id']
