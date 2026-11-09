@@ -1,10 +1,10 @@
 def fake_question_set(snippets, count=3):
     snippet = snippets[0]
-    quote = next(line.strip() for line in snippet['content'] if line.strip())
+    line_number, quote = next((number, line) for number, line in enumerate(snippet['content'], 1) if line.strip())
     return [{'question': f'Explain the concept in {snippet["path"]}.',
              'reference_answer': 'A hidden source-grounded reference answer.',
              'rubric': [{'id': 'c1', 'description': 'Explain the required concept.',
-                         'snippet_id': str(snippet['id']), 'quote': quote}]}]
+                         'snippet_id': str(snippet['id']), 'quote': quote, 'line_start': line_number, 'line_end': line_number}]}]
 
 
 def fake_grade(package, answer, snippets):
