@@ -6,8 +6,9 @@ import wave
 from io import BytesIO
 from pathlib import Path
 from threading import Lock
+from datetime import timedelta
 
-from flask import Flask, jsonify, request, send_from_directory, session
+from flask import Flask, g, jsonify, request, send_from_directory, session
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
@@ -18,6 +19,8 @@ from backend.evidence.retrieve import retrieve
 from backend.evidence.uploads import uploads, next_source_evidence, owned_source
 from backend.evidence.documents import DocumentError
 from backend.speech.transcriber import TranscriptionError, transcribe_wav
+from backend.auth import auth, protect_study_routes
+from backend.database import database_enabled, get_database, DatabaseUnavailable, StudyConflict, public_question
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
@@ -38,7 +41,10 @@ except ImportError:
 app = Flask(__name__, static_folder=None)
 app.secret_key = os.getenv("SESSION_SECRET") or secrets.token_hex(32)
 app.config.update(SESSION_COOKIE_NAME="repoviva_session", SESSION_COOKIE_HTTPONLY=True,
-                  SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE") == "1")
+                  SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE") == "1",
+                  PERMANENT_SESSION_LIFETIME=timedelta(hours=1), SESSION_REFRESH_EACH_REQUEST=False)
+app.register_blueprint(auth)
+app.before_request(protect_study_routes)
 app.register_blueprint(uploads)
 turns = {}
 turns_lock = Lock()
@@ -83,12 +89,26 @@ def method_not_allowed(error):
 
 @app.get("/health")
 def health():
-    return jsonify({"status": "ok", "api_version": API_VERSION})
+    if database_enabled():
+        get_database().check()
+    return jsonify({"status": "ok", "api_version": API_VERSION,
+                    "storage_mode": "postgresql" if database_enabled() else "memory"})
+
+
+@app.errorhandler(DatabaseUnavailable)
+def database_unavailable(error):
+    app.logger.warning("PostgreSQL request unavailable (%s)", type(error.__cause__).__name__)
+    return jsonify({"error": "Saved data is temporarily unavailable. Please retry.", "error_code": "database_unavailable"}), 503
+
+
+@app.errorhandler(StudyConflict)
+def study_conflict(error):
+    return jsonify({"error": str(error)}), error.status
 
 
 @app.after_request
 def api_headers(response):
-    if request.path in ("/health", "/retrieve", "/questions", "/answers", "/transcriptions") or request.path.startswith("/sources"):
+    if request.path in ("/health", "/retrieve", "/questions", "/answers", "/transcriptions") or request.path.startswith(("/sources", "/auth/", "/history")):
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-RepoViva-API"] = API_VERSION
     return response
@@ -149,25 +169,27 @@ def generate_questions():
         return jsonify({"error": str(error)}), error.status
     except QuestionGenerationError as e:
         app.logger.warning("Question generation failed: %s", e.__cause__ or e)
-        return jsonify({"error": "Unable to generate validated questions from this material. Please retry."}), 502
+        return jsonify({"error": str(e), "error_code": e.code}), e.http_status
 
-    public_questions = []
-    with turns_lock:
-        now = time.monotonic()
-        expired = [key for key, turn in turns.items() if now - turn["created"] >= TURN_TTL_SECONDS and not turn["busy"]]
-        for key in expired:
-            del turns[key]
-        if len(turns) + len(packages) > MAX_TURNS:
-            return jsonify({"error": "Too many active turns. Please try again later."}), 503
-        for package in packages:
-            turn_id = uuid.uuid4().hex
-            primary_id = package["rubric"][0]["snippet_id"]
-            primary = next(item for item in snippets if str(item["id"]) == primary_id)
-            turns[turn_id] = {"question": package["question"], "question_package": package,
-                              "snippet": primary, "snippets": snippets, "created": now, "busy": False,
-                              "source_id": source_id, "revision": revision, "owner": session.get("source_owner")}
-            public_questions.append({"turn_id": turn_id, "source_id": source_id, "question": package["question"],
-                                     "evidence": primary, "evidence_snippets": snippets})
+    now, records = time.monotonic(), {}
+    for package in packages:
+        turn_id = uuid.uuid4().hex
+        primary_id = package["rubric"][0]["snippet_id"]
+        primary = next(item for item in snippets if str(item["id"]) == primary_id)
+        records[turn_id] = {"question": package["question"], "question_package": package,
+                            "snippet": primary, "snippets": snippets, "created": now, "busy": False,
+                            "source_id": source_id, "revision": revision, "owner": g.user["id"]}
+    if database_enabled():
+        get_database().save_questions(g.user["id"], source_id, records)
+    else:
+        with turns_lock:
+            expired = [key for key, turn in turns.items() if now - turn["created"] >= TURN_TTL_SECONDS and not turn["busy"]]
+            for key in expired:
+                del turns[key]
+            if len(turns) + len(packages) > MAX_TURNS:
+                return jsonify({"error": "Too many active turns. Please try again later."}), 503
+            turns.update(records)
+    public_questions = [public_question(turn_id, turn) for turn_id, turn in records.items()]
     return jsonify({"api_version": API_VERSION, "source_id": source_id, "source_revision": revision,
                     "questions": public_questions}), 200
 
@@ -189,34 +211,47 @@ def submit_answer():
     if len(answer) > 4000:
         return jsonify({"error": "Answer must be at most 4,000 characters."}), 400
 
-    with turns_lock:
-        turn = turns.get(turn_id)
-        if turn is not None and turn.get("owner") is not None and turn["owner"] != session.get("source_owner"):
-            return jsonify({"error": "Turn not found or expired. Start a new question."}), 404
-        if turn is None or time.monotonic() - turn["created"] >= TURN_TTL_SECONDS:
-            if turn is not None and not turn["busy"]:
-                del turns[turn_id]
-            return jsonify({"error": "Turn not found or expired. Start a new question."}), 404
-        if turn["busy"]:
-            return jsonify({"error": "This answer is already being evaluated."}), 409
-        turn["busy"] = True
+    persistent = database_enabled()
+    attempt_saved = False
+    if persistent:
+        turn, lease = get_database().claim_turn(g.user["id"], turn_id)
+    else:
+        with turns_lock:
+            turn = turns.get(turn_id)
+            if turn is not None and turn.get("owner") != g.user["id"]:
+                return jsonify({"error": "Turn not found or expired. Start a new question."}), 404
+            if turn is None or time.monotonic() - turn["created"] >= TURN_TTL_SECONDS:
+                if turn is not None and not turn["busy"]:
+                    del turns[turn_id]
+                return jsonify({"error": "Turn not found or expired. Start a new question."}), 404
+            if turn["busy"]:
+                return jsonify({"error": "This answer is already being evaluated."}), 409
+            turn["busy"] = True
 
     try:
         result = grade_answer(turn["question_package"], answer, turn["snippets"])
+        payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
+                   "evidence": turn["snippet"], "evidence_snippets": turn["snippets"], **result}
+        if persistent:
+            get_database().save_attempt(g.user["id"], turn_id, lease, answer, payload)
+            attempt_saved = True
     except EvaluationError as error:
         app.logger.warning("Answer evaluation failed: %s", error.__cause__ or error)
+        if error.code.startswith("provider_"):
+            return jsonify({"error": str(error), "error_code": error.code}), error.http_status
         return jsonify({"error": "Unable to evaluate the answer. Please try again."}), 502
     finally:
-        with turns_lock:
-            turn["busy"] = False
-    return jsonify({
-        "turn_id": turn_id,
-        "source_id": turn["source_id"],
-        "question": turn["question"],
-        "evidence": turn["snippet"],
-        "evidence_snippets": turn["snippets"],
-        **result,
-    }), 200
+        if persistent and not attempt_saved:
+            get_database().release_turn(g.user["id"], turn_id, lease)
+        elif not persistent:
+            with turns_lock:
+                turn["busy"] = False
+    return jsonify(payload), 200
+
+
+@app.get("/history")
+def practice_history():
+    return jsonify({"attempts": get_database().history(g.user["id"]) if database_enabled() else []})
 
 
 @app.post("/transcriptions")
