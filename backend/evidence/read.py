@@ -1,6 +1,22 @@
+def chunk_text(content, file_name):
+    """Split text into cited chunks without executing it or trimming its lines."""
+    lines = content.splitlines()
+    snippets = []
+    for start in range(0, len(lines), 40):
+        snippet = lines[start:start + 40]
+        snippets.append({
+            "id": (len(snippets) + 1, file_name),
+            "path": file_name,
+            "content": snippet,
+            "start_line": start + 1,
+            "end_line": start + len(snippet),
+        })
+    return snippets
+
+
 def read(file_name):
     """
-    Reads the content of a file and returns it as a string.
+    Reads a UTF-8 file and returns line-cited snippet records.
 
     Args:
         file_path (str): The path to the file to be read.
@@ -8,31 +24,9 @@ def read(file_name):
     try:
         with open(file_name, 'r', encoding='utf-8') as file:
             content = file.read()
-            lines=content.splitlines()
-            snippet_num = 1
-            snippets = []
-
-            if len(lines) == 0:
+            snippets = chunk_text(content, file_name)
+            if not snippets:
                 print(f"Warning: The file at {file_name} is empty.")
-                return snippets
-
-            for start in range(0, len(lines), 40):
-                snippet = lines[start:start+40]
-
-                start_line = start + 1
-                end_line = start_line + len(snippet)-1
-
-                snippet_record = {
-                    "id": (snippet_num,file_name),
-                    "path": file_name,
-                    "content": (snippet),
-                    "start_line": start_line,
-                    "end_line": end_line
-                }
-                snippets.append(snippet_record)                
-
-                
-                snippet_num += 1    
             return snippets    
 
     except FileNotFoundError:

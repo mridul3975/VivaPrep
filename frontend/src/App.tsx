@@ -1,18 +1,42 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import VoiceRecorder from './components/VoiceRecorder'
+import SourceUpload, { type SourceDocument } from './components/SourceUpload'
 import './index.css'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Evidence {
+  id?: string
   path: string
-  start_line: number
-  end_line: number
+  start_line: number | null
+  end_line: number | null
+  citation_type?: 'lines' | 'page'
+  page?: number | null
   content: string[]
 }
 
 interface QuestionResponse {
   turn_id: string
   question: string
+  evidence: Evidence
+  source_id?: string | null
+  evidence_snippets: Evidence[]
+}
+
+interface Score {
+  earned: number
+  possible: number
+  percentage: number | null
+  excluded_criteria: number
+}
+
+interface GradedCriterion {
+  id: string
+  description: string
+  status: 'met' | 'partial' | 'missed' | 'contradicted' | 'unverified'
+  points: number
+  max_points: number
+  explanation: string
+  quote: string
   evidence: Evidence
 }
 
@@ -28,14 +52,19 @@ interface AnswerResponse {
   question: string
   claims: Claim[]
   evidence: Evidence
+  source_id: string
+  evidence_snippets: Evidence[]
+  score: Score
+  criteria: GradedCriterion[]
+  reference_answer: string
 }
 
 function isEvidence(value: unknown): value is Evidence {
   if (!value || typeof value !== 'object') return false
   const evidence = value as Evidence
   return typeof evidence.path === 'string'
-    && Number.isInteger(evidence.start_line)
-    && Number.isInteger(evidence.end_line)
+    && (evidence.citation_type === 'page' ? Number.isInteger(evidence.page)
+      : Number.isInteger(evidence.start_line) && Number.isInteger(evidence.end_line))
     && Array.isArray(evidence.content)
     && evidence.content.every((line) => typeof line === 'string')
 }
@@ -46,12 +75,22 @@ function isQuestionResponse(value: unknown): value is QuestionResponse {
   return typeof turn.turn_id === 'string' && !!turn.turn_id.trim()
     && typeof turn.question === 'string' && !!turn.question.trim()
     && isEvidence(turn.evidence)
+    && typeof turn.source_id === 'string'
+    && Array.isArray(turn.evidence_snippets) && turn.evidence_snippets.length > 0
+    && turn.evidence_snippets.every(isEvidence)
 }
 
 function isAnswerResponse(value: unknown): value is AnswerResponse {
   if (!isQuestionResponse(value)) return false
   const response = value as AnswerResponse
-  return Array.isArray(response.claims) && response.claims.every((claim) =>
+  return typeof response.reference_answer === 'string' && !!response.reference_answer.trim()
+    && !!response.score && Number.isFinite(response.score.earned) && Number.isFinite(response.score.possible)
+    && (response.score.percentage === null || (Number.isFinite(response.score.percentage) && response.score.percentage >= 0 && response.score.percentage <= 100))
+    && Array.isArray(response.criteria) && response.criteria.length > 0
+    && response.criteria.every((item) => item && typeof item.description === 'string'
+      && ['met', 'partial', 'missed', 'contradicted', 'unverified'].includes(item.status)
+      && typeof item.explanation === 'string' && typeof item.quote === 'string' && isEvidence(item.evidence))
+    && Array.isArray(response.claims) && response.claims.every((claim) =>
     claim && typeof claim.claim === 'string'
     && ['supported', 'contradicted', 'unverified'].includes(claim.label)
     && typeof claim.explanation === 'string'
@@ -73,30 +112,86 @@ async function readResponse(response: Response): Promise<unknown> {
 
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [backendReady, setBackendReady] = useState(false)
+  const [backendError, setBackendError] = useState('')
+  const [backendAttempt, setBackendAttempt] = useState(0)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
   const [submittingAnswer, setSubmittingAnswer] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
   const [recordingBusy, setRecordingBusy] = useState(false)
+  const [uploadingSource, setUploadingSource] = useState(true)
+  const [activeSource, setActiveSource] = useState<SourceDocument | null>(null)
   const [transcriptionNotice, setTranscriptionNotice] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const [turn, setTurn] = useState<QuestionResponse | null>(null)
+  const [questionSet, setQuestionSet] = useState<QuestionResponse[]>([])
+  const [questionIndex, setQuestionIndex] = useState(0)
+  const [results, setResults] = useState<Record<string, AnswerResponse>>({})
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<AnswerResponse | null>(null)
   const [showEvidence, setShowEvidence] = useState(true)
 
+  useEffect(() => {
+    let active = true
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 8000)
+    async function checkBackend() {
+      try {
+        const response = await fetch('/health', { cache: 'no-store', signal: controller.signal })
+        const data = await response.json()
+        if (!response.ok || data.api_version !== 'study-v2') {
+          throw new Error('The backend is running an older version. Restart Flask with python -m backend.app, then retry the connection.')
+        }
+        if (active) setBackendReady(true)
+      } catch (error) {
+        if (active) setBackendError(error instanceof Error && error.message.includes('older version')
+          ? error.message : 'Cannot connect to the current backend. Start Flask, then retry the connection.')
+      } finally {
+        window.clearTimeout(timeout)
+      }
+    }
+    void checkBackend()
+    return () => { active = false; controller.abort(); window.clearTimeout(timeout) }
+  }, [backendAttempt])
+
+  const handleSourceChange = useCallback((source: SourceDocument | null) => {
+    setActiveSource(source)
+    setTurn(null)
+    setQuestionSet([])
+    setResults({})
+    setQuestionIndex(0)
+    setAnswer('')
+    setFeedback(null)
+    setError(null)
+    setTranscriptionNotice('')
+  }, [])
+
   // 1. Generate Question
   async function generateQuestion() {
-    if (loadingQuestion || submittingAnswer || transcribing || recordingBusy) return
+    if (!backendReady || !activeSource || loadingQuestion || submittingAnswer || transcribing || recordingBusy || uploadingSource) return
     setLoadingQuestion(true)
     setError(null)
     setTranscriptionNotice('')
 
     try {
-      const res = await fetch('/questions', { method: 'POST' })
+      const res = await fetch('/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_id: activeSource.source_id, count: 3 }),
+      })
       const data = await readResponse(res)
-      if (!isQuestionResponse(data)) throw new Error('The server returned an invalid question. Please retry.')
-      setTurn(data)
+      if (!data || typeof data !== 'object' || !('questions' in data) || !Array.isArray(data.questions)
+        || !data.questions.length || !data.questions.every(isQuestionResponse)) {
+        throw new Error('The backend did not return the current question format. Restart Flask and reload, then upload your file again.')
+      }
+      if (!data.questions.every((item) => item.source_id === activeSource.source_id)) {
+        throw new Error('The backend used a different source. Restart Flask, reload, and upload your material again.')
+      }
+      setQuestionSet(data.questions)
+      setQuestionIndex(0)
+      setResults({})
+      setTurn(data.questions[0])
       setFeedback(null)
       setAnswer('')
     } catch (error) {
@@ -110,7 +205,7 @@ export default function App() {
   // 2. Submit Answer
   async function submitAnswer(e: React.FormEvent) {
     e.preventDefault()
-    if (!turn || !answer.trim() || submittingAnswer || loadingQuestion || transcribing || recordingBusy) return
+    if (!turn || !answer.trim() || submittingAnswer || loadingQuestion || transcribing || recordingBusy || uploadingSource) return
 
     setSubmittingAnswer(true)
     setError(null)
@@ -132,6 +227,7 @@ export default function App() {
         throw new Error('The server returned invalid feedback. Please retry.')
       }
       setFeedback(data)
+      setResults((previous) => ({ ...previous, [data.turn_id]: data }))
     } catch (error) {
       setError(error instanceof TypeError ? 'Could not reach the server. Your answer is preserved; please retry.'
         : error instanceof Error ? error.message : 'Evaluation failed. Your answer is preserved; please retry.')
@@ -140,10 +236,21 @@ export default function App() {
     }
   }
 
+  function nextQuestion() {
+    if (!feedback || questionIndex + 1 >= questionSet.length) return
+    const next = questionIndex + 1
+    setQuestionIndex(next)
+    setTurn(questionSet[next])
+    setAnswer('')
+    setFeedback(null)
+    setError(null)
+    setTranscriptionNotice('')
+  }
+
   async function uploadAudio(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = '' // Allow retrying the same file after a failure.
-    if (!file || !turn || loadingQuestion || submittingAnswer || transcribing || recordingBusy) return
+    if (!file || !turn || loadingQuestion || submittingAnswer || transcribing || recordingBusy || uploadingSource) return
     await transcribeFile(file)
   }
 
@@ -217,6 +324,12 @@ export default function App() {
   }
 
   const activeEvidence = feedback?.evidence ?? turn?.evidence
+  const evidenceList = feedback?.evidence_snippets ?? turn?.evidence_snippets ?? []
+  const completed = Object.values(results)
+  const totalEarned = completed.reduce((sum, item) => sum + item.score.earned, 0)
+  const totalPossible = completed.reduce((sum, item) => sum + item.score.possible, 0)
+  const evidenceLocation = (evidence: Evidence) => evidence.citation_type === 'page'
+    ? `Page ${evidence.page}` : `Lines ${evidence.start_line}–${evidence.end_line}`
 
   return (
     <main className="max-w-3xl mx-auto px-6 py-12">
@@ -226,23 +339,30 @@ export default function App() {
           RepoViva
         </h1>
         <p className="text-sm" style={{ color: 'var(--muted)' }}>
-          Practice explaining code with grounded source citations.
+          Upload material, answer AI-generated questions, and review source-backed scores.
         </p>
       </header>
+
+      {backendReady ? <SourceUpload disabled={loadingQuestion || submittingAnswer || transcribing || recordingBusy}
+        onBusyChange={setUploadingSource} onSourceChange={handleSourceChange} />
+        : !backendError && <p role="status" className="mb-6">Connecting to the backend…</p>}
+      <h2 className="text-base font-semibold mb-3 break-words">
+        {activeSource ? `Practice: ${activeSource.filename}` : 'Upload material to begin'}
+      </h2>
 
       {/* 1. Generate Question Button */}
       <section className="mb-6 flex flex-wrap items-center gap-4">
         <button
           onClick={generateQuestion}
-          disabled={loadingQuestion || submittingAnswer || transcribing || recordingBusy}
+          disabled={!backendReady || !activeSource || loadingQuestion || submittingAnswer || transcribing || recordingBusy || uploadingSource}
           className="px-5 py-2.5 rounded text-sm font-medium transition-all active:scale-[0.98]"
           style={{
             background: loadingQuestion ? 'var(--border)' : 'var(--accent)',
             color: '#0d1117',
-            cursor: loadingQuestion || submittingAnswer || transcribing || recordingBusy ? 'not-allowed' : 'pointer',
+            cursor: !backendReady || !activeSource || loadingQuestion || submittingAnswer || transcribing || recordingBusy || uploadingSource ? 'not-allowed' : 'pointer',
           }}
         >
-          {loadingQuestion ? 'Generating Question…' : turn ? 'Generate New Question' : 'Generate Question'}
+          {loadingQuestion ? 'Generating questions and answers…' : turn ? 'Generate new set' : 'Generate questions'}
         </button>
 
         {turn && (
@@ -253,13 +373,16 @@ export default function App() {
       </section>
 
       {/* Global Error Banner */}
-      {error && (
+      {(error || backendError) && (
         <div
           role="alert"
           className="mb-6 text-sm px-4 py-3 rounded border"
           style={{ background: '#251214', color: 'var(--warn)', borderColor: '#5a1d22' }}
         >
-          {error}
+          {error || backendError}
+          {backendError && <button type="button" className="block mt-3 underline" onClick={() => {
+            setBackendError(''); setBackendReady(false); setBackendAttempt((value) => value + 1)
+          }}>Retry connection</button>}
         </div>
       )}
 
@@ -271,7 +394,7 @@ export default function App() {
         >
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: 'var(--muted)' }}>
-              Question
+              Question {questionIndex + 1} of {questionSet.length}
             </p>
             <button
               aria-expanded={showEvidence}
@@ -289,7 +412,7 @@ export default function App() {
           </p>
 
           <p className="text-xs" style={{ color: 'var(--muted)' }}>
-            Source: <span className="font-mono break-all">{turn.evidence.path}</span> (Lines {turn.evidence.start_line}–{turn.evidence.end_line})
+            Source: <span className="font-mono break-all">{turn.evidence.path}</span> ({evidenceLocation(turn.evidence)})
           </p>
         </section>
       )}
@@ -306,24 +429,17 @@ export default function App() {
             style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--muted)' }}
           >
             <span className="min-w-0 break-all">Evidence File: <strong className="text-[#e6edf3]">{activeEvidence.path}</strong></span>
-            <span className="shrink-0">Lines {activeEvidence.start_line}–{activeEvidence.end_line}</span>
+            <span className="shrink-0">{evidenceLocation(activeEvidence)}</span>
           </div>
 
-          <div className="p-3 overflow-x-auto max-h-72 text-xs font-mono">
-            {activeEvidence.content.map((line, idx) => {
-              const lineNum = activeEvidence.start_line + idx
-              return (
-                <div key={lineNum} className="flex leading-5 w-max min-w-full">
-                  <span
-                    className="w-10 select-none text-right pr-4 shrink-0"
-                    style={{ color: 'var(--muted)' }}
-                  >
-                    {lineNum}
-                  </span>
-                  <span className="whitespace-pre text-[#c9d1d9]">{line || ' '}</span>
-                </div>
-              )
-            })}
+          <div className="p-3 overflow-auto max-h-96 text-xs font-mono">
+            {evidenceList.map((evidence, section) => <div key={evidence.id ?? section} className="mb-4">
+              <p className="mb-2" style={{ color: 'var(--muted)' }}>{evidenceLocation(evidence)}</p>
+              {evidence.content.map((line, idx) => <div key={idx} className="flex leading-5 w-max min-w-full">
+                {evidence.citation_type !== 'page' && <span className="w-10 select-none text-right pr-4 shrink-0" style={{ color: 'var(--muted)' }}>{(evidence.start_line ?? 1) + idx}</span>}
+                <span className="whitespace-pre text-[#c9d1d9]">{line || ' '}</span>
+              </div>)}
+            </div>)}
           </div>
         </section>
       )}
@@ -337,7 +453,7 @@ export default function App() {
           <form onSubmit={submitAnswer}>
             <VoiceRecorder
               key={turn.turn_id}
-              disabled={loadingQuestion || submittingAnswer || transcribing}
+              disabled={loadingQuestion || submittingAnswer || transcribing || uploadingSource}
               onBusyChange={setRecordingBusy}
               onRecording={transcribeFile}
               onError={(message) => { setError(message); setTranscriptionNotice('') }}
@@ -351,7 +467,7 @@ export default function App() {
                 type="file"
                 accept=".wav,audio/wav,audio/x-wav"
                 onChange={uploadAudio}
-                disabled={loadingQuestion || submittingAnswer || transcribing || recordingBusy}
+                disabled={loadingQuestion || submittingAnswer || transcribing || recordingBusy || uploadingSource}
                 aria-describedby="audio-help"
                 className="block w-full min-w-0 text-sm file:mr-3 file:rounded file:border file:border-[#30363d] file:bg-[#161b22] file:px-3 file:py-2 file:text-[#e6edf3] disabled:opacity-60"
               />
@@ -372,8 +488,8 @@ export default function App() {
               aria-describedby="answer-count"
               value={answer}
               onChange={(e) => { setAnswer(e.target.value); setFeedback(null) }}
-              disabled={submittingAnswer || loadingQuestion || transcribing || recordingBusy}
-              placeholder="Explain how the code works in your own words..."
+              disabled={submittingAnswer || loadingQuestion || transcribing || recordingBusy || uploadingSource}
+              placeholder="Answer the question in your own words…"
               rows={4}
               maxLength={4000}
               className="w-full p-3 rounded text-sm font-mono border transition-all resize-y"
@@ -391,12 +507,12 @@ export default function App() {
 
               <button
                 type="submit"
-                disabled={submittingAnswer || loadingQuestion || transcribing || recordingBusy || !answer.trim()}
+                disabled={submittingAnswer || loadingQuestion || transcribing || recordingBusy || uploadingSource || !answer.trim()}
                 className="px-5 py-2 rounded text-sm font-medium transition-all active:scale-[0.98]"
                 style={{
-                  background: submittingAnswer || loadingQuestion || transcribing || recordingBusy || !answer.trim() ? 'var(--border)' : '#58a6ff',
+                  background: submittingAnswer || loadingQuestion || transcribing || recordingBusy || uploadingSource || !answer.trim() ? 'var(--border)' : '#58a6ff',
                   color: '#0d1117',
-                  cursor: submittingAnswer || loadingQuestion || transcribing || recordingBusy || !answer.trim() ? 'not-allowed' : 'pointer',
+                  cursor: submittingAnswer || loadingQuestion || transcribing || recordingBusy || uploadingSource || !answer.trim() ? 'not-allowed' : 'pointer',
                 }}
               >
                 {submittingAnswer ? 'Evaluating Answer…' : 'Submit Answer'}
@@ -415,6 +531,32 @@ export default function App() {
           <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--text)' }}>
             Evaluation Feedback
           </h2>
+
+          <p className="text-xl font-semibold mb-2" aria-label="Practice score">
+            {feedback.score.percentage === null ? 'Not enough evidence to score' : `Score: ${feedback.score.percentage}%`}
+          </p>
+          <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+            {feedback.score.earned} / {feedback.score.possible} points.
+            {feedback.score.excluded_criteria > 0 && ` ${feedback.score.excluded_criteria} criteria excluded because source evidence is insufficient.`}
+          </p>
+          <ul className="space-y-4 mb-5">
+            {feedback.criteria.map((criterion) => <li key={criterion.id} className="text-sm">
+              <p><strong>{criterion.description}</strong> — {criterion.status} ({criterion.points}/{criterion.max_points})</p>
+              <p className="mt-1" style={{ color: 'var(--muted)' }}>{criterion.explanation}</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>{criterion.evidence.path} · {evidenceLocation(criterion.evidence)}</p>
+              <pre className="mt-1 overflow-auto text-xs p-2 rounded" style={{ background: 'var(--bg)' }}>{criterion.quote}</pre>
+            </li>)}
+          </ul>
+          <details className="mb-5">
+            <summary className="cursor-pointer text-sm font-semibold">AI reference answer</summary>
+            <p className="mt-3 whitespace-pre-wrap text-sm">{feedback.reference_answer}</p>
+          </details>
+          {questionSet.length > 1 && <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
+            Reviewed {completed.length} / {questionSet.length} questions.
+            {totalPossible > 0 && ` Set score so far: ${Math.round(100 * totalEarned / totalPossible)}%.`}
+          </p>}
+          {questionIndex + 1 < questionSet.length && <button type="button" className="px-4 py-2 rounded border border-[#30363d] mb-5 disabled:opacity-50"
+            disabled={loadingQuestion || submittingAnswer || transcribing || recordingBusy || uploadingSource} onClick={nextQuestion}>Next question</button>}
 
           {feedback.claims.length === 0 ? (
             <p className="text-sm" style={{ color: 'var(--muted)' }}>
@@ -453,7 +595,7 @@ export default function App() {
                         style={{ background: '#161b22', borderColor: '#30363d' }}
                       >
                         <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: 'var(--muted)' }}>
-                          Cited Code Evidence:
+                          Cited Source Evidence:
                         </p>
                         <pre className="whitespace-pre-wrap text-[#c9d1d9]">{claim.quote}</pre>
                       </div>

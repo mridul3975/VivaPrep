@@ -1,4 +1,5 @@
 import os
+import secrets
 import time
 import uuid
 import wave
@@ -6,19 +7,21 @@ from io import BytesIO
 from pathlib import Path
 from threading import Lock
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, session
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
-from backend.interview.question_generator import QuestionGenerationError, generate_question
-from backend.interview.evaluator import EvaluationError, evaluate_answer
-from backend.evidence.read import read
+from backend.interview.question_generator import QuestionGenerationError, generate_question_set
+from backend.interview.evaluator import EvaluationError
+from backend.interview.grading import grade_answer
 from backend.evidence.retrieve import retrieve
+from backend.evidence.uploads import uploads, next_source_evidence, owned_source
+from backend.evidence.documents import DocumentError
 from backend.speech.transcriber import TranscriptionError, transcribe_wav
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SAMPLE_PATH = PROJECT_ROOT / "samples" / "read.py"
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
+API_VERSION = "study-v2"
 
 try:
     from dotenv import load_dotenv
@@ -33,6 +36,10 @@ except ImportError:
                 os.environ.setdefault(k.strip(), v.strip())
 
 app = Flask(__name__, static_folder=None)
+app.secret_key = os.getenv("SESSION_SECRET") or secrets.token_hex(32)
+app.config.update(SESSION_COOKIE_NAME="repoviva_session", SESSION_COOKIE_HTTPONLY=True,
+                  SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE") == "1")
+app.register_blueprint(uploads)
 turns = {}
 turns_lock = Lock()
 TURN_TTL_SECONDS = 3600
@@ -76,7 +83,15 @@ def method_not_allowed(error):
 
 @app.get("/health")
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "api_version": API_VERSION})
+
+
+@app.after_request
+def api_headers(response):
+    if request.path in ("/health", "/retrieve", "/questions", "/answers", "/transcriptions") or request.path.startswith("/sources"):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-RepoViva-API"] = API_VERSION
+    return response
 
 
 @app.post("/retrieve")
@@ -90,54 +105,71 @@ def retrieve_snippets():
     if not question:
         return jsonify({"error": "Question cannot be empty"}), 400
 
-    records = read(str(SAMPLE_PATH))
+    source_id = data.get("source_id", session.get("active_source_id"))
+    if "source_id" in data and (not isinstance(source_id, str) or not source_id.strip()):
+        return jsonify({"error": "source_id must be a non-empty string."}), 400
+    if not source_id:
+        return jsonify({"error": "Upload your study material first."}), 400
+    document = owned_source(source_id)
+    if document is None:
+        return jsonify({"error": "Upload not found or expired. Please upload the file again."}), 404
+    records = document["snippets"]
     results = retrieve(question, records)
 
     return jsonify({
         "question": question,
+        "source_id": source_id,
         "results": results,
     })
 
 
 @app.post("/questions")
 def generate_questions():
-    records = read(str(SAMPLE_PATH))
-    
-    ## Validate the records
-
-    if not records:
-        return jsonify({"error": "No records found"}), 400
-
-    # Select the first snippet for question generation
-    snippet = records[0]
-
+    data = request.get_json(silent=True)
+    if data is None and (request.is_json or request.content_length):
+        return jsonify({"error": "Expected a JSON object."}), 400
+    if data is not None and not isinstance(data, dict):
+        return jsonify({"error": "Expected a JSON object."}), 400
+    data = data or {}
+    source_id = data.get("source_id", session.get("active_source_id"))
+    if "source_id" in data and (not isinstance(source_id, str) or not source_id.strip()):
+        return jsonify({"error": "source_id must be a non-empty string."}), 400
+    if not source_id:
+        return jsonify({"error": "Upload your study material before generating questions."}), 400
+    count = data.get("count", 3)
+    if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
+        return jsonify({"error": "Question count must be between 1 and 3."}), 400
     try:
-        question = generate_question(snippet)
+        selected = next_source_evidence(source_id)
+        if selected is None:
+            return jsonify({"error": "Upload not found or expired. Please upload the file again."}), 404
+        snippets, revision = selected
+        packages = generate_question_set(snippets, count=count)
+    except DocumentError as error:
+        return jsonify({"error": str(error)}), error.status
     except QuestionGenerationError as e:
-        app.logger.error(f"Question generation failed: {e}")
-        return jsonify({"error": "Unable to generate a question at this time. Please try again later."}), 502
+        app.logger.warning("Question generation failed: %s", e.__cause__ or e)
+        return jsonify({"error": "Unable to generate validated questions from this material. Please retry."}), 502
 
-    turn_id = uuid.uuid4().hex
+    public_questions = []
     with turns_lock:
         now = time.monotonic()
         expired = [key for key, turn in turns.items() if now - turn["created"] >= TURN_TTL_SECONDS and not turn["busy"]]
         for key in expired:
             del turns[key]
-        if len(turns) >= MAX_TURNS:
+        if len(turns) + len(packages) > MAX_TURNS:
             return jsonify({"error": "Too many active turns. Please try again later."}), 503
-        turns[turn_id] = {"question": question, "snippet": snippet, "created": now, "busy": False}
-
-    return jsonify({
-        "turn_id": turn_id,
-        "question": question,
-        "evidence": {
-            "snippet": snippet,
-            "path": snippet["path"],
-            "start_line": snippet["start_line"],
-            "end_line": snippet["end_line"],
-            "content": snippet["content"]
-        }
-    }), 200
+        for package in packages:
+            turn_id = uuid.uuid4().hex
+            primary_id = package["rubric"][0]["snippet_id"]
+            primary = next(item for item in snippets if str(item["id"]) == primary_id)
+            turns[turn_id] = {"question": package["question"], "question_package": package,
+                              "snippet": primary, "snippets": snippets, "created": now, "busy": False,
+                              "source_id": source_id, "revision": revision, "owner": session.get("source_owner")}
+            public_questions.append({"turn_id": turn_id, "source_id": source_id, "question": package["question"],
+                                     "evidence": primary, "evidence_snippets": snippets})
+    return jsonify({"api_version": API_VERSION, "source_id": source_id, "source_revision": revision,
+                    "questions": public_questions}), 200
 
 
 @app.post("/answers")
@@ -159,6 +191,8 @@ def submit_answer():
 
     with turns_lock:
         turn = turns.get(turn_id)
+        if turn is not None and turn.get("owner") is not None and turn["owner"] != session.get("source_owner"):
+            return jsonify({"error": "Turn not found or expired. Start a new question."}), 404
         if turn is None or time.monotonic() - turn["created"] >= TURN_TTL_SECONDS:
             if turn is not None and not turn["busy"]:
                 del turns[turn_id]
@@ -168,18 +202,20 @@ def submit_answer():
         turn["busy"] = True
 
     try:
-        claims = evaluate_answer(turn["question"], answer, turn["snippet"])
-    except EvaluationError:
-        app.logger.warning("Answer evaluation failed")
+        result = grade_answer(turn["question_package"], answer, turn["snippets"])
+    except EvaluationError as error:
+        app.logger.warning("Answer evaluation failed: %s", error.__cause__ or error)
         return jsonify({"error": "Unable to evaluate the answer. Please try again."}), 502
     finally:
         with turns_lock:
             turn["busy"] = False
     return jsonify({
         "turn_id": turn_id,
+        "source_id": turn["source_id"],
         "question": turn["question"],
-        "claims": claims,
         "evidence": turn["snippet"],
+        "evidence_snippets": turn["snippets"],
+        **result,
     }), 200
 
 
@@ -233,4 +269,6 @@ def transcribe_upload():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    # Local development reloads code without exposing Flask's interactive debugger.
+    # Gunicorn imports app directly, so its production reload=False still applies.
+    app.run(debug=False, use_reloader=True)

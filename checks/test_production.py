@@ -20,7 +20,8 @@ class ProductionTests(unittest.TestCase):
             self.addCleanup(asset.close)
             self.assertEqual(asset.status_code, 200)
             self.assertIn("immutable", asset.headers["Cache-Control"])
-            self.assertEqual(client.get("/health").get_json(), {"status": "ok"})
+            self.assertEqual(client.get("/health").get_json()["status"], "ok")
+            self.assertEqual(client.get("/health").get_json()["api_version"], "study-v2")
             self.assertEqual(client.post("/answers", json={}).status_code, 400)
 
     def test_missing_build_is_explicit(self):

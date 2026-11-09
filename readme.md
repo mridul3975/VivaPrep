@@ -4,8 +4,13 @@ Practice explaining a project, with feedback grounded in its source code.
 
 **Status, November 9, 2026 (IST): local Flask backend implemented.** Source loading,
 retrieval, question generation, and answer evaluation are connected; standalone
-Prisma transcription and live question/answer calls have been exercised. Fourteen
-local regression tests pass. The production React build is served directly by
+Prisma transcription and live question/answer calls have been exercised. Thirty-nine
+local regression tests pass. Uploaded source/text files and PDFs now supply the
+evidence for AI question sets, hidden reference answers, and rubric-based scoring,
+with browser-session ownership checks. Student endpoints require an upload and
+never fall back to the bundled test file. Correct and conflicting live answers
+were graded at 100% and 0% respectively in the tested biology case.
+The production React build is served directly by
 Flask under one Gunicorn worker. A local production browser test completed real
 question generation, Prisma WAV upload, transcript review, and answer evaluation.
 Direct microphone capture, real PCM WAV conversion, playback, cancellation, retry,
@@ -48,6 +53,8 @@ Keep RAG as a small, explicit pipeline: read source files, split them into cited
 - [architecture.md](architecture.md): components, data flow, boundaries and trade-offs.
 - [trd.md](trd.md): technical requirements, proposed contracts, acceptance checks and milestones.
 - This file: working agreement, progress and the current assignment.
+- [UPLOADS.md](UPLOADS.md): source/text and PDF upload preview, session isolation,
+  limits, question/reference generation, and scoring.
 
 ## Learning workflow
 

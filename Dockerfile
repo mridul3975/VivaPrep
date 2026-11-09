@@ -11,7 +11,6 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PORT=10000
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ backend/
-COPY samples/read.py samples/read.py
 COPY gunicorn.conf.py ./
 COPY --from=frontend-build /build/frontend/dist frontend/dist
 RUN useradd --system --uid 10001 app

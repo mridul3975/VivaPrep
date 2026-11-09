@@ -1,0 +1,33 @@
+{
+  "date_ist": "2026-11-09",
+  "api_version": "study-v2",
+  "mode": "Live Groq calls through the actual Vite 5173 -> Flask 5000 development setup",
+  "biology": {
+    "file": "biology.txt",
+    "question_count": 3,
+    "topics": ["photosynthesis reactants and products", "chloroplasts and chlorophyll", "energy conversion"],
+    "correct_paraphrased_answer_percentage": 100,
+    "conflicting_answer_percentage": 0,
+    "reference_answers_hidden_before_submission": true,
+    "next_question_hides_its_reference_answer": true
+  },
+  "history": {
+    "file": "history.txt",
+    "question_count": 3,
+    "topics": ["Treaty of Versailles date", "parties", "effect"],
+    "previous_turn_cleared_on_file_switch": true,
+    "active_upload_restored_on_reload": true
+  },
+  "pdf": {
+    "file": "vivaprep-test-notes.pdf",
+    "fixture_pages": 3,
+    "evidence_pages": [1, 3],
+    "question_count": 3,
+    "topics": ["gravity", "acceleration", "summary of both concepts"],
+    "correct_answer_percentage": 100,
+    "page_citations_preserved": true
+  },
+  "viewports_checked": [360, 768, 1280],
+  "runtime_errors": [],
+  "all_passed": true
+}

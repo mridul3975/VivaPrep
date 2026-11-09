@@ -11,3 +11,7 @@ services:
         sync: false
       - key: VACHANA_API_KEY
         sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SESSION_COOKIE_SECURE
+        value: "1"

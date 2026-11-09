@@ -48,6 +48,9 @@ The default container command runs Gunicorn with debug mode and reloading off.
 4. Set `GROQ_API_KEY` and `VACHANA_API_KEY` in the service's runtime environment.
    The Blueprint uses `sync: false` placeholders and contains no secret values.
    Do not prefix these values with `VITE_` or put them in the React build.
+   The Blueprint also generates `SESSION_SECRET` for upload-session cookies and
+   sets `SESSION_COOKIE_SECURE=1` for the HTTPS deployment. Configure these too
+   if creating the service manually.
 5. Deploy, wait for a successful health check, then open the assigned HTTPS URL.
 
 The deployment is not verified until the public URL is returned and exercised.

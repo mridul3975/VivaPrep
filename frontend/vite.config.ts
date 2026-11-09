@@ -6,7 +6,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true, // Listens on all addresses (0.0.0.0) so Windows browser can connect to WSL
+    watch: { usePolling: true, interval: 300 },
     proxy: {
+      '/sources': 'http://127.0.0.1:5000',
       '/questions': 'http://127.0.0.1:5000',
       '/answers':   'http://127.0.0.1:5000',
       '/transcriptions': 'http://127.0.0.1:5000',

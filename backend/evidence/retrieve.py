@@ -48,7 +48,6 @@ def retrieve(question, records):
 
     results.sort(key=lambda x: x["score"], reverse=True)
 
-    print(keywords)
     return results
     
     
