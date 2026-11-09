@@ -9,6 +9,9 @@ python -m unittest discover -s checks -p 'test_*.py' -v
 ```
 
 These tests simulate provider responses and do not make live API calls.
+The production-serving checks require the React build first. On a fresh checkout,
+run `npm --prefix frontend ci` and `npm --prefix frontend run build` before the
+test command.
 
 ## Live provider checks
 
