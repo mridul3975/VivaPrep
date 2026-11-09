@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T20:32:20.618011+00:00",
+  "title": "Design System: RepoViva",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Desk Charcoal",
+        "tonalRamp": [
+          "oklch(15% 0.0018 264.5)",
+          "oklch(26% 0.0029 264.5)",
+          "oklch(38% 0.0037 264.5)",
+          "oklch(49% 0.0044 264.5)",
+          "oklch(61% 0.0044 264.5)",
+          "oklch(72% 0.0037 264.5)",
+          "oklch(84% 0.0026 264.5)",
+          "oklch(95% 0.0011 264.5)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Panel Charcoal",
+        "tonalRamp": [
+          "oklch(15% 0.0024 271.1)",
+          "oklch(26% 0.0039 271.1)",
+          "oklch(38% 0.0051 271.1)",
+          "oklch(49% 0.0060 271.1)",
+          "oklch(61% 0.0060 271.1)",
+          "oklch(72% 0.0051 271.1)",
+          "oklch(84% 0.0036 271.1)",
+          "oklch(95% 0.0015 271.1)"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Charcoal",
+        "tonalRamp": [
+          "oklch(15% 0.0023 271.2)",
+          "oklch(26% 0.0038 271.2)",
+          "oklch(38% 0.0049 271.2)",
+          "oklch(49% 0.0058 271.2)",
+          "oklch(61% 0.0058 271.2)",
+          "oklch(72% 0.0049 271.2)",
+          "oklch(84% 0.0035 271.2)",
+          "oklch(95% 0.0014 271.2)"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Hover Charcoal",
+        "tonalRamp": [
+          "oklch(15% 0.0029 274.7)",
+          "oklch(26% 0.0048 274.7)",
+          "oklch(38% 0.0062 274.7)",
+          "oklch(49% 0.0073 274.7)",
+          "oklch(61% 0.0073 274.7)",
+          "oklch(72% 0.0062 274.7)",
+          "oklch(84% 0.0044 274.7)",
+          "oklch(95% 0.0018 274.7)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Crisp Border",
+        "tonalRamp": [
+          "oklch(15% 0.0035 276.9)",
+          "oklch(26% 0.0057 276.9)",
+          "oklch(38% 0.0075 276.9)",
+          "oklch(49% 0.0088 276.9)",
+          "oklch(61% 0.0088 276.9)",
+          "oklch(72% 0.0075 276.9)",
+          "oklch(84% 0.0053 276.9)",
+          "oklch(95% 0.0022 276.9)"
+        ]
+      },
+      "border-soft": {
+        "role": "neutral",
+        "displayName": "Quiet Border",
+        "tonalRamp": [
+          "oklch(15% 0.0030 274.7)",
+          "oklch(26% 0.0048 274.7)",
+          "oklch(38% 0.0063 274.7)",
+          "oklch(49% 0.0074 274.7)",
+          "oklch(61% 0.0074 274.7)",
+          "oklch(72% 0.0063 274.7)",
+          "oklch(84% 0.0044 274.7)",
+          "oklch(95% 0.0019 274.7)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Silver White",
+        "tonalRamp": [
+          "oklch(15% 0.0011 286.3)",
+          "oklch(26% 0.0017 286.3)",
+          "oklch(38% 0.0023 286.3)",
+          "oklch(49% 0.0027 286.3)",
+          "oklch(61% 0.0027 286.3)",
+          "oklch(72% 0.0023 286.3)",
+          "oklch(84% 0.0016 286.3)",
+          "oklch(95% 0.0007 286.3)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Silver",
+        "tonalRamp": [
+          "oklch(15% 0.0046 280.4)",
+          "oklch(26% 0.0075 280.4)",
+          "oklch(38% 0.0098 280.4)",
+          "oklch(49% 0.0115 280.4)",
+          "oklch(61% 0.0115 280.4)",
+          "oklch(72% 0.0098 280.4)",
+          "oklch(84% 0.0069 280.4)",
+          "oklch(95% 0.0029 280.4)"
+        ]
+      },
+      "subtle": {
+        "role": "neutral",
+        "displayName": "Subtle Silver",
+        "tonalRamp": [
+          "oklch(15% 0.0053 280.9)",
+          "oklch(26% 0.0087 280.9)",
+          "oklch(38% 0.0113 280.9)",
+          "oklch(49% 0.0133 280.9)",
+          "oklch(61% 0.0133 280.9)",
+          "oklch(72% 0.0113 280.9)",
+          "oklch(84% 0.0080 280.9)",
+          "oklch(95% 0.0033 280.9)"
+        ]
+      },
+      "silver": {
+        "role": "primary",
+        "displayName": "Silver",
+        "tonalRamp": [
+          "oklch(15% 0.0027 286.3)",
+          "oklch(26% 0.0044 286.3)",
+          "oklch(38% 0.0057 286.3)",
+          "oklch(49% 0.0068 286.3)",
+          "oklch(61% 0.0068 286.3)",
+          "oklch(72% 0.0057 286.3)",
+          "oklch(84% 0.0041 286.3)",
+          "oklch(95% 0.0017 286.3)"
+        ]
+      },
+      "silver-hover": {
+        "role": "primary",
+        "displayName": "Bright Silver",
+        "tonalRamp": [
+          "oklch(15% 0.0016 286.3)",
+          "oklch(26% 0.0026 286.3)",
+          "oklch(38% 0.0034 286.3)",
+          "oklch(49% 0.0040 286.3)",
+          "oklch(61% 0.0040 286.3)",
+          "oklch(72% 0.0034 286.3)",
+          "oklch(84% 0.0024 286.3)",
+          "oklch(95% 0.0010 286.3)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Charcoal Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0031 274.6)",
+          "oklch(26% 0.0050 274.6)",
+          "oklch(38% 0.0065 274.6)",
+          "oklch(49% 0.0077 274.6)",
+          "oklch(61% 0.0077 274.6)",
+          "oklch(72% 0.0065 274.6)",
+          "oklch(84% 0.0046 274.6)",
+          "oklch(95% 0.0019 274.6)"
+        ]
+      },
+      "error": {
+        "role": "neutral",
+        "displayName": "Error Rose",
+        "tonalRamp": [
+          "oklch(15% 0.0246 14.7)",
+          "oklch(26% 0.0400 14.7)",
+          "oklch(38% 0.0523 14.7)",
+          "oklch(49% 0.0615 14.7)",
+          "oklch(61% 0.0615 14.7)",
+          "oklch(72% 0.0523 14.7)",
+          "oklch(84% 0.0369 14.7)",
+          "oklch(95% 0.0154 14.7)"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Focus Silver",
+        "tonalRamp": [
+          "oklch(15% 0.0038 286.2)",
+          "oklch(26% 0.0062 286.2)",
+          "oklch(38% 0.0081 286.2)",
+          "oklch(49% 0.0095 286.2)",
+          "oklch(61% 0.0095 286.2)",
+          "oklch(72% 0.0081 286.2)",
+          "oklch(84% 0.0057 286.2)",
+          "oklch(95% 0.0024 286.2)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Two-tone study introduction",
+        "purpose": "The initial Know it. Explain it. heading, in silver white and muted silver; uses the responsive display role in DESIGN.md."
+      },
+      "headline": {
+        "displayName": "Active-practice heading",
+        "purpose": "The compact practice-stage invitation above the material tray; uses the responsive headline role in DESIGN.md."
+      },
+      "title": {
+        "displayName": "Question title",
+        "purpose": "The active question, balanced for reading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base copy at 14px with 1.6 line height."
+      },
+      "label": {
+        "displayName": "Action label",
+        "purpose": "Primary and secondary action labels."
+      },
+      "evidence": {
+        "displayName": "Original evidence",
+        "purpose": "Preserved source lines in a monospace stack."
+      }
+    },
+    "shadows": [
+      {
+        "name": "brand-mark",
+        "value": "0 3px 8px #0004",
+        "purpose": "Beneath the small book tile."
+      },
+      {
+        "name": "primary-action",
+        "value": "0 3px 6px #0002",
+        "purpose": "Enabled primary actions; removed from disabled and compact tray actions."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "180ms",
+        "purpose": "Background, color, and border state transitions with CSS default easing."
+      },
+      {
+        "name": "thinking-orbs",
+        "value": "Native thinking-orbs 0.3.2 presets",
+        "purpose": "Tuned 20px inline and 64px session orbs; connecting, searching, composing, listening, weaving, and solving reflect real ongoing actions."
+      },
+      {
+        "name": "activity-pause",
+        "value": "paused={!active}; library offscreen/hidden-tab pause",
+        "purpose": "Idle, answer-ready, review, and error states are paused. Active work outranks stale errors."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none; scroll-behavior: auto; static orb frame",
+        "purpose": "CSS motion is removed and native canvas orbs remain static when reduced motion is requested."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop-max",
+        "value": "1180px"
+      },
+      {
+        "name": "tablet-max",
+        "value": "900px"
+      },
+      {
+        "name": "phone-layout-max",
+        "value": "700px"
+      },
+      {
+        "name": "compact-labels-max",
+        "value": "650px"
+      },
+      {
+        "name": "small-phone-max",
+        "value": "390px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Silver submission and forward actions; the compact material tray uses its outlined override.",
+      "html": "<button class=\"ds-primary\" type=\"button\">Submit Answer<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-primary{font-family:'Geist Variable',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;max-width:100%;padding:11px 17px;border:1px solid transparent;border-radius:9px;font-size:12px;font-weight:600;line-height:1.5;text-align:center;cursor:pointer;transition:background 180ms,color 180ms,border-color 180ms;color:var(--ink,#202125);background:var(--silver,#dedee3);box-shadow:0 3px 6px #0002}.ds-primary:hover:not(:disabled){background:var(--silver-hover,#f4f4f7)}.ds-primary:active:not(:disabled){background:#c5c5cd}.ds-primary:disabled{background:#484950;color:#bbbcc4;box-shadow:none;cursor:not-allowed}.ds-primary:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Recording and supporting controls on raised charcoal.",
+      "html": "<button class=\"ds-secondary\" type=\"button\">Record answer</button>",
+      "css": ".ds-secondary{font-family:'Geist Variable',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;max-width:100%;padding:11px 17px;border:1px solid transparent;border-radius:9px;font-size:12px;font-weight:600;line-height:1.5;text-align:center;cursor:pointer;transition:background 180ms,color 180ms,border-color 180ms;background:var(--surface-raised,#222326);color:#e0e0e6;border-color:#4a4b52}.ds-secondary:hover:not(:disabled){background:#32333a;border-color:#71717c}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}.ds-secondary:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}"
+    },
+    {
+      "name": "Text action",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Underlined, low-emphasis actions such as evidence visibility and transcription retry.",
+      "html": "<button class=\"ds-text-action\" type=\"button\">Transcribe recording again</button>",
+      "css": ".ds-text-action{font-family:'Geist Variable',sans-serif;display:inline-flex;align-items:center;gap:7px;padding:5px 0;border:0;background:none;color:#c5c5cf;text-decoration:underline;text-decoration-color:#676873;text-underline-offset:4px;font-size:12px;cursor:pointer}.ds-text-action:hover:not(:disabled){color:white}.ds-text-action:disabled{opacity:.5;cursor:not-allowed}.ds-text-action:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}"
+    },
+    {
+      "name": "Icon action",
+      "kind": "button",
+      "description": "Small SVG-only controls always receive a full accessible name.",
+      "html": "<button class=\"ds-icon-action\" type=\"button\" aria-label=\"Remove upload\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 6 12 12M6 18 18 6\"/></svg></button>",
+      "css": ".ds-icon-action{display:grid;place-items:center;width:32px;height:32px;border:1px solid transparent;border-radius:7px;color:#b8b9c2;background:transparent;cursor:pointer}.ds-icon-action:hover:not(:disabled){background:#383940;color:white}.ds-icon-action:disabled{color:#70717a;opacity:.6;cursor:not-allowed}.ds-icon-action:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}"
+    },
+    {
+      "name": "Editable answer",
+      "kind": "input",
+      "refersTo": "answer-field",
+      "description": "The shared typed-answer and reviewed-transcript field; submission remains explicit.",
+      "html": "<textarea class=\"ds-answer\" aria-label=\"Your answer\" placeholder=\"Explain it the way you understand it…\" rows=\"6\" maxlength=\"4000\"></textarea>",
+      "css": ".ds-answer{font-family:'Geist Variable',sans-serif;display:block;width:100%;min-height:165px;padding:16px;border:1px solid #494a51;border-radius:9px;background:#131417;color:#eeeef3;font-size:14px;line-height:1.75;resize:vertical;caret-color:var(--silver,#dedee3);transition:border-color 180ms}.ds-answer:hover{border-color:#686973}.ds-answer::placeholder{color:#90919b}.ds-answer:disabled{opacity:.6;cursor:not-allowed}.ds-answer:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}@media(max-width:650px){.ds-answer{font-size:16px}}@media(prefers-reduced-motion:reduce){.ds-answer{transition:none}}"
+    },
+    {
+      "name": "Workspace navigation",
+      "kind": "nav",
+      "refersTo": "navigation-item",
+      "description": "Horizontal header navigation; phones place its single row beneath brand and status, and review is disabled until feedback exists.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace navigation\"><a class=\"ds-nav-item ds-selected\" href=\"#workspace\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Z\"/><path d=\"M12 6v14M6 9h3M15 9h3M6 12h3M15 12h3\"/></svg>Study desk</a><a class=\"ds-nav-item\" href=\"#source-material\" aria-label=\"Your material\"><span class=\"ds-label-full\">Your material</span><span class=\"ds-label-compact\" aria-hidden=\"true\">Material</span></a><button class=\"ds-nav-item\" type=\"button\" disabled aria-label=\"Answer review\"><span class=\"ds-label-full\">Answer review</span><span class=\"ds-label-compact\" aria-hidden=\"true\">Review</span></button></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;flex-wrap:nowrap;gap:7px}.ds-nav-item{font-family:'Geist Variable',sans-serif;display:flex;align-items:center;gap:8px;width:auto;padding:10px 14px;border:0;border-radius:10px;background:none;color:var(--muted,#a5a6ae);font-size:12px;font-weight:500;line-height:1.6;text-align:left;text-decoration:none;cursor:pointer;transition:background 180ms,color 180ms}.ds-nav-item svg{width:16px;height:16px}.ds-nav-item:hover{background:#1c1d20;color:var(--text,#f0f0f2)}.ds-nav-item.ds-selected{background:#232428;color:#f0f0f4;box-shadow:none}.ds-nav-item:disabled{color:#90919a;opacity:.65;background:transparent;cursor:not-allowed}.ds-nav-item:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px}.ds-label-compact{display:none}@media(max-width:900px){.ds-nav{justify-content:center;gap:2px}.ds-nav-item{padding:10px 9px;gap:6px;font-size:11px}}@media(max-width:700px){.ds-nav{justify-content:space-between}.ds-nav-item{flex:1;justify-content:center;font-size:12px;min-height:44px}}@media(max-width:650px){.ds-label-full{display:none}.ds-label-compact{display:inline}.ds-nav-item{min-width:0;white-space:nowrap}}@media(max-width:390px){.ds-nav-item{padding:10px 6px;gap:7px}}@media(prefers-reduced-motion:reduce){.ds-nav-item{transition:none}}"
+    },
+    {
+      "name": "Verdict labels",
+      "kind": "chip",
+      "refersTo": "verdict-supported",
+      "description": "Text, fill, and border style distinguish feedback without colored grading accents.",
+      "html": "<div class=\"ds-verdicts\"><span class=\"ds-verdict ds-met\">Met · 1/1</span><span class=\"ds-verdict ds-missed\">Missed · 0/1</span><span class=\"ds-verdict ds-partial\">Partly met · 0.5/1</span><span class=\"ds-verdict ds-unverified\">Unverified</span></div>",
+      "css": ".ds-verdicts{display:flex;flex-wrap:wrap;gap:9px}.ds-verdict{font-family:'Geist Variable',sans-serif;display:inline-flex;align-items:center;width:fit-content;border:1px solid #63646e;border-radius:5px;padding:3px 7px;font-size:10px;line-height:1.5;font-weight:500;text-transform:capitalize}.ds-met{background:#d7d7df;color:#22232a;border-color:transparent}.ds-missed{color:#f0f0f4;border-color:#999aa6}.ds-partial,.ds-unverified{color:#c2c3cc;border-style:dashed}"
+    },
+    {
+      "name": "Source evidence panel",
+      "kind": "card",
+      "refersTo": "evidence-panel",
+      "description": "A bordered source container with original line spacing and local horizontal scrolling.",
+      "html": "<section class=\"ds-evidence\"><h2 class=\"ds-evidence-title\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Z\"/><path d=\"M12 6v14M6 9h3M15 9h3M6 12h3M15 12h3\"/></svg>Source evidence</h2><p class=\"ds-evidence-intro\">The original text behind your questions.</p><div class=\"ds-evidence-file\"><span>notes.md</span><span>Lines 1–2</span></div><div class=\"ds-source-lines\"><div class=\"ds-source-line\"><span class=\"ds-line-number\">1</span><span>Photosynthesis converts light energy</span></div><div class=\"ds-source-line\"><span class=\"ds-line-number\">2</span><span>into chemical energy.</span></div></div></section>",
+      "css": ".ds-evidence{font-family:'Geist Variable',sans-serif;min-width:0;padding:22px 0 0;border:1px solid var(--border,#35363b);border-radius:14px;background:#17181b;color:var(--text,#f0f0f2)}.ds-evidence-title{display:flex;align-items:center;gap:9px;margin:0;padding:0 20px;font-size:14px;font-weight:500;line-height:1.6}.ds-evidence-intro{padding:0 20px;margin:6px 0 20px;color:var(--muted,#a5a6ae);font-size:11px;line-height:1.6}.ds-evidence-file{display:flex;flex-wrap:wrap;gap:7px 12px;justify-content:space-between;padding:12px 18px;background:#202125;color:#babbc5;font-size:10px}.ds-source-lines{overflow:auto;padding:14px;background:#121315;color:#c0c1cb;font-family:ui-monospace,\"Cascadia Code\",Consolas,monospace;font-size:11px;line-height:1.9}.ds-source-line{display:flex;width:max-content;min-width:100%}.ds-source-line>span:last-child{white-space:pre}.ds-line-number{display:inline-block;flex-shrink:0;min-width:28px;padding-right:14px;color:#8c8d99;text-align:right;user-select:none}"
+    },
+    {
+      "name": "Compact material tray",
+      "kind": "custom",
+      "refersTo": "material-tray",
+      "description": "A concise file row with optional details; opened details expose the full filename and shift the new-set control below.",
+      "html": "<section class=\"ds-tray\"><div class=\"ds-tray-file\"><strong title=\"study-material-with-a-long-filename.md\">study-material-with-a-long-filename.md</strong><button class=\"ds-tray-replace\" type=\"button\">Replace</button></div><div class=\"ds-tray-footer\"><details class=\"ds-material-details\"><summary>Material details<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m8 4 8 8-8 8\"/></svg></summary><div class=\"ds-material-body\">study-material-with-a-long-filename.md<br>Preview extracted evidence</div></details><button class=\"ds-new-set\" type=\"button\">New set<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button></div></section>",
+      "css": ".ds-tray{font-family:'Geist Variable',sans-serif;min-width:0;padding:18px 22px;border:1px solid var(--border-soft,#292a2e);border-radius:16px;background:var(--surface,#1a1b1e);color:var(--text,#f0f0f2)}.ds-tray-file{display:flex;align-items:center;gap:14px;min-width:0}.ds-tray-file strong{min-width:0;flex:1;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:15px;font-weight:500}.ds-tray-replace{font-family:'Geist Variable',sans-serif;border:0;background:none;color:#d0d0da;padding:5px 0;text-decoration:underline;text-underline-offset:4px;font-size:12px;cursor:pointer}.ds-tray-footer{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 16px;margin-top:9px}.ds-material-details{min-width:0;color:var(--muted,#a5a6ae);font-size:12px}.ds-material-details>summary{display:flex;align-items:center;gap:7px;min-height:38px;width:fit-content;list-style:none;cursor:pointer}.ds-material-details[open]{grid-column:1/-1}.ds-material-details[open]>summary>svg{transform:rotate(90deg)}.ds-material-body{padding-top:8px;overflow-wrap:anywhere;color:#ceced8;font-size:12px;line-height:1.6}.ds-new-set{font-family:'Geist Variable',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;max-width:100%;padding:11px 17px;border:1px solid transparent;border-radius:9px;font-size:12px;font-weight:600;line-height:1.5;text-align:center;cursor:pointer;transition:background 180ms,color 180ms,border-color 180ms;grid-column:2;min-height:38px;background:transparent;border-color:#53545d;box-shadow:none;color:#dedee6}.ds-new-set:hover:not(:disabled){background:var(--surface-raised,#222326)}.ds-tray-replace:focus-visible,.ds-material-details>summary:focus-visible,.ds-new-set:focus-visible{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}@media(max-width:1180px){.ds-tray{padding:17px 20px}}@media(max-width:650px){.ds-tray{padding:18px}.ds-new-set{padding:11px 14px}}@media(prefers-reduced-motion:reduce){.ds-new-set{transition:none}}"
+    },
+    {
+      "name": "Material upload target",
+      "kind": "input",
+      "description": "The welcome view native upload target on the open canvas, ahead of the generate action and phone session companion.",
+      "html": "<div class=\"ds-upload\"><strong>Drop your material here</strong><span>or <span class=\"ds-browse\">browse files</span> to upload</span><input class=\"ds-upload-input\" type=\"file\" aria-label=\"Upload study material\" accept=\".pdf,.py,.js,.jsx,.ts,.tsx,.md,.txt,.java,.c,.cpp,.h,.css,.html,.json,.yaml,.yml\"></div>",
+      "css": ".ds-upload{font-family:'Geist Variable',sans-serif;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:146px;margin-top:20px;padding:25px 16px;border:1px dashed #5d5f69;border-radius:11px;background:#191a1e;color:#d6d6df;text-align:center;transition:border-color 180ms,background 180ms}.ds-upload strong{font-size:15px;font-weight:500}.ds-upload>span{color:var(--muted,#a5a6ae);font-size:12px}.ds-browse{color:#ededf2;text-decoration:underline;text-underline-offset:3px}.ds-upload-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.ds-upload:hover:not(.ds-disabled),.ds-upload.ds-dragging{background:#24252b;border-color:var(--silver,#dedee3)}.ds-upload:focus-within{outline:2px solid var(--focus,#d9d9e0);outline-offset:4px;}.ds-upload.ds-disabled{opacity:.65}.ds-upload-input:disabled{cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-upload{transition:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Focused Study Desk",
+    "overview": "RepoViva uses silver type and actions on charcoal layers to make study practice feel calm and direct. The user-selected SpeakSpin reference informs the spacious shell and tactile controls. The supplied Finora artwork informs bold two-tone typography, and Meridial informs the restrained product-panel composition. These references concern the artwork, not Dribbble's hosting interface; RepoViva keeps its own book identity and source-evidence workflow.\n\nThe interface becomes denser as the student moves from preparation to answering. Clear questions, editable answers, and inspectable original evidence carry the visual weight. Small icons support text, and feedback uses explicit labels rather than relying on color.",
+    "keyCharacteristics": [
+      "Silver actions and typography on neutral charcoal surfaces.",
+      "A bold two-tone introduction and upload flow beside a restrained session panel, contracting into a compact practice tray.",
+      "Self-hosted Geist with a separate monospace treatment for evidence.",
+      "Quiet borders, soft tonal gradients, and limited control shadows.",
+      "Visible, truthful session, progress, and feedback states, with Thinking Orbs motion tied to actual work."
+    ],
+    "rules": [
+      {
+        "name": "The Labeled Verdict Rule",
+        "body": "Keep feedback monochrome and always pair its treatment with a written verdict. Filled silver means met or supported; a bright outline means missed or contradicted; a dashed outline means partly met or unverified.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contracting Setup Rule",
+        "body": "When practice starts, keep the uploaded file and replacement controls visible in the compact tray; move preview, full filename, requirements, and privacy copy into “Material details.” Keep the question and answer close to the top of the practice view.",
+        "section": "layout"
+      },
+      {
+        "name": "The State-Truth Rule",
+        "body": "Connecting means backend connection or microphone permission; searching means source extraction; composing means question generation; listening means recording; weaving means transcription; solving means grading. In-progress states outrank stale errors. Idle, answer-ready, review, and error displays are paused; preserve library offscreen/hidden-tab pausing and static reduced motion.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** use the silver and charcoal tokens and reserve rose for explained errors.",
+      "**Do** keep the compact practice tray and the single-row phone navigation.",
+      "**Do** preserve original source formatting inside its scrollable evidence region.",
+      "**Do** keep transcripts editable and require explicit answer submission.",
+      "**Do** pair monochrome verdict treatments with text and show only actual session progress.",
+      "**Do** retain visible keyboard focus and the reduced-motion behavior.",
+      "**Do** animate Thinking Orbs only for real ongoing actions and let active work outrank stale errors."
+    ],
+    "donts": [
+      "**Don't** introduce fabricated history, account activity, scores, or saved progress.",
+      "**Don't** use color alone to communicate grading or connection status.",
+      "**Don't** repeat the large preparation invitation once a question is active.",
+      "**Don't** silently submit a recording or transcript for evaluation.",
+      "**Don't** replace preserved source whitespace with prose wrapping to hide overflow."
+    ]
+  }
+}
