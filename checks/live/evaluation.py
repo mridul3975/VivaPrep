@@ -1,3 +1,4 @@
+from checks.auth_fixtures import authenticated_client
 def main():
     import argparse
     import json
@@ -9,7 +10,7 @@ def main():
     parser.add_argument('--answer', required=True)
     args = parser.parse_args()
     path = Path(args.source_file)
-    with app.test_client() as client:
+    with authenticated_client(app) as client:
         with path.open('rb') as stream:
             uploaded = client.post('/sources', data={'source_file': (stream, path.name)})
         if uploaded.status_code != 201:
