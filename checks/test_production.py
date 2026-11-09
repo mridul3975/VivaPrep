@@ -1,3 +1,4 @@
+from checks.auth_fixtures import authenticated_client
 import re
 import runpy
 import tempfile
@@ -10,7 +11,7 @@ from backend.app import app
 
 class ProductionTests(unittest.TestCase):
     def test_built_index_assets_and_api_are_served_together(self):
-        with app.test_client() as client:
+        with authenticated_client(app) as client:
             index = client.get("/")
             self.addCleanup(index.close)
             self.assertEqual(index.status_code, 200)
@@ -26,11 +27,11 @@ class ProductionTests(unittest.TestCase):
 
     def test_missing_build_is_explicit(self):
         with tempfile.TemporaryDirectory() as directory, patch("backend.app.FRONTEND_DIST", Path(directory)):
-            with app.test_client() as client:
+            with authenticated_client(app) as client:
                 self.assertEqual(client.get("/").status_code, 503)
 
     def test_api_and_missing_assets_never_return_index_html(self):
-        with app.test_client() as client:
+        with authenticated_client(app) as client:
             for path in ("/assets/missing.js", "/api/missing", "/.env", "/backend/app.py", "/assets/../index.html"):
                 response = client.get(path)
                 self.addCleanup(response.close)
