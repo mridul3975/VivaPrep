@@ -48,7 +48,10 @@ def _pdf_worker(data, sender):
             if stream is not None and len(stream.get_data()) > 2 * 1024 * 1024:
                 sender.send({"error": "This PDF page is too complex. Upload a simpler or smaller PDF."})
                 return
-            text = page.extract_text() or ""
+            # Layout mode keeps visually adjacent PDF words on the same line.
+            # Plain extraction can put every word on a separate line, starving
+            # a bounded chunk packet of the context needed to ask questions.
+            text = page.extract_text(extraction_mode="layout") or ""
             total += len(text)
             if total > MAX_EXTRACTED_CHARS:
                 sender.send({"error": "The extracted text is too large. Upload a shorter document."})
