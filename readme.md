@@ -2,6 +2,8 @@
 
 Practice explaining a project, with feedback grounded in its source code.
 
+**November 10, 2026:** [PostgreSQL persistence](POSTGRES.md) now saves identities, material, practice and scores across restarts; local database access is verified, while real Google account sign-in and Render hosting remain unverified.
+
 **Status, November 9, 2026 (IST): local Flask backend implemented.** Source loading,
 retrieval, question generation, and answer evaluation are connected; standalone
 Prisma transcription and live question/answer calls have been exercised. Thirty-nine
@@ -161,6 +163,13 @@ For each session also note the AI help used: explanation, hint, snippet, review 
 
 ## Running the app
 
+The app now requires **Sign in with Google**. Set `GOOGLE_CLIENT_ID` and a stable
+`SESSION_SECRET` in the root `.env`; configure the OAuth client for the exact
+browser origin. See [AUTHENTICATION.md](AUTHENTICATION.md) for setup. The Google
+button flow needs no client secret. Configure `DATABASE_URL` and run
+`python -m backend.database migrate` for saved study state; see
+[POSTGRES.md](POSTGRES.md). A blank URL explicitly selects temporary memory mode.
+
 From the project root, with the project virtual environment active:
 
 ```sh
@@ -169,8 +178,8 @@ python -m backend.app
 
 The Flask backend exposes `/health`, `/retrieve`, `/questions`, `/answers`, and
 `/transcriptions`.
-Question generation and evaluation require `GROQ_API_KEY`. Turn state is held in
-memory in a single process and is cleared on restart. In a second terminal, run
+Question generation and evaluation require `GROQ_API_KEY`. Configured PostgreSQL
+retains turn state across restarts; temporary memory mode clears it. In a second terminal, run
 `npm run dev` from `frontend/` and open the URL Vite prints. Its development proxy
 forwards requests to Flask on port 5000. When using WSL, run both servers inside
 WSL with its Python and Node installations. Restart Vite if changes made through
