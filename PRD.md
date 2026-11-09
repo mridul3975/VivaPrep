@@ -53,7 +53,7 @@ A single complete turn is the fallback release if the larger session cannot be f
 | Arbitrary repository upload or GitHub ingestion | Later | Excluded from deadline commitment |
 | Embeddings, vector search, agents, graphs | Later | Only considered after an observed need |
 
-No multiplayer, formal hiring score, junior/senior label, automatic execution of uploaded code, login system or personalized long-term history in the first release.
+No multiplayer, formal hiring score, junior/senior label, automatic execution of uploaded code or personalized long-term history in the first release. Google-only sign-in was added at the user's request; persistent storage remains a separate milestone.
 
 ## 6. Feedback rules
 
