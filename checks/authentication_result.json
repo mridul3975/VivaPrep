@@ -1,0 +1,37 @@
+{
+  "date_ist": "2026-11-10",
+  "provider": "Google Identity Services directly; no managed third-party authentication provider",
+  "frontend_build": "passed",
+  "frontend_lint": "passed with zero warnings and errors",
+  "backend_regression_tests_passed": 63,
+  "authentication_tests_passed": 13,
+  "backend_authentication_checks": [
+    "Google signature verification using locally generated fixture signing keys",
+    "reject forged signature, wrong audience, issuer, expired token, nonce, and unverified identity",
+    "require authentication on all study and AI/STT endpoints",
+    "require CSRF on sign-in, sign-out, and study mutations",
+    "rotate application cookie, CSRF, and nonce on sign-in",
+    "revocable opaque login sessions, including old-cookie replay after logout",
+    "identity ownership uses verified Google subject instead of email or browser claims",
+    "expire sessions and restore still-live material after signing in again",
+    "safe Google outage and unconfigured-provider errors without a guest bypass",
+    "HttpOnly, SameSite, and production Secure cookie flags",
+    "reject malformed or oversized credential requests"
+  ],
+  "browser_widths": [1440, 768, 390, 360],
+  "browser_checks": [
+    "Google-only sign-in gate, invalid-token error, and provider-script failure",
+    "authenticated upload, reload restoration, question, and answer requests",
+    "CSRF enforcement using the actual Flask middleware",
+    "sign-out removes workspace, revokes access, and releases microphone capture",
+    "different Google identity cannot access the prior student's source",
+    "expired session unmounts the workspace",
+    "keyboard focus and no horizontal viewport overflow"
+  ],
+  "browser_runtime_errors": [],
+  "browser_all_passed": true,
+  "verification_boundary": "Browser checks use an isolated Flask fixture with locally signed identity tokens, a stub Google SDK/certificate response, and simulated AI/STT. They do not validate a live Google account sign-in or production OAuth configuration.",
+  "live_google_sign_in": "pending GOOGLE_CLIENT_ID and authorized-origin configuration",
+  "database": "not added; login sessions and study data are temporary server-memory state",
+  "development_evidence": ".impeccable/review/auth/ (ignored screenshots and browser report)"
+}
