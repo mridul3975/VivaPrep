@@ -15,7 +15,15 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: SESSION_COOKIE_SECURE
         value: "1"
+      - key: DAILY_QUESTION_LIMIT
+        value: "10"
+      - key: DAILY_REVIEW_LIMIT
+        value: "30"
+      - key: DAILY_TRANSCRIPTION_LIMIT
+        value: "10"
