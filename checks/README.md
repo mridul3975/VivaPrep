@@ -118,3 +118,9 @@ checks. `checks/live/debugging.py` has prepare/resume behavior based on a privat
 checkpoint: run it once, restart the local app, then run again to prove Neon
 persistence and remove the disposable fixture. Its test observations are fixtures,
 not a substitute for the actual browser runner checks. See DEBUGGING.md.
+
+Run `npm run check:dev-proxy` from the project root to exercise the actual Vite
+proxy configuration with 13 GET/write requests against a disposable HTTP backend.
+It uses an isolated temporary dependency cache and no database. This catches
+missing proxy prefixes that production Flask-only browser tests cannot detect.
+`dev_navigation_result.json` records the actual localhost:5173 regression check.
