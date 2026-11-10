@@ -774,7 +774,7 @@ export default function App() {
         navigate({ page: 'history' })
       }} />}
       {route.page === 'profile' && <ProfilePage />}
-      {route.page === 'debug' && <DebugPage key={route.runId || 'catalogue'} runId={route.runId} source={activeSource} onOpen={runId => navigate({ page: 'debug', runId: runId || undefined })} onBusyChange={setDebugBusy} onSaveHandler={registerDebugSave} />}
+      {route.page === 'debug' && <DebugPage key={route.runId || 'catalogue'} runId={route.runId} source={activeSource} onSourceChange={source => { handleSourceChange(source); setSourceOverride(source) }} onOpen={runId => navigate({ page: 'debug', runId: runId || undefined })} onBusyChange={setDebugBusy} onSaveHandler={registerDebugSave} />}
       <main
         id="workspace"
         hidden={!studyVisible}
