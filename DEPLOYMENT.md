@@ -50,7 +50,9 @@ mode and reloading off.
 
 ## Render
 
-1. In Render, choose **New > Postgres**, name the database, select the same region
+1. This app is configured for Neon PostgreSQL. Keep the pooled `DATABASE_URL`
+   and direct `DATABASE_URL_UNPOOLED` from the ignored `.env` for the web service's
+   runtime environment. If using Render Postgres instead, choose **New > Postgres**, name the database, select the same region
    as the web service, choose a database plan, and create it. A Free database is
    optional and expires after 30 days; choose a paid plan for longer retention.
    See [Render's database setup](https://render.com/docs/postgresql-creating-connecting)
@@ -66,9 +68,12 @@ mode and reloading off.
    create a Web Service, select Docker, and use the root Dockerfile.
 4. Use one instance and `/health` as the health-check path. Leave the Docker
    command at its default so the migrate-then-Gunicorn startup is used.
-5. Set `GROQ_API_KEY`, `VACHANA_API_KEY`, `GOOGLE_CLIENT_ID`, and `DATABASE_URL` in the service's runtime environment.
-   Use the database's **Internal Database URL** for `DATABASE_URL` in the
-   same-region Render service; the external URL is for local connections.
+5. Set `GROQ_API_KEY`, `VACHANA_API_KEY`, `GOOGLE_CLIENT_ID`, `DATABASE_URL`, and
+   `DATABASE_URL_UNPOOLED` in the service's runtime environment. With Neon, use
+   the pooled and direct URLs pulled by `neon deploy`, including their SSL
+   parameters. With Render Postgres, use its **Internal Database URL** for
+   `DATABASE_URL` in the same-region web service; the external URL is for local
+   connections, and `DATABASE_URL_UNPOOLED` can use the same internal URL.
    The Blueprint uses `sync: false` placeholders and contains no secret values.
    Do not prefix these values with `VITE_` or put them in the React build.
    The Blueprint also generates `SESSION_SECRET` for upload-session cookies and
@@ -92,7 +97,7 @@ Render deployment remain unverified.
 Render's Free service sleeps after 15 minutes of inactivity and can take about a
 minute to wake. PostgreSQL study records survive web-service sleep/restarts; in
 explicit memory mode they do not. Open the demo before recording your submission
-video. The current local PostgreSQL connection is verified; no Render database or
+video. The Neon database connection is verified; no Render database or
 web service has been provisioned by this change.
 
 References:
@@ -101,3 +106,10 @@ References:
 - https://render.com/docs/docker
 - https://render.com/docs/configure-environment-variables
 - https://render.com/docs/free
+
+## Daily application allowances
+
+Render defaults are DAILY_QUESTION_LIMIT=10, DAILY_REVIEW_LIMIT=30 and
+DAILY_TRANSCRIPTION_LIMIT=10. Set these on the backend, never in frontend
+variables. Limits reset at midnight UTC and persist in PostgreSQL. Startup runs
+additive schema migrations before Gunicorn starts. See HISTORY_PROFILE.md.
