@@ -1,0 +1,13 @@
+{
+  "date_ist": "2026-11-10",
+  "origin": "http://localhost:5173",
+  "root_cause": "Vite omitted the history, profile and debug API proxies, returning HTML instead of Flask JSON. Draft saves under history also blocked navigation.",
+  "fix": "Added all three proxies, visible failed-navigation feedback, and an isolated-cache development-proxy integration test.",
+  "proxy_regression": "13 real HTTP requests through Vite passed; test failed before the fix at GET /profile",
+  "browser": "Actual Vite, Flask and Neon: Profile save, Back, History draft resume, Debug create/hints/resume, failed-save preservation and retry passed",
+  "widths": [1440, 390],
+  "runtime_errors": [],
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "boundary": "Disposable seeded app identity and saved question fixture. No external AI or STT calls were used for navigation checks. A draft-save failure was injected only in the test browser."
+}
