@@ -1,10 +1,14 @@
-"""Curated, reproducible debugging practice. Submitted code is never run by Flask."""
+"""Owned, source-derived debugging practice. Submitted code is never run by Flask."""
 import hashlib
+import json
 import uuid
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 from psycopg.types.json import Jsonb
 from backend.database import get_database, StudyConflict
 from backend.library import require_storage
+from backend.account import allowance
+from backend.interview.debug_generator import SOURCE_SCENARIO_ID, generate_debug_challenge, source_excerpt
+from backend.interview.provider import ProviderError
 
 debugging = Blueprint('debugging', __name__, url_prefix='/debug')
 
@@ -45,22 +49,43 @@ HINTS = [
 
 def scenario():
     return {'id': SCENARIO_ID, 'title': 'A 30-second recording is rejected as too short',
-            'project': 'SpeakSpin example', 'language': 'JavaScript', 'starter_code': STARTER, 'tests': TESTS,
+            'project': 'Archived exercise', 'language': 'JavaScript', 'starter_code': STARTER, 'tests': TESTS,
+            'function_name': 'validateRecording', 'execution_mode': 'javascript', 'verification_steps': [],
             'contract': 'validateRecording(durationMs, minSeconds) must return a boolean. Durations arrive in milliseconds; the minimum is in seconds. Accept recordings at or above the minimum. Reject invalid inputs.',
-            'provenance': 'A deliberately broken, isolated recording validator inspired by SpeakSpin. It is a practice copy, not a detected defect in your live application.'}
+            'provenance': 'This is an archived sample. Start a new exercise from your uploaded project in Debug.'}
 
 
 def public_run(row):
     state = row['state']
+    exercise = state.get('scenario', scenario())
+    hints = state.get('challenge_hints', HINTS)
     report = state.get('test_result')
     current = report and report.get('code_sha256') == hashlib.sha256(state['code'].encode()).hexdigest()
-    tests_passed = bool(current and all(item['passed'] for item in report['results']))
+    tests_passed = bool(exercise['tests'] and current and all(item['passed'] for item in report['results']))
+    public_state = {key: value for key, value in state.items() if key not in {'scenario', 'challenge_hints'}}
     return {'id': row['id'], 'source_id': row['source_id'], 'created_at': row['created_at'].isoformat(),
-            'updated_at': row['updated_at'].isoformat(), **state, 'scenario': scenario(),
-            'hints': HINTS[:state.get('hints_revealed', 0)], 'total_hints': len(HINTS),
+            'updated_at': row['updated_at'].isoformat(), **public_state, 'scenario': exercise,
+            'hints': hints[:state.get('hints_revealed', 0)], 'total_hints': len(hints),
             'tests_current': bool(current), 'tests_passed': tests_passed,
             'complete': bool(tests_passed and state.get('hypothesis', '').strip() and state.get('explanation', '').strip()),
-            'verification': 'Browser-executed practice tests; saved results are client observations, not a server-certified assessment.'}
+            'verification': ('Browser-executed practice tests; saved results are client observations, not a server-certified assessment.'
+                             if exercise.get('execution_mode', 'javascript') == 'javascript'
+                             else 'Local verification plan only. Test execution has not been verified by this application.')}
+
+
+def same_json(actual, expected):
+    """JSON numbers compare numerically; booleans never equal 0 or 1."""
+    if isinstance(actual, bool) or isinstance(expected, bool):
+        return type(actual) is type(expected) and actual == expected
+    if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
+        return actual == expected
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(actual, list):
+        return len(actual) == len(expected) and all(same_json(a, b) for a, b in zip(actual, expected))
+    if isinstance(actual, dict):
+        return actual.keys() == expected.keys() and all(same_json(actual[k], expected[k]) for k in actual)
+    return actual == expected
 
 
 def owned(conn, run_id, lock=False):
@@ -72,7 +97,7 @@ def owned(conn, run_id, lock=False):
 
 @debugging.get('/challenges')
 def challenges():
-    return jsonify({'challenges': [scenario()]})
+    return jsonify({'challenges': [], 'requires_source': True})
 
 
 @debugging.route('/runs', methods=['GET', 'POST'])
@@ -80,31 +105,39 @@ def runs():
     require_storage()
     with get_database().connection() as conn:
         if request.method == 'GET':
-            rows = conn.execute('SELECT * FROM repoviva.debug_runs WHERE owner=%s ORDER BY updated_at DESC,id LIMIT 20', (g.user['id'],)).fetchall()
-            return jsonify({'runs': [{key: value for key, value in public_run(row).items() if key in {'id','created_at','updated_at','complete','tests_passed'}} for row in rows]})
-        data = request.get_json(silent=True)
-        if not isinstance(data, dict) or data.get('scenario_id') != SCENARIO_ID:
-            raise StudyConflict('Choose an available debugging challenge.', 400)
-        context = None
-        source_id = data.get('source_id')
-        if source_id is not None:
-            if not isinstance(source_id, str) or not source_id:
-                raise StudyConflict('Choose a valid source file.', 400)
-            source = conn.execute('SELECT document FROM repoviva.sources WHERE id=%s AND owner=%s', (source_id, g.user['id'])).fetchone()
-            if not source:
-                raise StudyConflict('Material not found.', 404)
-            document = source['document']
-            if document['kind'] != 'text':
-                raise StudyConflict('Attach a source or text file for project context.', 400)
-            snippets = document['snippets']
-            matching = next((item for item in snippets if any(word in '\n'.join(item['content']).lower() for word in ('duration','recording','elapsed'))), snippets[0])
-            context = {'filename': document['filename'], 'revision': document['revision'], 'snippet': matching}
-        conn.execute('SELECT id FROM repoviva.users WHERE id=%s FOR NO KEY UPDATE', (g.user['id'],))
-        if conn.execute('SELECT count(*) AS n FROM repoviva.debug_runs WHERE owner=%s', (g.user['id'],)).fetchone()['n'] >= 100:
-            raise StudyConflict('You have 100 saved debugging runs. Delete an older run before starting another.', 409)
-        run_id = uuid.uuid4().hex
-        state = {'code': STARTER, 'hypothesis': '', 'explanation': '', 'hints_revealed': 0, 'context': context}
-        row = conn.execute('INSERT INTO repoviva.debug_runs(id,owner,source_id,scenario_id,state) VALUES(%s,%s,%s,%s,%s) RETURNING *', (run_id,g.user['id'],source_id,SCENARIO_ID,Jsonb(state))).fetchone()
+            rows = conn.execute('SELECT * FROM repoviva.debug_runs WHERE owner=%s AND scenario_id=%s ORDER BY updated_at DESC,id LIMIT 20', (g.user['id'], SOURCE_SCENARIO_ID)).fetchall()
+            return jsonify({'runs': [{**{key: value for key, value in public_run(row).items() if key in {'id','created_at','updated_at','complete','tests_passed'}}, 'title': row['state']['scenario']['title'], 'filename': row['state']['scenario']['project']} for row in rows]})
+    data = request.get_json(silent=True)
+    source_id = data.get('source_id') if isinstance(data, dict) else None
+    if not isinstance(source_id, str) or not source_id.strip():
+        raise StudyConflict('Upload or select your project source file before starting Debug.', 400)
+    with get_database().connection() as conn:
+        source = conn.execute('SELECT document FROM repoviva.sources WHERE id=%s AND owner=%s', (source_id, g.user['id'])).fetchone()
+        if not source:
+            raise StudyConflict('Material not found.', 404)
+        document = source['document']
+    try:
+        source_excerpt(document, data.get('snippet_id'))
+    except ValueError as error:
+        raise StudyConflict(str(error), 400) from error
+    try:
+        with allowance('questions'):
+            exercise = generate_debug_challenge(document, data.get('snippet_id'))
+            hints = exercise.pop('_hints')
+            with get_database().connection() as conn:
+                conn.execute('SELECT id FROM repoviva.users WHERE id=%s FOR NO KEY UPDATE', (g.user['id'],))
+                if not conn.execute('SELECT id FROM repoviva.sources WHERE id=%s AND owner=%s', (source_id, g.user['id'])).fetchone():
+                    raise StudyConflict('Material was deleted while the challenge was being generated. Upload it again.', 404)
+                if conn.execute('SELECT count(*) AS n FROM repoviva.debug_runs WHERE owner=%s AND scenario_id=%s', (g.user['id'], SOURCE_SCENARIO_ID)).fetchone()['n'] >= 100:
+                    raise StudyConflict('You have 100 saved debugging runs. Delete an older run before starting another.', 409)
+                run_id = uuid.uuid4().hex
+                state = {'code': exercise['starter_code'], 'hypothesis': '', 'explanation': '', 'hints_revealed': 0, 'scenario': exercise, 'challenge_hints': hints}
+                row = conn.execute('INSERT INTO repoviva.debug_runs(id,owner,source_id,scenario_id,state) VALUES(%s,%s,%s,%s,%s) RETURNING *', (run_id,g.user['id'],source_id,SOURCE_SCENARIO_ID,Jsonb(state))).fetchone()
+    except (ProviderError, ValueError, KeyError, TypeError) as error:
+        current_app.logger.warning('Project debugging generation failed: %s', type(error).__name__)
+        if isinstance(error, ProviderError) and error.status_code == 429:
+            return jsonify({'error': 'The AI provider is temporarily rate limited. Wait a moment and retry.'}), 503
+        return jsonify({'error': 'Could not create a source-matched debugging exercise. Choose a section with a complete function and retry. No sample exercise was substituted.'}), 502
     return jsonify(public_run(row)), 201
 
 
@@ -130,15 +163,20 @@ def run(run_id):
                     state[key] = data[key]
             if 'test_result' in data:
                 report = data['test_result']
-                if not isinstance(report, dict) or report.get('tested_code') != state['code'] or not isinstance(report.get('results'), list) or len(report['results']) != len(TESTS):
+                tests = state.get('scenario', scenario())['tests']
+                if not tests or not isinstance(report, dict) or report.get('tested_code') != state['code'] or not isinstance(report.get('results'), list) or len(report['results']) != len(tests):
                     raise StudyConflict('Test results must match the current code and full test suite.', 400)
                 results = []
-                for item, test in zip(report['results'], TESTS):
-                    if not isinstance(item, dict) or item.get('id') != test['id'] or type(item.get('passed')) is not bool or (item.get('actual') is not None and type(item['actual']) is not bool) or not isinstance(item.get('error', ''), str) or len(item.get('error', '')) > 160:
+                for item, test in zip(report['results'], tests):
+                    try:
+                        actual_size = len(json.dumps(item.get('actual'), allow_nan=False)) if isinstance(item, dict) else 4001
+                    except (ValueError, TypeError):
+                        raise StudyConflict('Test observations must contain finite JSON values.', 400)
+                    if not isinstance(item, dict) or 'actual' not in item or item.get('id') != test['id'] or type(item.get('passed')) is not bool or not isinstance(item.get('error', ''), str) or len(item.get('error', '')) > 160 or actual_size > 4000:
                         raise StudyConflict('Invalid test observations.', 400)
                     actual, error = item.get('actual'), item.get('error', '')
                     # Recompute verdicts from observations, never accept the posted pass flag.
-                    results.append({'id': test['id'], 'actual': actual, 'error': error, 'passed': not error and actual is test['expected']})
+                    results.append({'id': test['id'], 'actual': actual, 'error': error, 'passed': not error and same_json(actual, test['expected'])})
                 state['test_result'] = {'code_sha256': hashlib.sha256(state['code'].encode()).hexdigest(), 'results': results}
             row = conn.execute('UPDATE repoviva.debug_runs SET state=%s,updated_at=now() WHERE id=%s AND owner=%s RETURNING *', (Jsonb(state),run_id,g.user['id'])).fetchone()
     return jsonify(public_run(row))
@@ -149,6 +187,6 @@ def hint(run_id):
     require_storage()
     with get_database().connection() as conn:
         row = owned(conn, run_id, True)
-        state = {**row['state'], 'hints_revealed': min(3, row['state'].get('hints_revealed', 0) + 1)}
+        state = {**row['state'], 'hints_revealed': min(len(row['state'].get('challenge_hints', HINTS)), row['state'].get('hints_revealed', 0) + 1)}
         row = conn.execute('UPDATE repoviva.debug_runs SET state=%s,updated_at=now() WHERE id=%s AND owner=%s RETURNING *', (Jsonb(state),run_id,g.user['id'])).fetchone()
     return jsonify(public_run(row))

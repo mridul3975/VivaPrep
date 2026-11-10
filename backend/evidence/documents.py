@@ -9,7 +9,7 @@ from threading import BoundedSemaphore
 from backend.evidence.read import chunk_text
 
 
-TEXT_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx", ".md", ".txt", ".java", ".c", ".cpp", ".h", ".css", ".html", ".json", ".yaml", ".yml"}
+TEXT_EXTENSIONS = {".py", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".md", ".txt", ".java", ".c", ".cpp", ".h", ".hpp", ".cs", ".go", ".rs", ".rb", ".php", ".swift", ".kt", ".sql", ".sh", ".css", ".html", ".json", ".yaml", ".yml"}
 MAX_FILE_BYTES = 5 * 1024 * 1024
 MAX_TEXT_BYTES = 256 * 1024
 MAX_EXTRACTED_CHARS = 200_000
