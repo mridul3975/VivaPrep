@@ -3,6 +3,9 @@ import App from '../App'
 import GoogleSignIn from './GoogleSignIn'
 import { AuthContext, type AuthSession } from './context'
 
+// A suspended cloud database can take longer to connect than a local database.
+const AUTH_REQUEST_TIMEOUT_MS = 30_000
+
 async function readSession(response: Response): Promise<AuthSession> {
   const data = await response.json()
   if (!response.ok)
@@ -31,7 +34,7 @@ async function readSession(response: Response): Promise<AuthSession> {
   return data as AuthSession
 }
 
-function requestSession(signal = AbortSignal.timeout(10_000)) {
+function requestSession(signal = AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS)) {
   return fetch('/auth/session', {
     credentials: 'same-origin',
     cache: 'no-store',
@@ -80,7 +83,7 @@ export default function AuthGate() {
     let active = true
     const controller = new AbortController()
     const generation = authGeneration.current
-    const timeout = window.setTimeout(() => controller.abort(), 10_000)
+    const timeout = window.setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS)
     void requestSession(controller.signal)
       .then((result) => {
         if (active && generation === authGeneration.current)
@@ -151,7 +154,7 @@ export default function AuthGate() {
             'X-CSRF-Token': csrfToken,
           },
           body: JSON.stringify({ credential }),
-          signal: AbortSignal.timeout(15_000),
+          signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
         })
         const accepted = await readSession(response)
         if (!accepted.user) {
@@ -219,7 +222,7 @@ export default function AuthGate() {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'X-CSRF-Token': csrfToken ?? '' },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
     })
     const result = await readSession(response)
     window.google?.accounts.id.disableAutoSelect()
