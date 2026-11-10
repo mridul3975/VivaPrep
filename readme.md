@@ -2,7 +2,13 @@
 
 Practice explaining a project, with feedback grounded in its source code.
 
-**November 10, 2026:** [PostgreSQL persistence](POSTGRES.md) now saves identities, material, practice and scores across restarts; local database access is verified, while real Google account sign-in and Render hosting remain unverified.
+**Latest features:** [History and Profile](HISTORY_PROFILE.md) restore saved files,
+drafts, practice and scores, with daily allowances of 10 question sets, 30 answer
+reviews and 10 transcriptions. [Debugging practice](DEBUGGING.md) adds a controlled
+SpeakSpin recording bug, graduated hints, executable browser tests and spoken
+reasoning. Build/lint and 94 backend tests pass; browser checks cover four widths.
+
+**November 10, 2026:** [Neon PostgreSQL](POSTGRES.md) now saves identities, material, practice and scores across restarts. The live upload, Groq question/grading, browser restoration, and server-restart flow is recorded in [the Neon check](checks/neon_result.json). Real Google account sign-in and public Render hosting remain separate checks.
 
 **Status, November 9, 2026 (IST): local Flask backend implemented.** Source loading,
 retrieval, question generation, and answer evaluation are connected; standalone
