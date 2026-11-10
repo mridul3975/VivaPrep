@@ -247,12 +247,13 @@ export default function VoiceRecorder({
             <span className="muted"> / 01:00</span>
           </span>
         )}
+        {phase === 'idle' && <span className="voice-limit">60s max</span>}
       </div>
-      <p role="status" className="voice-help">
-        {phase === 'recording'
-          ? 'Recording. Stops automatically at 60 seconds.'
-          : 'Up to 60 seconds. Prisma transcribes your voice; you review the words.'}
-      </p>
+      {phase === 'recording' && (
+        <p role="status" className="voice-help">
+          Stops automatically at 60 seconds.
+        </p>
+      )}
       {recording && previewUrl && (
         <div className="recording-preview">
           <audio controls src={previewUrl} aria-label="Your recorded answer" />
