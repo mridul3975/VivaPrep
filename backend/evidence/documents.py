@@ -99,7 +99,7 @@ def _extract_pdf(data):
         pdf_gate.release()
 
 
-def extract_document(filename, data):
+def validate_upload(filename, data):
     extension = Path(filename).suffix.lower()
     if extension not in TEXT_EXTENSIONS and extension != ".pdf":
         raise DocumentError("Choose a supported source/text file or a PDF.", 415)
@@ -107,6 +107,14 @@ def extract_document(filename, data):
         raise DocumentError("The uploaded file is empty.")
     if len(data) > MAX_FILE_BYTES or (extension != ".pdf" and len(data) > MAX_TEXT_BYTES):
         raise DocumentError("PDFs must be at most 5 MiB; source/text files at most 256 KiB.", 413)
+    if extension == ".pdf" and not data.startswith(b"%PDF-"):
+        raise DocumentError("This file is not a valid PDF.", 415)
+    return "pdf" if extension == ".pdf" else "text"
+
+
+def extract_document(filename, data):
+    kind = validate_upload(filename, data)
+    extension = ".pdf" if kind == "pdf" else Path(filename).suffix.lower()
 
     warnings = []
     if extension == ".pdf":
