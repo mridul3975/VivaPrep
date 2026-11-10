@@ -2,6 +2,7 @@
 import os
 import secrets
 import time
+from functools import partial
 from hmac import compare_digest
 from threading import Lock
 
@@ -64,7 +65,7 @@ def _valid_csrf():
 
 def protect_study_routes():
     endpoint = request.endpoint or ""
-    if endpoint not in {"retrieve_snippets", "generate_questions", "submit_answer", "transcribe_upload", "practice_history"} and not endpoint.startswith("sources."):
+    if endpoint not in {"retrieve_snippets", "generate_questions", "submit_answer", "transcribe_upload", "practice_history"} and not endpoint.startswith(("sources.", "library.", "account.", "debugging.")):
         return None
     user, _ = current_identity()
     if user is None:
@@ -100,7 +101,7 @@ def google_sign_in():
     try:
         transport = google_requests.Request()
         claims = id_token.verify_oauth2_token(
-            credential, lambda **kwargs: transport(timeout=8, **kwargs), audience=client_id,
+            credential, partial(transport, timeout=8), audience=client_id,
         )
         nonce = claims.get("nonce")
         expected_nonce = session.get("google_nonce")
