@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import VoiceRecorder, { type RecordingPhase } from './components/VoiceRecorder'
+import DebugPage from './pages/DebugPage'
 import SourceUpload, { type SourceDocument } from './components/SourceUpload'
 import Icon from './components/Icon'
 import ActivityOrb from './components/ActivityOrb'
 import type { OrbState } from 'thinking-orbs'
 import { useAuth } from './auth/context'
 import AccountControls from './auth/AccountControls'
+import HistoryPage from './pages/HistoryPage'
+import ProfilePage from './pages/ProfilePage'
+import { useNavigation, type Route } from './navigation'
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Evidence {
   id?: string
@@ -64,7 +68,7 @@ function isEvidence(value: unknown): value is Evidence {
     (evidence.citation_type === 'page'
       ? Number.isInteger(evidence.page)
       : Number.isInteger(evidence.start_line) &&
-        Number.isInteger(evidence.end_line)) &&
+      Number.isInteger(evidence.end_line)) &&
     Array.isArray(evidence.content) &&
     evidence.content.every((line) => typeof line === 'string')
   )
@@ -122,6 +126,9 @@ function isAnswerResponse(value: unknown): value is AnswerResponse {
   )
 }
 interface SavedPractice {
+  practice_id?: string
+  drafts?: Record<string, string>
+  resume_turn_id?: string | null
   questions: QuestionResponse[]
   results: Record<string, AnswerResponse>
   answers: Record<string, string>
@@ -170,7 +177,8 @@ async function readResponse(response: Response): Promise<unknown> {
 }
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const { apiFetch } = useAuth()
+  const { apiFetch, storageMode } = useAuth()
+  const { route, navigate, back, depth } = useNavigation()
   const [backendReady, setBackendReady] = useState(false)
   const [backendError, setBackendError] = useState('')
   const [backendAttempt, setBackendAttempt] = useState(0)
@@ -183,17 +191,63 @@ export default function App() {
   const [activeSource, setActiveSource] = useState<SourceDocument | null>(null)
   const [transcriptionNotice, setTranscriptionNotice] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [turn, setTurn] = useState<QuestionResponse | null>(null)
+  const [storedTurn, setTurn] = useState<QuestionResponse | null>(null)
+  const turn = route.page === 'setup' ? null : storedTurn
   const [questionSet, setQuestionSet] = useState<QuestionResponse[]>([])
   const [questionIndex, setQuestionIndex] = useState(0)
   const [results, setResults] = useState<Record<string, AnswerResponse>>({})
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<AnswerResponse | null>(null)
   const [showEvidence, setShowEvidence] = useState(true)
+  const [sourceOverride, setSourceOverride] = useState<SourceDocument | null | undefined>()
+  const [draftError, setDraftError] = useState('')
+  const [navigationError, setNavigationError] = useState('')
+  const [debugBusy, setDebugBusy] = useState(false)
+  const debugSave = useRef<(() => Promise<void>) | null>(null)
+  const registerDebugSave = useCallback((handler: (() => Promise<void>) | null) => { debugSave.current = handler }, [])
+  const draft = useRef<{ turnId: string; answer: string; dirty: boolean } | null>(null)
+  const draftChain = useRef<Promise<void>>(Promise.resolve())
+  const saveDraft = useCallback(async () => {
+    const pending = draft.current
+    if (!pending?.dirty || storageMode !== 'postgresql') return draftChain.current
+    pending.dirty = false
+    const operation = draftChain.current.catch(() => {}).then(async () => {
+      const response = await apiFetch(`/history/turns/${encodeURIComponent(pending.turnId)}/draft`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: pending.answer }),
+      })
+      await readResponse(response)
+    })
+    draftChain.current = operation
+    try { await operation; setDraftError('') }
+    catch (failure) {
+      if (draft.current === pending) pending.dirty = true
+      setDraftError('Your draft could not be saved. Keep this page open and retry.')
+      throw failure
+    }
+  }, [apiFetch, storageMode])
+  useEffect(() => {
+    if (!storedTurn || feedback || storageMode !== 'postgresql') { draft.current = null; return }
+    if (submittingAnswer) return
+    draft.current = { turnId: storedTurn.turn_id, answer, dirty: true }
+    const timer = window.setTimeout(() => { void saveDraft().catch(() => {}) }, 600)
+    return () => window.clearTimeout(timer)
+  }, [storedTurn, answer, feedback, storageMode, submittingAnswer, saveDraft])
+  useEffect(() => {
+    const departing = () => {
+      const pending = draft.current
+      if (pending?.dirty && storageMode === 'postgresql') {
+        void apiFetch(`/history/turns/${encodeURIComponent(pending.turnId)}/draft`, {
+          method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: pending.answer }),
+        }).catch(() => {})
+      }
+    }
+    window.addEventListener('pagehide', departing)
+    return () => window.removeEventListener('pagehide', departing)
+  }, [apiFetch, storageMode])
   useEffect(() => {
     let active = true
     const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 8000)
+    const timeout = window.setTimeout(() => controller.abort(), 30_000)
     async function checkBackend() {
       try {
         const response = await fetch('/health', {
@@ -226,6 +280,7 @@ export default function App() {
     }
   }, [backendAttempt])
   const handleSourceChange = useCallback((source: SourceDocument | null) => {
+    draft.current = null
     setActiveSource(source)
     setRecordingPhase('idle')
     setTurn(null)
@@ -247,14 +302,16 @@ export default function App() {
       const unanswered = saved.questions.findIndex(
         (question) => !saved.results[question.turn_id],
       )
-      const index = unanswered >= 0 ? unanswered : saved.questions.length - 1
+      const resumed = saved.questions.findIndex(question => question.turn_id === saved.resume_turn_id)
+      const index = resumed >= 0 ? resumed : unanswered >= 0 ? unanswered : saved.questions.length - 1
       const question = saved.questions[index]
       setQuestionSet(saved.questions)
       setQuestionIndex(index)
       setTurn(question)
       setResults(saved.results)
-      setFeedback(saved.results[question.turn_id] ?? null)
-      setAnswer(saved.answers[question.turn_id] ?? '')
+      const hasDraft = saved.drafts && Object.hasOwn(saved.drafts, question.turn_id)
+      setFeedback(hasDraft ? null : saved.results[question.turn_id] ?? null)
+      setAnswer(saved.drafts?.[question.turn_id] ?? saved.answers[question.turn_id] ?? '')
     }
   }, [])
   // 1. Generate Question
@@ -273,6 +330,7 @@ export default function App() {
     setError(null)
     setTranscriptionNotice('')
     try {
+      await saveDraft()
       const res = await apiFetch('/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -306,6 +364,7 @@ export default function App() {
       setTurn(data.questions[0])
       setFeedback(null)
       setAnswer('')
+      navigate({ page: 'study' })
     } catch (error) {
       setError(
         error instanceof TypeError
@@ -336,6 +395,7 @@ export default function App() {
     setFeedback(null)
     setTranscriptionNotice('')
     try {
+      await saveDraft()
       const res = await apiFetch('/answers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -349,6 +409,7 @@ export default function App() {
         throw new Error('The server returned invalid feedback. Please retry.')
       }
       setFeedback(data)
+      draft.current = null
       setResults((previous) => ({ ...previous, [data.turn_id]: data }))
     } catch (error) {
       setError(
@@ -462,7 +523,7 @@ export default function App() {
     submittingAnswer ||
     transcribing ||
     recordingBusy ||
-    uploadingSource
+    uploadingSource || debugBusy
   const evidenceLocation = (evidence: Evidence) =>
     evidence.citation_type === 'page'
       ? `Page ${evidence.page}`
@@ -484,103 +545,103 @@ export default function App() {
   const inProgress: Activity | null =
     !backendReady && !backendError
       ? {
-          state: 'connecting',
-          active: true,
-          title: 'Connecting your workspace',
-          detail: 'Getting the study tools ready.',
-        }
+        state: 'connecting',
+        active: true,
+        title: 'Connecting your workspace',
+        detail: 'Getting the study tools ready.',
+      }
       : loadingQuestion
         ? {
-            state: 'composing',
-            active: true,
-            title: 'Building your questions',
-            detail: 'Turning your material into a source-backed practice set.',
-          }
+          state: 'composing',
+          active: true,
+          title: 'Building your questions',
+          detail: 'Turning your material into a source-backed practice set.',
+        }
         : submittingAnswer
           ? {
-              state: 'solving',
-              active: true,
-              title: 'Reviewing your answer',
-              detail:
-                'Comparing your meaning with the reference and original evidence.',
-            }
+            state: 'solving',
+            active: true,
+            title: 'Reviewing your answer',
+            detail:
+              'Comparing your meaning with the reference and original evidence.',
+          }
           : recordingPhase === 'permission'
             ? {
-                state: 'connecting',
-                active: true,
-                title: 'Waiting for your microphone',
-                detail: 'Allow microphone access to record your answer.',
-              }
+              state: 'connecting',
+              active: true,
+              title: 'Waiting for your microphone',
+              detail: 'Allow microphone access to record your answer.',
+            }
             : recordingPhase === 'recording'
               ? {
-                  state: 'listening',
-                  active: true,
-                  title: 'Listening to your answer',
-                  detail:
-                    'Stop when you are ready. You can edit the transcript next.',
-                }
+                state: 'listening',
+                active: true,
+                title: 'Listening to your answer',
+                detail:
+                  'Stop when you are ready. You can edit the transcript next.',
+              }
               : transcribing || recordingPhase === 'processing'
                 ? {
-                    state: 'weaving',
-                    active: true,
-                    title: 'Preparing your transcript',
-                    detail: 'Turning your recording into words you can review.',
-                  }
+                  state: 'weaving',
+                  active: true,
+                  title: 'Preparing your transcript',
+                  detail: 'Turning your recording into words you can review.',
+                }
                 : uploadingSource && backendReady
                   ? {
-                      state: 'searching',
-                      active: true,
-                      title: 'Reading your material',
-                      detail:
-                        'Extracting the text that will support your questions.',
-                    }
+                    state: 'searching',
+                    active: true,
+                    title: 'Reading your material',
+                    detail:
+                      'Extracting the text that will support your questions.',
+                  }
                   : null
   const activity: Activity =
     inProgress ??
     (error || backendError
       ? {
-          state: 'breathing',
-          active: false,
-          title: 'Needs your attention',
-          detail: 'Check the message above, then try again.',
-        }
+        state: 'breathing',
+        active: false,
+        title: 'Needs your attention',
+        detail: 'Check the message above, then try again.',
+      }
       : feedback
         ? {
-            state: 'breathing',
-            active: false,
-            title: 'Your review is ready',
-            detail:
-              'See what matched, what was missing, and the source behind it.',
-          }
+          state: 'breathing',
+          active: false,
+          title: 'Your review is ready',
+          detail:
+            'See what matched, what was missing, and the source behind it.',
+        }
         : turn
           ? {
-              state: 'breathing',
-              active: false,
-              title: 'Your turn',
-              detail:
-                'Say it out loud or write it down. Submit when you are ready.',
-            }
+            state: 'breathing',
+            active: false,
+            title: 'Your turn',
+            detail:
+              'Say it out loud or write it down. Submit when you are ready.',
+          }
           : activeSource
             ? {
-                state: 'breathing',
-                active: false,
-                title: 'Your material is ready',
-                detail:
-                  'Generate your questions when you are ready to practice.',
-              }
+              state: 'breathing',
+              active: false,
+              title: 'Your material is ready',
+              detail:
+                'Generate your questions when you are ready to practice.',
+            }
             : {
-                state: 'breathing',
-                active: false,
-                title: 'Ready for your material',
-                detail:
-                  'Upload a PDF or source file to build your practice session.',
-              })
+              state: 'breathing',
+              active: false,
+              title: 'Ready for your material',
+              detail:
+                'Upload a PDF or source file to build your practice session.',
+            })
   const workspaceHeading = (
     <div className={`workspace-heading ${!turn ? 'study-introduction' : ''}`}>
       <div>
         <h1>
           {turn ? (
-            'Put it in your own words.'
+            'Practice'
           ) : (
             <>
               <span>Know it.</span>
@@ -588,11 +649,12 @@ export default function App() {
             </>
           )}
         </h1>
-        <p>
-          {turn
-            ? 'Take your time. Review your answer, then see how it holds up.'
-            : 'Practice with questions built from your notes. Explain them in your own words, then check the evidence.'}
-        </p>
+        {!turn && (
+          <p>
+            Practice with questions built from your notes. Explain them in your
+            own words, then check the evidence.
+          </p>
+        )}
       </div>
       {turn && (
         <div
@@ -627,7 +689,10 @@ export default function App() {
       aria-label={turn ? 'Generate new set' : undefined}
       aria-busy={loadingQuestion}
       className="button button-primary"
-      onClick={generateQuestion}
+      onClick={() => {
+        if (route.page === 'setup' && storedTurn) navigate({ page: 'study' })
+        else void generateQuestion()
+      }}
       disabled={!backendReady || !activeSource || busy}
     >
       {loadingQuestion ? (
@@ -638,25 +703,41 @@ export default function App() {
       ) : (
         <>
           {turn ? (
-            <>
-              <span className="action-label-full">Generate new set</span>
-              <span className="action-label-compact">New set</span>
-            </>
+            'New set'
           ) : (
-            'Generate questions'
+            route.page === 'setup' && storedTurn ? 'Continue practice' : 'Generate questions'
           )}
           <Icon name="arrow" size={18} />
         </>
       )}
     </button>
   )
+  async function go(next: Route) {
+    if (busy) return
+    setNavigationError('')
+    try { await saveDraft(); await debugSave.current?.(); navigate(next) }
+    catch { setNavigationError('Your draft could not be saved, so this page stayed open. Please try again.') }
+  }
+  function openSaved(source: SourceDocument) {
+    handleSourceChange(source)
+    setSourceOverride(source)
+    navigate({ page: 'study' })
+  }
+  const studyVisible = route.page === 'study' || route.page === 'setup'
+  useEffect(() => {
+    const destination = route.page === 'study' || route.page === 'setup' ? 'workspace' : `${route.page}-page`
+    document.getElementById(destination)?.focus({ preventScroll: true })
+  }, [route.page, route.sourceId, route.runId])
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#workspace">
-        Skip to study workspace
+      <a className="skip-link" href="#workspace" onClick={event => {
+        event.preventDefault()
+        document.getElementById(studyVisible ? 'workspace' : `${route.page}-page`)?.focus()
+      }}>
+        Skip to content
       </a>
       <header className="app-header">
-        <a className="brand" href="#workspace" aria-label="RepoViva study desk">
+        <a className="brand" href="#/study" aria-label="RepoViva study desk" onClick={event => { event.preventDefault(); void go({ page: 'study' }) }}>
           <span className="brand-mark">
             <Icon name="book" size={22} />
           </span>
@@ -665,42 +746,10 @@ export default function App() {
           </span>
         </a>
         <nav className="workspace-nav">
-          <a
-            href="#workspace"
-            className="nav-item is-active"
-            aria-current="page"
-          >
-            <Icon name="desk" />
-            Study desk
-          </a>
-          <a
-            href="#source-material"
-            className="nav-item"
-            aria-label="Your material"
-          >
-            <Icon name="file" />
-            <span className="nav-label-full">Your material</span>
-            <span className="nav-label-compact" aria-hidden="true">
-              Material
-            </span>
-          </a>
-          <button
-            type="button"
-            className="nav-item"
-            disabled={!feedback}
-            aria-label="Answer review"
-            onClick={() =>
-              document
-                .getElementById('review')
-                ?.scrollIntoView({ block: 'start' })
-            }
-          >
-            <Icon name="review" />
-            <span className="nav-label-full">Answer review</span>
-            <span className="nav-label-compact" aria-hidden="true">
-              Review
-            </span>
-          </button>
+          <button type="button" className={`nav-item ${studyVisible ? 'is-active' : ''}`} aria-current={studyVisible ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'study' }) }}><Icon name="desk" />Study</button>
+          <button type="button" className={`nav-item ${route.page === 'debug' ? 'is-active' : ''}`} aria-current={route.page === 'debug' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'debug' }) }}><Icon name="code" />Debug</button>
+          <button type="button" className={`nav-item ${route.page === 'history' ? 'is-active' : ''}`} aria-current={route.page === 'history' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'history' }) }}><Icon name="history" />History</button>
+          <button type="button" className={`nav-item ${route.page === 'profile' ? 'is-active' : ''}`} aria-current={route.page === 'profile' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'profile' }) }}><Icon name="profile" />Profile</button>
         </nav>
         <div className="header-session">
           <div className="connection" role="status">
@@ -714,8 +763,21 @@ export default function App() {
           <AccountControls />
         </div>
       </header>
+      <div className="page-back-bar"><button type="button" className="text-button back-button" disabled={busy || (depth === 0 && studyVisible && !turn)} onClick={() => {
+        if (busy) return
+        setNavigationError('')
+        void saveDraft().then(() => debugSave.current?.()).then(() => { if (depth === 0 && turn && studyVisible) navigate({ page: 'setup' }); else back() }).catch(() => setNavigationError('Your draft could not be saved, so this page stayed open. Please try again.'))
+      }}><Icon name="arrow" size={17} className="rotate-180" />Back</button></div>
+      {navigationError && <div className="page-back-bar"><p className="inline-error" role="alert">{navigationError}</p></div>}
+      {route.page === 'history' && <HistoryPage key={route.sourceId || 'files'} sourceId={route.sourceId} beforeAction={saveDraft} onDebug={runId => navigate({ page: 'debug', runId })} onSelect={id => navigate({ page: 'history', sourceId: id })} onOpen={openSaved} onDeleted={ids => {
+        if (activeSource && ids.includes(activeSource.source_id)) { handleSourceChange(null); setSourceOverride(null) }
+        navigate({ page: 'history' })
+      }} />}
+      {route.page === 'profile' && <ProfilePage />}
+      {route.page === 'debug' && <DebugPage key={route.runId || 'catalogue'} runId={route.runId} source={activeSource} onOpen={runId => navigate({ page: 'debug', runId: runId || undefined })} onBusyChange={setDebugBusy} onSaveHandler={registerDebugSave} />}
       <main
         id="workspace"
+        hidden={!studyVisible}
         className={`workspace ${turn ? 'workspace-practice' : 'workspace-welcome'}`}
         tabIndex={-1}
       >
@@ -744,10 +806,32 @@ export default function App() {
         )}
         <div className={`preparation-grid ${turn ? 'has-questions' : ''}`}>
           {!turn && workspaceHeading}
-          <div className="material-area" id="source-material">
+          <section
+            className={`material-area ${!turn ? 'start-panel session-console' : ''}`}
+            id="source-material"
+            aria-labelledby={!turn ? 'session-heading' : undefined}
+          >
+            {!turn && (
+              <div
+                className="session-console-heading flex items-center justify-center min-h-[150px]"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}
+              >
+                <div className="setup-activity" role="status" aria-live="polite">
+                  <ActivityOrb
+                    size={64}
+                    state={activity.state}
+                    active={activity.active}
+                  />
+                  <span className="sr-only">{activity.title}</span>
+                </div>
+              </div>
+            )}
             {backendReady ? (
               <SourceUpload
+                restoredSource={sourceOverride}
+                beforeSourceChange={saveDraft}
                 compact={!!turn}
+                embedded={!turn}
                 practiceAction={turn ? generationButton : undefined}
                 disabled={
                   loadingQuestion ||
@@ -773,85 +857,12 @@ export default function App() {
                 <div className="skeleton-line short" />
               </section>
             )}
-          </div>
-          {!turn && (
-            <>
+            {!turn && (
               <div className="start-action">
                 {generationButton}
-                <p className="start-hint">
-                  {activeSource
-                    ? 'Reference answers stay hidden until you submit.'
-                    : 'Upload your material to start. Up to 3 questions per set.'}
-                </p>
               </div>
-              <section
-                className="start-panel session-console"
-                aria-labelledby="session-heading"
-              >
-                <div className="session-console-heading">
-                  <h2 id="session-heading">Your practice session</h2>
-                  <Icon name="mic" size={20} />
-                </div>
-                <div
-                  className="orb-stage"
-                  role="status"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
-                  <ActivityOrb
-                    size={64}
-                    state={activity.state}
-                    active={activity.active}
-                  />
-                  <strong>{activity.title}</strong>
-                  <p>{activity.detail}</p>
-                </div>
-                <dl className="session-facts">
-                  <div>
-                    <dt>Material</dt>
-                    <dd>
-                      {activeSource ? activeSource.filename : 'Awaiting upload'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Evidence</dt>
-                    <dd>
-                      {activeSource
-                        ? `${activeSource.snippet_count} extracted ${activeSource.snippet_count === 1 ? 'snippet' : 'snippets'}`
-                        : 'From your file'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Answer format</dt>
-                    <dd>Voice or text</dd>
-                  </div>
-                </dl>
-                <ol className="practice-steps">
-                  <li>
-                    <span>1</span>
-                    <div>
-                      <strong>Make it a question.</strong>
-                      <p>AI builds a set from your material.</p>
-                    </div>
-                  </li>
-                  <li>
-                    <span>2</span>
-                    <div>
-                      <strong>Put it in your words.</strong>
-                      <p>Record, type, and refine your answer.</p>
-                    </div>
-                  </li>
-                  <li>
-                    <span>3</span>
-                    <div>
-                      <strong>See what holds up.</strong>
-                      <p>Review your score and original evidence.</p>
-                    </div>
-                  </li>
-                </ol>
-              </section>
-            </>
-          )}
+            )}
+          </section>
         </div>
         {turn && (
           <div className="practice-grid">
@@ -864,28 +875,18 @@ export default function App() {
                   <span>
                     Question {questionIndex + 1} of {questionSet.length}
                   </span>
-                  <span
-                    className="question-activity"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <ActivityOrb
-                      state={activity.state}
-                      active={activity.active}
-                    />
-                    <span>{activity.title}</span>
-                  </span>
+                  {activity.active && (
+                    <span
+                      className="question-activity"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <ActivityOrb state={activity.state} />
+                      <span>{activity.title}</span>
+                    </span>
+                  )}
                 </div>
                 <h2 id="question-heading">{turn.question}</h2>
-                <p className="source-caption">
-                  <Icon name="file" size={15} />
-                  <span>
-                    {turn.evidence.path}{' '}
-                    <span className="muted">
-                      · {evidenceLocation(turn.evidence)}
-                    </span>
-                  </span>
-                </p>
               </section>
               <section
                 className="answer-panel"
@@ -894,9 +895,8 @@ export default function App() {
                 <form onSubmit={submitAnswer}>
                   <div className="section-heading">
                     <h2 id="answer-heading">Your answer</h2>
-                    <span>Make it yours.</span>
                   </div>
-                  <VoiceRecorder
+                  {studyVisible && <VoiceRecorder
                     key={turn.turn_id}
                     disabled={
                       loadingQuestion ||
@@ -911,7 +911,7 @@ export default function App() {
                       setError(message)
                       setTranscriptionNotice('')
                     }}
-                  />
+                  />}
                   <label className="sr-only" htmlFor="answer">
                     Your answer
                   </label>
@@ -930,47 +930,46 @@ export default function App() {
                       recordingBusy ||
                       uploadingSource
                     }
-                    placeholder="Explain it the way you understand it…"
+                    placeholder="Type your answer…"
                     rows={6}
                     maxLength={4000}
                   />
+                  <span id="answer-help" className="sr-only">
+                    Type here, or edit your voice transcript.
+                  </span>
+                  {draftError && <p className="inline-error" role="alert">{draftError}<button type="button" className="text-button" onClick={() => { void saveDraft().catch(() => {}) }}>Retry save</button></p>}
                   <div className="answer-draft-meta">
-                    <span id="answer-help">
-                      Type here, or edit your voice transcript.
-                    </span>
+                    <details className="audio-upload">
+                      <summary>
+                        <Icon name="upload" size={16} />
+                        Upload audio
+                      </summary>
+                      <div className="audio-upload-content">
+                        <label htmlFor="audio-file">Upload audio (WAV)</label>
+                        <input
+                          id="audio-file"
+                          type="file"
+                          accept=".wav,audio/wav,audio/x-wav"
+                          onChange={uploadAudio}
+                          disabled={busy}
+                          aria-describedby="audio-help"
+                        />
+                        <p id="audio-help">
+                          WAV, up to 60 seconds and 10 MiB. Transcription replaces
+                          your draft; review it before submitting.
+                        </p>
+                      </div>
+                    </details>
                     <span id="answer-count">
                       {answer.length.toLocaleString()} / 4,000
                     </span>
                   </div>
-                  <details className="audio-upload">
-                    <summary>
-                      <Icon name="upload" size={16} />
-                      Use an audio file instead
-                    </summary>
-                    <div className="audio-upload-content">
-                      <label htmlFor="audio-file">Upload audio (WAV)</label>
-                      <input
-                        id="audio-file"
-                        type="file"
-                        accept=".wav,audio/wav,audio/x-wav"
-                        onChange={uploadAudio}
-                        disabled={busy}
-                        aria-describedby="audio-help"
-                      />
-                      <p id="audio-help">
-                        Up to 60 seconds and 10 MiB. Gnani Prisma transcribes
-                        the audio and replaces your draft. Review it before
-                        submitting.
-                      </p>
-                    </div>
-                  </details>
                   <p role="status" className="transcript-status">
                     {transcribing
                       ? 'Transcribing your recording…'
                       : transcriptionNotice}
                   </p>
                   <div className="answer-submit-row">
-                    <p>Checked against your uploaded material.</p>
                     <button
                       type="submit"
                       aria-busy={submittingAnswer}
@@ -1001,7 +1000,6 @@ export default function App() {
                   <div className="review-topline">
                     <div>
                       <h2 id="review-heading">Answer review</h2>
-                      <p>Here’s what your material supports.</p>
                     </div>
                     <div className="score" aria-label="Practice score">
                       <strong>
@@ -1031,7 +1029,7 @@ export default function App() {
                               criterion.status === 'met'
                                 ? 'check'
                                 : criterion.status === 'contradicted' ||
-                                    criterion.status === 'missed'
+                                  criterion.status === 'missed'
                                   ? 'close'
                                   : 'minus'
                             }
@@ -1095,12 +1093,11 @@ export default function App() {
                     )}
                   </details>
                   <div className="review-footer">
-                    <p>
-                      {completed.length} of {questionSet.length} reviewed
-                      {totalPossible > 0
-                        ? ` · Set score so far: ${Math.round((100 * totalEarned) / totalPossible)}%`
-                        : ''}
-                    </p>
+                    {questionSet.length > 1 && totalPossible > 0 && (
+                      <p>
+                        Set score: {Math.round((100 * totalEarned) / totalPossible)}%
+                      </p>
+                    )}
                     {questionIndex + 1 < questionSet.length ? (
                       <button
                         type="button"
@@ -1119,8 +1116,7 @@ export default function App() {
                     )}
                   </div>
                   <p className="assessment-note">
-                    AI-assisted practice feedback. Check the evidence when a
-                    judgment seems off.
+                    AI feedback. Verify uncertain results against the source.
                   </p>
                 </section>
               )}
@@ -1144,9 +1140,6 @@ export default function App() {
                   {showEvidence ? 'Hide' : 'Show'}
                 </button>
               </div>
-              <p className="evidence-intro">
-                The original text behind your questions.
-              </p>
               {showEvidence && (
                 <div id="source-evidence" className="evidence-sections">
                   {evidenceList.map((evidence, section) => (
@@ -1174,21 +1167,15 @@ export default function App() {
                   ))}
                 </div>
               )}
-              <p className="evidence-footnote">
-                <Icon name="info" size={14} />
-                <span>
-                  {turn.evidence.citation_type === 'page'
-                    ? 'PDF formatting can affect extraction. Check tables and equations against the original.'
-                    : 'Original lines are preserved, including blank lines and indentation.'}
-                </span>
-              </p>
+              {turn.evidence.citation_type === 'page' && (
+                <p className="evidence-footnote">
+                  <Icon name="info" size={14} />
+                  <span>Check PDF tables and equations against the original.</span>
+                </p>
+              )}
             </aside>
           </div>
         )}
-        <footer className="workspace-footer">
-          <span>Made for understanding.</span>
-          <span>Questions from your material. Answers in your words.</span>
-        </footer>
       </main>
     </div>
   )
