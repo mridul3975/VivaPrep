@@ -11,6 +11,7 @@ interface Snippet {
   page: number | null
 }
 export interface SourceDocument {
+  reused?: boolean
   saved_practice?: unknown
   source_id: string
   filename: string
@@ -49,15 +50,21 @@ function isDocument(value: unknown): value is SourceDocument {
   )
 }
 interface Props {
+  restoredSource?: SourceDocument | null
+  beforeSourceChange?: () => Promise<void>
   disabled: boolean
   compact?: boolean
+  embedded?: boolean
   practiceAction?: ReactNode
   onBusyChange: (busy: boolean) => void
   onSourceChange: (source: SourceDocument | null) => void
 }
 export default function SourceUpload({
+  restoredSource,
+  beforeSourceChange,
   disabled,
   compact = false,
+  embedded = false,
   practiceAction,
   onBusyChange,
   onSourceChange,
@@ -70,6 +77,11 @@ export default function SourceUpload({
   const [notice, setNotice] = useState('')
   const [dragging, setDragging] = useState(false)
   const [restoring, setRestoring] = useState(true)
+  const [previousRestore, setPreviousRestore] = useState(restoredSource)
+  if (restoredSource !== previousRestore && restoredSource !== undefined) {
+    setPreviousRestore(restoredSource)
+    setSource(restoredSource); setSelected(0); setError(''); setNotice(restoredSource ? 'Restored from history.' : 'Material closed.'); setLoading(false)
+  }
   useEffect(() => {
     let active = true
     const controller = new AbortController()
@@ -132,6 +144,7 @@ export default function SourceUpload({
     setLoading(true)
     onBusyChange(true)
     try {
+      await beforeSourceChange?.()
       const form = new FormData()
       form.append('source_file', file)
       const response = await apiFetch('/sources', {
@@ -153,7 +166,7 @@ export default function SourceUpload({
       setSource(result)
       onSourceChange(result)
       setSelected(0)
-      setNotice('File processed. Review the extracted evidence below.')
+      setNotice(result.reused ? 'Restored from history.' : 'File processed. Review the extracted evidence below.')
     } catch (error) {
       setError(
         error instanceof Error && error.name === 'TimeoutError'
@@ -171,25 +184,19 @@ export default function SourceUpload({
   }
   async function removeUpload() {
     if (!source || disabled || loading) return
-    if (
-      storageMode === 'postgresql' &&
-      !window.confirm(
-        'Remove this material and delete its saved questions and answers? This cannot be undone.',
-      )
-    )
-      return
     setLoading(true)
     onBusyChange(true)
     setError('')
     try {
-      const response = await apiFetch(`/sources/${source.source_id}`, {
-        method: 'DELETE',
+      await beforeSourceChange?.()
+      const response = await apiFetch(storageMode === 'postgresql' ? `/sources/${source.source_id}/close` : `/sources/${source.source_id}`, {
+        method: storageMode === 'postgresql' ? 'POST' : 'DELETE',
       })
       if (!response.ok && response.status !== 404)
         throw new Error('Could not remove the upload. Please retry.')
       setSource(null)
       onSourceChange(null)
-      setNotice('Upload removed.')
+      setNotice('Material closed. Saved practice remains in History.')
     } catch {
       setError('Could not remove the upload. Please retry.')
     } finally {
@@ -198,6 +205,9 @@ export default function SourceUpload({
     }
   }
   const snippet = source?.snippets[selected]
+  const sourceCounts = source
+    ? `${source.kind === 'pdf' ? `${source.page_count} ${source.page_count === 1 ? 'page' : 'pages'}` : `${source.line_count} lines`} · ${source.snippet_count} ${source.snippet_count === 1 ? 'snippet' : 'snippets'}`
+    : ''
   const accept =
     '.pdf,.py,.js,.jsx,.ts,.tsx,.md,.txt,.java,.c,.cpp,.h,.css,.html,.json,.yaml,.yml'
   const materialDetails = (
@@ -274,7 +284,7 @@ export default function SourceUpload({
           One UTF-8 source/text file, or a searchable PDF with up to 20 pages.
           Scanned-only and password-protected PDFs are not supported. Your
           {storageMode === 'postgresql'
-            ? 'material and submitted answers are saved to your Google account. A new upload becomes your active material; earlier practice stays saved. Removing material deletes its associated questions and answers. '
+            ? 'material and submitted answers are saved to your account. Closing material keeps it in History. Permanent deletion is available there. '
             : 'upload is kept in this browser session for up to one hour and cleared on server restart. A new upload replaces the previous one. '}
           Selected excerpts are sent to Groq to generate and evaluate questions.
         </p>
@@ -283,10 +293,10 @@ export default function SourceUpload({
   )
   return (
     <section
-      className={`material-panel ${compact ? 'material-panel-compact' : ''}`}
+      className={`material-panel ${compact ? 'material-panel-compact' : ''} ${embedded ? 'material-panel-embedded' : ''}`}
       aria-labelledby="material-heading"
     >
-      {!compact && (
+      {!compact && !embedded && (
         <div className="material-heading">
           <h2 id="material-heading">Start with your material.</h2>
           <p>
@@ -295,7 +305,7 @@ export default function SourceUpload({
           </p>
         </div>
       )}
-      {compact && (
+      {(compact || embedded) && (
         <h2 id="material-heading" className="sr-only">
           Your study material
         </h2>
@@ -361,14 +371,7 @@ export default function SourceUpload({
           </span>
           <div className="uploaded-file-info">
             <strong title={source.filename}>{source.filename}</strong>
-            <p>
-              {source.kind === 'pdf'
-                ? `${source.page_count} ${source.page_count === 1 ? 'page' : 'pages'}`
-                : `${source.line_count} lines`}
-              <span>·</span>
-              {source.snippet_count}{' '}
-              {source.snippet_count === 1 ? 'snippet' : 'snippets'}
-            </p>
+            {!compact && <p>{sourceCounts}</p>}
           </div>
           <div className="file-actions">
             <label
@@ -389,8 +392,8 @@ export default function SourceUpload({
               type="button"
               className="icon-button"
               disabled={disabled || loading}
-              aria-label="Remove upload"
-              title="Remove upload"
+              aria-label="Close material"
+              title="Close material"
               onClick={removeUpload}
             >
               <Icon name="close" size={17} />
@@ -413,7 +416,7 @@ export default function SourceUpload({
       <p
         role="status"
         className={
-          compact
+          compact || embedded
             ? 'sr-only'
             : `upload-notice ${notice || (loading && !restoring) ? 'has-notice' : ''}`
         }
@@ -438,6 +441,7 @@ export default function SourceUpload({
             </summary>
             <div className="material-details-body">
               {source && <p className="full-filename">{source.filename}</p>}
+              {source && <p className="material-counts">{sourceCounts}</p>}
               {materialDetails}
             </div>
           </details>
