@@ -92,6 +92,7 @@ export default function GoogleSignIn({
           </span>
         </a>
       </header>
+      <div className="auth-back-bar"><button type="button" className="text-button back-button" disabled={window.history.length <= 1} onClick={() => window.history.back()}><Icon name="arrow" size={17} className="rotate-180" />Back</button></div>
       <main className="auth-layout">
         <div className="auth-introduction">
           <h1>
