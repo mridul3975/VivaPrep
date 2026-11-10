@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
 import uuid
+from pathlib import Path
 
 from backend.app import app, turns
 from backend.auth import auth_sessions
@@ -71,7 +72,7 @@ class PostgresTests(unittest.TestCase):
         self.store.check()
         with self.store.connection() as conn:
             self.assertIn("PostgreSQL", conn.execute("SELECT version() AS version").fetchone()["version"])
-            self.assertEqual(conn.execute("SELECT count(*) AS count FROM repoviva.schema_migrations").fetchone()["count"], 1)
+            self.assertEqual(conn.execute("SELECT count(*) AS count FROM repoviva.schema_migrations").fetchone()["count"], len(list(Path('backend/migrations').glob('*.sql'))))
 
     def test_material_questions_answers_and_scores_survive_new_python_process(self):
         source = self.upload()
