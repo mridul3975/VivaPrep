@@ -1,0 +1,63 @@
+1
+00:00:00,180 --> 00:00:03,800
+This is RepoViva.
+Understand the code you build.
+
+2
+00:00:04,180 --> 00:00:07,150
+Upload the project source.
+Keep the original evidence.
+
+3
+00:00:09,150 --> 00:00:12,000
+Source-grounded questions, generated with Groq.
+
+4
+00:00:12,350 --> 00:00:15,500
+Reference answers stay hidden until submission.
+
+5
+00:00:16,200 --> 00:00:20,200
+Speech to editable text with Gnani Prisma v3.
+
+6
+00:00:20,300 --> 00:00:22,400
+Prerecorded synthetic sample.
+
+7
+00:00:22,550 --> 00:00:24,550
+Real Prisma transcript.
+
+8
+00:00:24,700 --> 00:00:27,350
+Students can edit the written transcript.
+
+9
+00:00:30,150 --> 00:00:33,850
+Submit an answer.
+Inspect feedback and source words.
+
+10
+00:00:37,150 --> 00:00:40,650
+Controlled debugging practice.
+Reproduce the failure.
+
+11
+00:00:41,200 --> 00:00:44,500
+Repair the code. Run executable tests.
+
+12
+00:00:44,750 --> 00:00:47,650
+Graduated hints support the learner.
+
+13
+00:00:48,150 --> 00:00:51,350
+History restores saved material and practice.
+
+14
+00:00:54,150 --> 00:00:57,950
+Progress and daily allowances persist in Neon.
+
+15
+00:00:58,200 --> 00:01:00,000
+Built with Gnani Prisma.
