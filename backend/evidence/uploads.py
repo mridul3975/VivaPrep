@@ -1,5 +1,6 @@
 import time
 import uuid
+import hashlib
 from copy import deepcopy
 from threading import Lock
 
@@ -7,7 +8,7 @@ from flask import Blueprint, g, jsonify, request, session
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
 
-from backend.evidence.documents import DocumentError, MAX_FILE_BYTES, extract_document
+from backend.evidence.documents import DocumentError, MAX_FILE_BYTES, extract_document, validate_upload
 from backend.database import database_enabled, get_database
 
 
@@ -111,6 +112,13 @@ def upload_source():
             data = upload.stream.read(MAX_FILE_BYTES + 1)
         finally:
             upload.close()
+        kind = validate_upload(filename, data)
+        if database_enabled():
+            from backend.library import reuse_upload
+            existing = reuse_upload(g.user["id"], hashlib.sha256(data).hexdigest(), kind, filename)
+            if existing:
+                session["active_source_id"] = existing["source_id"]
+                return jsonify(existing), 200
         document = extract_document(filename, data)
     except RequestEntityTooLarge:
         return jsonify({"error": "Uploaded files must be at most 5 MiB."}), 413
@@ -123,9 +131,10 @@ def upload_source():
         snippet["id"] = f"{source_id}:{number}"
     document.update({"source_id": source_id, "expires_in_seconds": SOURCE_TTL_SECONDS})
     if database_enabled():
-        document = get_database().replace_source(owner, document)
-        session["active_source_id"] = source_id
-        return jsonify(document), 201
+        from backend.library import save_upload
+        document = save_upload(owner, document)
+        session["active_source_id"] = document["source_id"]
+        return jsonify(document), 200 if document["reused"] else 201
     with sources_lock:
         _expire_sources()
         previous = [key for key, item in sources.items() if item["owner"] == owner]
