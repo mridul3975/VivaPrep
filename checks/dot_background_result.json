@@ -1,0 +1,33 @@
+{
+  "date_ist": "2026-11-10",
+  "reference": "https://www.shadcn.io/background/dot-pattern",
+  "implementation": "Interactive page decoration: 2px muted-silver dots with 24px spacing; nearby dots grow to 3.5px and brighten within a 120px cursor light. Slow 12-second CSS wave. CSS variables update without React renders or a JavaScript frame loop. No extra dependency; overlays never intercept controls.",
+  "frontend_build": "passed",
+  "frontend_lint": "passed with zero warnings and errors",
+  "browser_widths": [1440, 390, 360],
+  "verified_states": ["sign-in", "upload", "question", "review"],
+  "browser_runtime_errors": [],
+  "browser_all_passed": true,
+  "checks": [
+    "same page pattern is present before and after authentication",
+    "page background extends behind the entire scrolling review",
+    "card and reading surfaces retain solid backgrounds",
+    "sign-in, file upload, question generation and answer submission remain clickable",
+    "no horizontal viewport overflow at desktop and phone sizes",
+    "near-cursor dots become larger and brighter while distant dots remain unchanged",
+    "pointer leave restores the base dots",
+    "reduced motion stops the wave and pointer easing while immediate cursor feedback remains",
+    "touch input does not activate cursor lighting"
+  ],
+  "pixel_checks": {
+    "dot_pixels_before": 4,
+    "dot_pixels_near_cursor": 12,
+    "brightness_before": 64,
+    "brightness_near_cursor": 215,
+    "distant_dots_unchanged": true,
+    "pointer_leave_restores_dots": true,
+    "normal_and_reduced_motion_passed": true
+  },
+  "verification_boundary": "Local Flask fixture with simulated Google SDK/certificates and AI responses. No real account sign-in, live provider requests or Neon records were exercised for this background-only change.",
+  "development_evidence": [".impeccable/review/dot-background/", ".impeccable/review/interactive-dots/"]
+}
