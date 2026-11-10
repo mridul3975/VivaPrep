@@ -1,0 +1,21 @@
+{
+  "date_ist": "2026-11-10",
+  "change": "Consolidated the welcome upload, preview and generation into the existing silver/charcoal session card.",
+  "frontend_build": "passed",
+  "frontend_lint": "passed with zero warnings and errors",
+  "browser_widths": [1440, 768, 390, 360],
+  "checks": [
+    "one session card contains upload and Generate questions",
+    "generation is disabled before upload and enabled after processing",
+    "keyboard focus reaches the file picker",
+    "empty-file validation appears inside the card",
+    "real Flask upload succeeds and source preview preserves original lines",
+    "question generation transitions to the compact practice tray",
+    "no horizontal viewport overflow or browser runtime errors"
+  ],
+  "browser_all_passed": true,
+  "browser_runtime_errors": [],
+  "visual_review": "Reviewed the rendered empty desktop, tablet and phone layouts and the uploaded evidence-preview state. Card gradient, orb and introductory typography are retained.",
+  "verification_boundary": "Isolated Flask fixture with real upload and preview routes. Google SDK/certificates and AI responses are simulated; no live database, provider calls, or Google account login were exercised for this UI-only change.",
+  "development_evidence": ".impeccable/review/setup-card/"
+}
