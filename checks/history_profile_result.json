@@ -1,0 +1,15 @@
+{
+  "date_ist": "2026-11-10",
+  "backend": "94 tests passed, including 10 new PostgreSQL history/profile tests and 5 debugging tests",
+  "build": "passed",
+  "lint": "passed with 0 warnings and 0 errors",
+  "browser_widths": [1440, 768, 390, 360],
+  "browser_runtime_errors": [],
+  "browser_checks": ["Back navigation", "profile save and reload", "actual remaining usage", "draft resume", "history feedback", "free cached practice", "close preserves history", "no horizontal overflow"],
+  "neon_preview_migration": "applied twice and verified over TLS on isolated child branch",
+  "neon_production_migration": "applied and pooled connection passed",
+  "live_neon_groq_flow": "question generation, grading, draft, close, history, renamed duplicate reuse and cached retry passed",
+  "actual_neon_server_restart": "profile details, remaining daily usage and both saved sets restored; disposable identity cleaned up",
+  "temporary_neon_branch": "deleted; only production remains",
+  "boundary": "Browser Google credentials and AI/STT are fixtures. Neon/Groq smoke used a disposable seeded identity. Real Google account sign-in is not established by these tests."
+}
