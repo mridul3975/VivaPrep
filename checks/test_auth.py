@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import time
 import unittest
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from google.auth import crypt, exceptions, jwt
+from requests import Response
 
 from backend.app import app, turns
 from backend.auth import auth_sessions
@@ -35,9 +37,9 @@ class GoogleAuthTests(unittest.TestCase):
         env = patch.dict(os.environ, {"GOOGLE_CLIENT_ID": "test-client.apps.googleusercontent.com"})
         env.start()
         self.addCleanup(env.stop)
-        certs = patch("google.oauth2.id_token._fetch_certs", return_value={"test-key": self.public})
-        certs.start()
-        self.addCleanup(certs.stop)
+        self.certs = patch("google.oauth2.id_token._fetch_certs", return_value={"test-key": self.public})
+        self.certs.start()
+        self.addCleanup(self.certs.stop)
         self.client = app.test_client()
         self.initial = self.client.get("/auth/session").get_json()
 
@@ -86,6 +88,21 @@ class GoogleAuthTests(unittest.TestCase):
             with self.subTest(change=change):
                 self.assertEqual(self.login(change).status_code, 401)
                 self.assertFalse(auth_sessions)
+
+    def test_google_certificate_fetch_uses_the_real_transport_interface(self):
+        self.certs.stop()
+        certificate_response = Response()
+        certificate_response.status_code = 200
+        certificate_response._content = json.dumps({"test-key": self.public}).encode()
+        # Keep Google's certificate loader, requests adapter and signature verifier
+        # real; replace only the outbound HTTP response with fixture public keys.
+        with patch("requests.sessions.Session.request", return_value=certificate_response) as http:
+            response = self.login()
+        self.assertEqual(response.status_code, 200, response.get_json())
+        http.assert_called_once()
+        self.assertEqual(http.call_args.args, ("GET", "https://www.googleapis.com/oauth2/v1/certs"))
+        self.assertEqual(http.call_args.kwargs["timeout"], 8)
+        self.assertEqual(self.client.get("/auth/session").get_json()["user"]["id"], "google:123456789")
 
     def test_forged_google_token_is_rejected(self):
         response = self.client.post("/auth/google", json={"credential": "forged.jwt.value"}, headers={"X-CSRF-Token": self.initial["csrf_token"]})
