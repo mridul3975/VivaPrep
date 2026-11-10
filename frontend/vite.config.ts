@@ -15,6 +15,9 @@ export default defineConfig({
       '/answers': 'http://127.0.0.1:5000',
       '/transcriptions': 'http://127.0.0.1:5000',
       '/health': 'http://127.0.0.1:5000',
+      '/history': 'http://127.0.0.1:5000',
+      '/profile': 'http://127.0.0.1:5000',
+      '/debug': 'http://127.0.0.1:5000',
     },
   },
 })
