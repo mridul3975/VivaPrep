@@ -43,6 +43,29 @@ sign-in, a live provider round trip, or a deployed Render service.
 
 ## Live provider checks
 
+### Neon deployment check
+
+After `neon deploy`, migrations and `npm run build`, start the app with the
+project Python environment active using `python -m backend.start`. In a second
+terminal, run:
+
+```sh
+python -m checks.live.neon prepare --base-url http://127.0.0.1:8000
+# Restart the application server, retaining its environment and session secret.
+python -m checks.live.neon resume --base-url http://127.0.0.1:8000
+```
+
+This uses real Neon storage and live Groq calls, which may consume credits. It
+creates one uniquely named verification identity with a signed app session;
+it does not bypass the production routes or exercise a real Google account.
+It verifies upload, generated questions, scored answers, history, session and
+practice restoration after restart, source removal, and logout. The resume
+phase removes its synthetic identity and records and writes `neon_result.json`.
+Its cookie checkpoint stays in the ignored `.impeccable/review/neon/` directory.
+No existing users or study data are truncated.
+
+### Individual providers
+
 Run these individually. They make real provider requests and may consume credits.
 
 ```sh
@@ -82,3 +105,16 @@ does not repeat the separately recorded live-provider flow.
 browser matrix uses an isolated Flask fixture with locally signed identity
 tokens and a stub Google SDK/certificate response. A real Google account sign-in
 remains a separate check after configuring the actual OAuth client ID and origin.
+
+History/profile checks: `checks/test_history_profile.py` verifies real PostgreSQL
+ownership, draft restoration, byte-hash reuse, cached practice, deletion, UTC
+reset, failure refunds and concurrent allowance enforcement. Use the dedicated
+repoviva_test database; these tests must never point at production.
+
+Debugging checks: `checks/test_debugging.py` verifies owned runs, context snapshots,
+graduated hints, CSRF, size limits and code-bound observations against real
+isolated PostgreSQL. `checks/debugging_result.json` records the browser execution
+checks. `checks/live/debugging.py` has prepare/resume behavior based on a private
+checkpoint: run it once, restart the local app, then run again to prove Neon
+persistence and remove the disposable fixture. Its test observations are fixtures,
+not a substitute for the actual browser runner checks. See DEBUGGING.md.
