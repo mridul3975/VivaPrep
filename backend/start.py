@@ -11,7 +11,7 @@ def main():
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
     if database_enabled():
         try:
-            get_database().migrate()
+            get_database(migration=True).migrate()
         except DatabaseUnavailable:
             raise SystemExit("PostgreSQL migration failed. Check DATABASE_URL; the web server was not started.")
         finally:
