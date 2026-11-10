@@ -1,0 +1,38 @@
+{
+  "date_ist": "2026-11-10",
+  "implementation": "PostgreSQL via psycopg 3 with versioned migrations and owner-scoped study records",
+  "backend_regression_tests_passed": 75,
+  "postgres_integration_tests_passed": 12,
+  "frontend_build": "passed",
+  "frontend_lint": "passed with zero warnings and errors",
+  "application_health": "ok, storage_mode=postgresql",
+  "application_database": "verified dedicated local PostgreSQL database; Neon URL not yet configured",
+  "checks": [
+    "idempotent transactional migration with advisory lock",
+    "login session and saved practice restoration in a fresh Python process",
+    "verified identity ownership on source, turn, answer and history access",
+    "private reference answers remain hidden before submission",
+    "source replacement archives prior material and preserves question evidence snapshots",
+    "source replacement remains compatible with an in-flight owner foreign key",
+    "evaluation leases prevent concurrent duplicates and recover after a crash",
+    "committed feedback does not depend on a second release request",
+    "provider failures save no attempt and allow a retry",
+    "configured database failures return 503 without memory fallback",
+    "confirmed source removal cascades to associated practice and attempts"
+  ],
+  "browser_widths": [1440, 390],
+  "browser_checks": [
+    "Google fixture sign-in creates a real PostgreSQL-backed app session",
+    "uploaded material and unsubmitted questions restore on page reload",
+    "submitted answer, feedback, progress and score restore on page reload",
+    "session and submitted practice survive an actual Flask process restart",
+    "cancelling source removal preserves data; confirming removes source and history",
+    "no horizontal viewport overflow or browser runtime errors"
+  ],
+  "browser_all_passed": true,
+  "browser_runtime_errors": [],
+  "test_data_boundary": "PostgreSQL tests and browser fixture use only the isolated repoviva_test database on a separate temporary cluster; application data is untouched.",
+  "verification_boundary": "Real local PostgreSQL, migrations, sessions, CRUD and restoration. Browser Google SDK/certificates and AI/STT responses are simulated. Live Google account sign-in, Neon connectivity and Render deployment remain separate checks.",
+  "development_evidence": ".impeccable/review/postgres/ (ignored screenshots and browser reports)",
+  "setup_guide": "POSTGRES.md"
+}
