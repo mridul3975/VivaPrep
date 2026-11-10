@@ -3,10 +3,11 @@
   "provider": "Google Identity Services directly; no managed third-party authentication provider",
   "frontend_build": "passed",
   "frontend_lint": "passed with zero warnings and errors",
-  "backend_regression_tests_passed": 63,
-  "authentication_tests_passed": 13,
+  "backend_regression_tests_passed": 75,
+  "authentication_tests_passed": 14,
   "backend_authentication_checks": [
     "Google signature verification using locally generated fixture signing keys",
+    "real certificate loader and HTTP adapter accept the positional URL and preserve the eight-second timeout",
     "reject forged signature, wrong audience, issuer, expired token, nonce, and unverified identity",
     "require authentication on all study and AI/STT endpoints",
     "require CSRF on sign-in, sign-out, and study mutations",
@@ -31,7 +32,16 @@
   "browser_runtime_errors": [],
   "browser_all_passed": true,
   "verification_boundary": "Browser checks use an isolated Flask fixture with locally signed identity tokens, a stub Google SDK/certificate response, and simulated AI/STT. They do not validate a live Google account sign-in or production OAuth configuration.",
-  "live_google_sign_in": "pending GOOGLE_CLIENT_ID and authorized-origin configuration",
-  "database": "not added; login sessions and study data are temporary server-memory state",
+  "session_regression_checks": [
+    "a browser clock two hours ahead does not immediately expire a valid session",
+    "a late anonymous refresh cannot overwrite successful sign-in",
+    "a late authenticated refresh cannot resurrect a signed-out workspace",
+    "Google HTTP 200 without a retained app session reports a clear error"
+  ],
+  "session_regression_boundary": "Browser-only scenarios simulate auth responses and Google SDK; all four passed without runtime errors.",
+  "certificate_transport_fix": "Reproduced 401 before the fix: the keyword-only request lambda rejected Google's positional certificate URL. Replaced it with functools.partial; the same regression now returns 200 and retains the app session.",
+  "live_google_certificate_fetch": "passed against Google's public signing-certificate endpoint using the corrected request wrapper; no account credential was sent",
+  "live_google_sign_in": "User reported verification failure. Certificate transport bug fixed and backend reloaded; a fresh real account sign-in awaits user verification.",
+  "database": "PostgreSQL login and study persistence is implemented and verified locally; see postgres_result.json",
   "development_evidence": ".impeccable/review/auth/ (ignored screenshots and browser report)"
 }
