@@ -11,7 +11,7 @@ from pathlib import Path
 import requests
 from backend.app import app
 from backend.database import get_database, close_pools
-from backend.debugging import SCENARIO_ID, STARTER, TESTS
+from checks.debug_fixtures import CODE
 
 checkpoint = Path('.impeccable/review/neon/debug-checkpoint.json')
 prefix = 'google:debug-verification-'
@@ -38,30 +38,33 @@ try:
         return response.json() if response.content else None
     if not resuming:
         before = call('GET','/profile')['usage']['allowances']
-        run = call('POST','/debug/runs',201,json={'scenario_id':SCENARIO_ID})
+        source = call('POST','/sources',201,files={'source_file': ('debug-tax.js', CODE.encode(), 'text/plain')})
+        run = call('POST','/debug/runs',201,json={'source_id':source['source_id']})
+        assert run['scenario']['execution_mode'] == 'javascript'
         url = '/debug/runs/'+run['id']
         assert len(call('POST',url+'/hint')['hints']) == 1
-        code = STARTER.replace('minSeconds * 1000','minSeconds')
-        report = {'tested_code':code,'results':[{'id':test['id'],'actual':test['expected'],'passed':True,'error':''} for test in TESTS]}
-        result = call('PATCH',url,json={'code':code,'hypothesis':'The comparison mixes units.','explanation':'Both sides now use seconds.','test_result':report})
+        code = run['scenario']['reference_code']
+        report = {'tested_code':code,'results':[{'id':test['id'],'actual':test['expected'],'passed':True,'error':''} for test in run['scenario']['tests']]}
+        result = call('PATCH',url,json={'code':code,'hypothesis':'Inspect the arithmetic in this uploaded function.','explanation':'Restoring the reference behavior matches the practice cases.','test_result':report})
         assert result['complete']
-        assert call('GET','/profile')['usage']['allowances'] == before
-        checkpoint.write_text(json.dumps({'owner':owner,'cookie':cookie,'csrf':csrf,'run_id':run['id']}))
+        assert call('GET','/profile')['usage']['allowances']['questions']['used'] == before['questions']['used'] + 1
+        checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        checkpoint.write_text(json.dumps({'owner':owner,'cookie':cookie,'csrf':csrf,'run_id':run['id'],'code':code,'starter':run['scenario']['starter_code']}))
         checkpoint.chmod(0o600)
-        print('Live Neon debugging save/hint/no-AI-usage passed. Restart before resume.',flush=True)
+        print('Live source-derived Neon debugging save/hint/generation allowance passed. Restart before resume.',flush=True)
     else:
         url = '/debug/runs/'+saved['run_id']
         run = call('GET',url)
         assert run['complete'] and len(run['hints']) == 1
-        assert run['code'] == STARTER.replace('minSeconds * 1000','minSeconds')
+        assert run['code'] == saved['code']
         assert call('GET','/debug/runs')['runs'][0]['id'] == run['id']
-        changed = call('PATCH',url,json={'code':STARTER})
+        changed = call('PATCH',url,json={'code':saved['starter']})
         assert not changed['tests_current'] and not changed['complete']
         call('DELETE',url,204)
         with store.connection() as conn:
             conn.execute('DELETE FROM repoviva.users WHERE id=%s',(owner,))
         checkpoint.unlink()
-        Path('checks/debugging_neon_result.json').write_text(json.dumps({'date_ist':'2026-11-10','storage':'Neon production via running local Gunicorn app','create_save_hint_list_delete':'passed','actual_process_restart_restore':'passed','code_edit_invalidates_results':'passed','AI_quota_unchanged':'passed','fixture_cleanup':'completed','boundary':'Seeded disposable identity and test-observation fixtures. Actual browser test execution is proved separately; this is not live Google authentication or a certified coding assessment.'},indent=2)+'\n')
+        Path('checks/source_debugging_neon_result.json').write_text(json.dumps({'storage':'Neon production via running local Gunicorn app','source_derived_create_save_hint_list_delete':'passed','actual_process_restart_restore':'passed','code_edit_invalidates_results':'passed','generation_charges_one_question_allowance':'passed','fixture_cleanup':'completed','boundary':'Seeded disposable identity and test-observation fixtures. Live Groq generation; actual browser test execution is proved separately. This is not live Google authentication or a certified coding assessment.'},indent=2)+'\n')
         print('Neon restart restoration, stale verdict and scoped cleanup passed.',flush=True)
 except Exception:
     if owner and owner.startswith(prefix):

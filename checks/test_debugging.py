@@ -1,8 +1,10 @@
-"""Saved debugging practice ownership, observations and independent AI quotas."""
+"""Source-owned debugging generation, persistence, quotas and observations."""
 import unittest
+from unittest.mock import patch
 from checks import test_postgres as pgtests
 from backend.app import app
-from backend.debugging import SCENARIO_ID, STARTER, TESTS
+from backend.interview.provider import ProviderError
+from checks.debug_fixtures import CODE, challenge
 
 
 @unittest.skipUnless(pgtests.TEST_URL, 'Requires the isolated repoviva_test database.')
@@ -12,76 +14,109 @@ class DebuggingTests(unittest.TestCase):
     setUp = pgtests.PostgresTests.setUp
     upload = pgtests.PostgresTests.upload
 
-    def start(self, **extra):
-        response = self.client.post('/debug/runs', json={'scenario_id': SCENARIO_ID, **extra})
+    def start(self, source=None):
+        source = source or self.upload(CODE.encode(), 'tax.js')
+        with patch('backend.debugging.generate_debug_challenge', side_effect=challenge):
+            response = self.client.post('/debug/runs', json={'source_id': source['source_id']})
         self.assertEqual(response.status_code, 201, response.get_json())
         return response.get_json()
 
-    def test_catalogue_reproduction_and_hints_are_graduated(self):
+    def test_requires_actual_owned_source_and_no_default_challenge(self):
         self.assertEqual(app.test_client().get('/debug/challenges').status_code, 401)
-        scenario = self.client.get('/debug/challenges').get_json()['challenges'][0]
-        self.assertEqual(scenario['tests'][0]['args'], [30000, 30])
-        run = self.start()
+        self.assertEqual(self.client.get('/debug/challenges').get_json()['challenges'], [])
+        self.assertEqual(self.client.post('/debug/runs', json={}).status_code, 400)
+        source = self.upload(CODE.encode(), 'tax.js')
+        with patch('backend.debugging.generate_debug_challenge') as provider:
+            self.assertEqual(self.other.post('/debug/runs', json={'source_id': source['source_id']}).status_code, 404)
+            notes = self.upload(b'No code.', 'notes.md')
+            self.assertEqual(self.client.post('/debug/runs', json={'source_id': notes['source_id']}).status_code, 400)
+            provider.assert_not_called()
+
+    def test_source_snapshot_and_graduated_hints(self):
+        source = self.upload(CODE.encode(), 'student-tax.js')
+        run = self.start(source)
+        self.assertEqual(run['scenario']['project'], 'student-tax.js')
+        self.assertEqual(run['scenario']['reference_code'], CODE)
+        self.assertEqual(run['scenario']['starter_code'], CODE.replace('+', '-'))
+        self.assertEqual(run['source_id'], source['source_id'])
         self.assertEqual(run['hints'], [])
-        self.assertEqual(run['code'], STARTER)
+        self.assertNotIn('challenge_hints', run)
         for index in range(1, 5):
             result = self.client.post(f"/debug/runs/{run['id']}/hint").get_json()
             self.assertEqual(len(result['hints']), min(index, 3))
         self.assertEqual(self.client.patch(f"/debug/runs/{run['id']}", json={'hints_revealed': 3}).status_code, 400)
-
-    def test_owned_context_is_snapshot_and_delete_removes_attached_run(self):
-        source = self.upload(b'const duration = elapsed / 1000;', 'recorder.js')
-        run = self.start(source_id=source['source_id'])
-        self.assertEqual(run['context']['filename'], 'recorder.js')
-        self.assertEqual(run['context']['snippet']['content'][0], 'const duration = elapsed / 1000;')
-        self.assertEqual(self.other.post('/debug/runs', json={'scenario_id': SCENARIO_ID, 'source_id': source['source_id']}).status_code, 404)
         self.client.delete('/history/documents/' + source['source_id'])
         self.assertEqual(self.client.get('/debug/runs/' + run['id']).status_code, 404)
 
-    def test_code_explanations_and_hints_survive_session_and_do_not_charge_ai(self):
-        before = self.client.get('/profile').get_json()['usage']
+    def test_failure_refunds_allowance_without_creating_sample_and_enforces_limit(self):
+        source = self.upload(CODE.encode(), 'tax.js')
+        before = self.client.get('/profile').get_json()['usage']['allowances']['questions']['used']
+        for error, status in ((ProviderError('Provider unavailable'), 502), (ValueError('Invalid quote'), 502), (ProviderError('Rate limited', 429), 503)):
+            with patch('backend.debugging.generate_debug_challenge', side_effect=error):
+                response = self.client.post('/debug/runs', json={'source_id': source['source_id']})
+            self.assertEqual(response.status_code, status)
+        self.assertEqual(self.client.get('/debug/runs').get_json()['runs'], [])
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['questions']['used'], before)
+        with patch('backend.account.limits', return_value={'questions': 0, 'answers': 30, 'transcriptions': 10}), patch('backend.debugging.generate_debug_challenge') as provider:
+            self.assertEqual(self.client.post('/debug/runs', json={'source_id': source['source_id']}).status_code, 429)
+            provider.assert_not_called()
+
+    def test_owned_saves_survive_session_and_only_generation_charges_ai(self):
+        before = self.client.get('/profile').get_json()['usage']['allowances']['questions']['used']
         run = self.start()
         url = '/debug/runs/' + run['id']
-        body = {'code': 'function validateRecording() { return false; }', 'hypothesis': 'The compared units differ.', 'explanation': 'Compare matching units.'}
+        body = {'code': CODE, 'hypothesis': 'The operator subtracts tax.', 'explanation': 'Add tax instead.'}
         self.assertEqual(self.client.patch(url, json=body).status_code, 200)
         self.client.post(url + '/hint')
         from checks.auth_fixtures import authenticated_client
-        client = authenticated_client(app, 'google:db-one')
-        saved = client.get(url).get_json()
-        self.assertEqual(saved['code'], body['code'])
-        self.assertEqual(saved['hypothesis'], body['hypothesis'])
+        saved = authenticated_client(app, 'google:db-one').get(url).get_json()
+        self.assertEqual(saved['code'], CODE)
         self.assertEqual(len(saved['hints']), 1)
-        self.assertEqual(self.client.get('/profile').get_json()['usage'], before)
-        self.assertEqual(self.client.get('/debug/runs').get_json()['runs'][0]['id'], run['id'])
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['questions']['used'], before + 1)
+        summary = self.client.get('/debug/runs').get_json()['runs'][0]
+        self.assertEqual(summary['filename'], 'tax.js')
+        self.assertEqual(summary['title'], run['scenario']['title'])
         self.assertEqual(self.other.get('/debug/runs').get_json()['runs'], [])
         for method in ('get', 'patch', 'delete'):
-            result = getattr(self.other, method)(url, **({'json': body} if method == 'patch' else {}))
-            self.assertEqual(result.status_code, 404)
+            self.assertEqual(getattr(self.other, method)(url, **({'json': body} if method == 'patch' else {})).status_code, 404)
         self.assertEqual(self.other.post(url + '/hint').status_code, 404)
         self.assertEqual(self.client.delete(url).status_code, 204)
 
-    def test_observations_bind_to_exact_code_and_edit_invalidates_pass(self):
+    def test_observations_bind_to_this_function_and_invalidate_on_edit(self):
         run = self.start()
         url = '/debug/runs/' + run['id']
-        code = STARTER.replace('minSeconds * 1000', 'minSeconds')
-        rows = [{'id': t['id'], 'actual': t['expected'], 'error': '', 'passed': True} for t in TESTS]
-        data = {'code': code, 'hypothesis': 'Units differ.', 'explanation': 'Both are now seconds.', 'test_result': {'tested_code': code, 'results': rows}}
+        rows = [{'id': t['id'], 'actual': t['expected'], 'error': '', 'passed': True} for t in run['scenario']['tests']]
+        data = {'code': CODE, 'hypothesis': 'Subtracting tax.', 'explanation': 'Now adds tax.', 'test_result': {'tested_code': CODE, 'results': rows}}
         result = self.client.patch(url, json=data)
         self.assertEqual(result.status_code, 200, result.get_json())
         self.assertTrue(result.get_json()['complete'])
-        self.assertIn('client observations', result.get_json()['verification'])
-        # Server recomputes pass flags, but does not certify browser execution.
         rows[0]['actual'] = False
-        result = self.client.patch(url, json=data).get_json()
-        self.assertFalse(result['tests_passed'])
-        self.assertFalse(result['test_result']['results'][0]['passed'])
-        rows[0]['actual'] = True
+        self.assertFalse(self.client.patch(url, json=data).get_json()['tests_passed'])
+        rows[0]['actual'] = 15
         self.client.patch(url, json=data)
-        edited = self.client.patch(url, json={'code': STARTER}).get_json()
+        edited = self.client.patch(url, json={'code': run['scenario']['starter_code']}).get_json()
         self.assertFalse(edited['tests_current']); self.assertFalse(edited['complete'])
         self.assertEqual(self.client.patch(url, json={'test_result': data['test_result']}).status_code, 400)
+        rows[0]['actual'] = float('nan')
+        self.assertEqual(self.client.patch(url, json=data).status_code, 400)
 
-    def test_invalid_data_csrf_and_code_are_never_executed_on_server(self):
+    def test_local_plan_cannot_claim_tests_passed(self):
+        source = self.upload(b'def add_tax(amount):\n    return amount + 5', 'tax.py')
+        from checks.debug_fixtures import completion
+        from backend.interview.debug_generator import generate_debug_challenge
+        data = {**completion(), 'function_name': '', 'tests': [], 'line_end': 2}
+        def local_challenge(document, snippet_id=None):
+            with patch('backend.interview.debug_generator.json_completion', return_value=data):
+                return generate_debug_challenge(document, snippet_id)
+        with patch('backend.debugging.generate_debug_challenge', side_effect=local_challenge):
+            response = self.client.post('/debug/runs', json={'source_id': source['source_id']})
+        self.assertEqual(response.status_code, 201, response.get_json())
+        run = response.get_json()
+        self.assertFalse(run['tests_passed']); self.assertFalse(run['complete'])
+        self.assertIn('not been verified', run['verification'])
+        self.assertEqual(self.client.patch('/debug/runs/' + run['id'], json={'test_result': {'tested_code': run['code'], 'results': []}}).status_code, 400)
+
+    def test_invalid_input_and_csrf_and_code_never_executed_on_server(self):
         run = self.start()
         url = '/debug/runs/' + run['id']
         for body in ({'code': 2}, {'explanation': 'x' * 4001}, {'test_result': {}}, {'complete': True}, []):

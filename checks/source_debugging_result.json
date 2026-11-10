@@ -1,0 +1,36 @@
+{
+  "date_ist": "2026-11-11",
+  "scope": "Replace default SpeakSpin challenge with owned uploaded-source exercises",
+  "backend_suite": "102 tests passed before final validation refinements; 15 targeted generator/PostgreSQL checks passed after those refinements",
+  "frontend_build": "passed",
+  "frontend_lint": "0 warnings, 0 errors",
+  "development_proxy": "13 requests passed",
+  "browser": {
+    "status": "passed",
+    "widths": [1440, 390, 360],
+    "runtime_errors": [],
+    "checks": [
+      "No preset exercise when source is missing; upload prompt is shown",
+      "Uploaded filename and actual source preview precede generation",
+      "Source-specific function is deliberately mutated, repaired and run in the browser",
+      "Hints, hypothesis, explanation and code persist and restore from History",
+      "History labels use actual filename and challenge title",
+      "Edits invalidate old results",
+      "Different Python upload produces Python practice code with local verification and no executed-test claim",
+      "No page overflow at checked widths"
+    ],
+    "boundary": "Real isolated PostgreSQL/Flask persistence and browser sandbox. Disposable signed identity and deterministic provider fixture for UI workflow; not live Google sign-in or microphone verification."
+  },
+  "live_groq": {
+    "javascript": "cart.js: source-matched cartTotal exercise generated; actual browser execution passed 4/4 on original exported function and 3/4 on deliberate mutation",
+    "python": "backend/evidence/read.py: exact complete chunk_text excerpt, mutation and local verification plan generated",
+    "initial_findings_fixed": [
+      "Prompt now explicitly nests array-valued positional arguments",
+      "Complete Python functions/classes are required; isolated changed lines are rejected"
+    ]
+  },
+  "runner": "Nested JSON, scalar outputs, non-finite rejection, app-window isolation and three-second timeout passed",
+  "local_backend": "Reloaded existing Gunicorn worker; localhost:5173/health reports ok and postgresql",
+  "storage": "Existing debug_runs JSONB supports source snapshots; no migration required",
+  "deployment": "Working-tree change only; not pushed or deployed to Render"
+}

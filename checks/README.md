@@ -111,10 +111,13 @@ ownership, draft restoration, byte-hash reuse, cached practice, deletion, UTC
 reset, failure refunds and concurrent allowance enforcement. Use the dedicated
 repoviva_test database; these tests must never point at production.
 
-Debugging checks: `checks/test_debugging.py` verifies owned runs, context snapshots,
-graduated hints, CSRF, size limits and code-bound observations against real
-isolated PostgreSQL. `checks/debugging_result.json` records the browser execution
-checks. `checks/live/debugging.py` has prepare/resume behavior based on a private
+Debugging checks: `checks/test_debug_generator.py` rejects fabricated source,
+invalid edits and incomplete Python excerpts. `checks/test_debugging.py` verifies
+owned source-specific runs, hints, CSRF, generation allowance/refunds, size limits
+and code-bound observations against real isolated PostgreSQL.
+`checks/source_debugging_result.json` records the current browser and live Groq
+generation checks. Older `debugging_result.json` is historical.
+`checks/live/debugging.py` has prepare/resume behavior based on a private
 checkpoint: run it once, restart the local app, then run again to prove Neon
 persistence and remove the disposable fixture. Its test observations are fixtures,
 not a substitute for the actual browser runner checks. See DEBUGGING.md.
