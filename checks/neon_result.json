@@ -1,0 +1,32 @@
+{
+  "date_ist": "2026-11-10",
+  "project": "cold-field-68844991",
+  "branch": "production",
+  "service": "Postgres",
+  "driver": "psycopg 3",
+  "runtime_url": "DATABASE_URL (pooled)",
+  "migration_url": "DATABASE_URL_UNPOOLED (direct)",
+  "tls": true,
+  "root_build": "passed",
+  "build_command": "npm run build",
+  "build_output": ["29 modules transformed.", "built in 1.74s"],
+  "lint": "passed",
+  "focused_tests_passed": 21,
+  "migration_preview": "passed on expiring child branch before production",
+  "live_groq_question_and_grading": "passed",
+  "score": 100,
+  "actual_server_restart_persistence": "passed",
+  "removal_and_logout": "passed",
+  "fixture_data_cleanup": "completed",
+  "temporary_branch_deleted": true,
+  "browser_widths": [1440, 390],
+  "browser_runtime_errors": [],
+  "browser_requests_mocked": false,
+  "browser_restoration_after_restart": "passed",
+  "resolved_checks": [
+    "The original five-second database connection budget timed out. Connections now allow 15 seconds and pool acquisition 20 seconds; the live flow passed afterward.",
+    "The verification assertion now compares the submitted answer after the endpoint's existing whitespace normalization.",
+    "TLS is verified on the client connection because the server pg_stat_ssl view does not describe the client-to-Neon-proxy connection."
+  ],
+  "verification_boundary": "Real running app, Neon database, and Groq. The session identity is seeded for verification; real Google account sign-in and public Render hosting are separate checks."
+}
