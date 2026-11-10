@@ -21,6 +21,9 @@ from backend.evidence.documents import DocumentError
 from backend.speech.transcriber import TranscriptionError, transcribe_wav
 from backend.auth import auth, protect_study_routes
 from backend.database import database_enabled, get_database, DatabaseUnavailable, StudyConflict, public_question
+from backend.account import account, allowance, UsageLimit, quota_error
+from backend.library import library
+from backend.debugging import debugging
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
@@ -46,6 +49,10 @@ app.config.update(SESSION_COOKIE_NAME="repoviva_session", SESSION_COOKIE_HTTPONL
 app.register_blueprint(auth)
 app.before_request(protect_study_routes)
 app.register_blueprint(uploads)
+app.register_blueprint(account)
+app.register_blueprint(library)
+app.register_blueprint(debugging)
+app.register_error_handler(UsageLimit, quota_error)
 turns = {}
 turns_lock = Lock()
 TURN_TTL_SECONDS = 3600
@@ -108,7 +115,7 @@ def study_conflict(error):
 
 @app.after_request
 def api_headers(response):
-    if request.path in ("/health", "/retrieve", "/questions", "/answers", "/transcriptions") or request.path.startswith(("/sources", "/auth/", "/history")):
+    if request.path in ("/health", "/retrieve", "/questions", "/answers", "/transcriptions", "/profile") or request.path.startswith(("/sources", "/auth/", "/history", "/debug/")):
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-RepoViva-API"] = API_VERSION
     return response
@@ -159,39 +166,43 @@ def generate_questions():
     count = data.get("count", 3)
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         return jsonify({"error": "Question count must be between 1 and 3."}), 400
+    if owned_source(source_id) is None:
+        return jsonify({"error": "Upload not found or expired. Please upload the file again."}), 404
     try:
-        selected = next_source_evidence(source_id)
-        if selected is None:
-            return jsonify({"error": "Upload not found or expired. Please upload the file again."}), 404
-        snippets, revision = selected
-        packages = generate_question_set(snippets, count=count)
+        with allowance("questions"):
+            selected = next_source_evidence(source_id)
+            if selected is None:
+                raise StudyConflict("Upload not found or expired. Please upload the file again.", 404)
+            snippets, revision = selected
+            packages = generate_question_set(snippets, count=count)
+            now, records = time.monotonic(), {}
+            for package in packages:
+                turn_id = uuid.uuid4().hex
+                primary_id = package["rubric"][0]["snippet_id"]
+                primary = next(item for item in snippets if str(item["id"]) == primary_id)
+                records[turn_id] = {"question": package["question"], "question_package": package,
+                                    "snippet": primary, "snippets": snippets, "created": now, "busy": False,
+                                    "source_id": source_id, "revision": revision, "owner": g.user["id"]}
+            practice_id = None
+            if database_enabled():
+                practice_id = get_database().save_questions(g.user["id"], source_id, records)
+            else:
+                with turns_lock:
+                    expired = [key for key, turn in turns.items() if now - turn["created"] >= TURN_TTL_SECONDS and not turn["busy"]]
+                    for key in expired:
+                        del turns[key]
+                    if len(turns) + len(packages) > MAX_TURNS:
+                        raise StudyConflict("Too many active turns. Please try again later.", 503)
+                    turns.update(records)
     except DocumentError as error:
         return jsonify({"error": str(error)}), error.status
     except QuestionGenerationError as e:
         app.logger.warning("Question generation failed: %s", e.__cause__ or e)
         return jsonify({"error": str(e), "error_code": e.code}), e.http_status
 
-    now, records = time.monotonic(), {}
-    for package in packages:
-        turn_id = uuid.uuid4().hex
-        primary_id = package["rubric"][0]["snippet_id"]
-        primary = next(item for item in snippets if str(item["id"]) == primary_id)
-        records[turn_id] = {"question": package["question"], "question_package": package,
-                            "snippet": primary, "snippets": snippets, "created": now, "busy": False,
-                            "source_id": source_id, "revision": revision, "owner": g.user["id"]}
-    if database_enabled():
-        get_database().save_questions(g.user["id"], source_id, records)
-    else:
-        with turns_lock:
-            expired = [key for key, turn in turns.items() if now - turn["created"] >= TURN_TTL_SECONDS and not turn["busy"]]
-            for key in expired:
-                del turns[key]
-            if len(turns) + len(packages) > MAX_TURNS:
-                return jsonify({"error": "Too many active turns. Please try again later."}), 503
-            turns.update(records)
     public_questions = [public_question(turn_id, turn) for turn_id, turn in records.items()]
     return jsonify({"api_version": API_VERSION, "source_id": source_id, "source_revision": revision,
-                    "questions": public_questions}), 200
+                    "practice_id": practice_id, "questions": public_questions}), 200
 
 
 @app.post("/answers")
@@ -229,12 +240,13 @@ def submit_answer():
             turn["busy"] = True
 
     try:
-        result = grade_answer(turn["question_package"], answer, turn["snippets"])
-        payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
-                   "evidence": turn["snippet"], "evidence_snippets": turn["snippets"], **result}
-        if persistent:
-            get_database().save_attempt(g.user["id"], turn_id, lease, answer, payload)
-            attempt_saved = True
+        with allowance("answers"):
+            result = grade_answer(turn["question_package"], answer, turn["snippets"])
+            payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
+                       "evidence": turn["snippet"], "evidence_snippets": turn["snippets"], **result}
+            if persistent:
+                get_database().save_attempt(g.user["id"], turn_id, lease, answer, payload)
+                attempt_saved = True
     except EvaluationError as error:
         app.logger.warning("Answer evaluation failed: %s", error.__cause__ or error)
         if error.code.startswith("provider_"):
@@ -294,7 +306,8 @@ def transcribe_upload():
         return jsonify({"error": "Upload a valid uncompressed WAV recording."}), 415
 
     try:
-        transcript = transcribe_wav(audio, filename)
+        with allowance("transcriptions"):
+            transcript = transcribe_wav(audio, filename)
     except TranscriptionError:
         app.logger.warning("Audio transcription failed")
         return jsonify({"error": "Unable to transcribe this recording. Please retry or type your answer."}), 502
