@@ -45,8 +45,12 @@ def _store(url):
     return PostgresStore(url)
 
 
-def get_database():
+def get_database(*, migration=False):
     url = database_url()
+    # Neon pulls both URLs: application traffic uses PgBouncer, while schema
+    # changes use the direct endpoint. Test overrides always remain isolated.
+    if migration and not (has_app_context() and "DATABASE_URL_OVERRIDE" in current_app.config):
+        url = os.getenv("DATABASE_URL_UNPOOLED", "").strip() or url
     if not url:
         raise DatabaseUnavailable("PostgreSQL is not configured.")
     return _store(url)
@@ -68,8 +72,8 @@ class PostgresStore:
         # Pool reconnect logs can include connection metadata; expose only safe errors.
         logging.getLogger("psycopg.pool").setLevel(logging.CRITICAL)
         try:
-            self.pool = ConnectionPool(url, min_size=0, max_size=5, timeout=5,
-                                       kwargs={"connect_timeout": 5, "row_factory": dict_row},
+            self.pool = ConnectionPool(url, min_size=0, max_size=5, timeout=20,
+                                       kwargs={"connect_timeout": 15, "row_factory": dict_row},
                                        check=ConnectionPool.check_connection, open=True)
         except (psycopg.Error, ValueError) as error:
             raise DatabaseUnavailable("PostgreSQL could not be configured.") from error
@@ -98,7 +102,8 @@ class PostgresStore:
     def check(self):
         with self.connection() as conn:
             row = conn.execute("SELECT max(version) AS version FROM repoviva.schema_migrations").fetchone()
-            if row["version"] != 1:
+            expected = max(int(path.name.split("_")[0]) for path in (Path(__file__).parent / "migrations").glob("*.sql"))
+            if row["version"] != expected:
                 raise DatabaseUnavailable("Database migrations need to be applied.")
 
     @staticmethod
@@ -162,6 +167,7 @@ class PostgresStore:
             conn.execute("INSERT INTO repoviva.practice_sets(id,owner,source_id) VALUES (%s,%s,%s)", (practice_id, owner, source_id))
             for position, (turn_id, turn) in enumerate(records.items()):
                 conn.execute("INSERT INTO repoviva.turns(id,owner,practice_id,position,payload) VALUES (%s,%s,%s,%s,%s)", (turn_id, owner, practice_id, position, Jsonb(turn)))
+            conn.execute("UPDATE repoviva.sources SET selected_practice_id=%s,last_opened_at=now() WHERE id=%s AND owner=%s", (practice_id, source_id, owner))
         return practice_id
 
     def claim_turn(self, owner, turn_id):
@@ -183,18 +189,16 @@ class PostgresStore:
             if not conn.execute("SELECT id FROM repoviva.turns WHERE id=%s AND owner=%s AND lease_token=%s FOR UPDATE", (turn_id, owner, token)).fetchone():
                 raise StudyConflict("The evaluation session changed. Please submit your answer again.")
             conn.execute("INSERT INTO repoviva.attempts(id,owner,turn_id,answer,feedback,earned,possible,percentage) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (uuid.uuid4().hex, owner, turn_id, answer, Jsonb(feedback), score["earned"], score["possible"], score["percentage"]))
+            conn.execute("DELETE FROM repoviva.drafts WHERE turn_id=%s AND owner=%s", (turn_id, owner))
             conn.execute("UPDATE repoviva.turns SET busy_until=NULL,lease_token=NULL WHERE id=%s AND owner=%s AND lease_token=%s", (turn_id, owner, token))
 
     def current_practice(self, owner, source_id):
         with self.connection() as conn:
-            practice = conn.execute("SELECT p.id FROM repoviva.practice_sets p JOIN repoviva.sources s ON s.id=p.source_id WHERE p.owner=%s AND p.source_id=%s AND s.owner=%s AND s.active ORDER BY p.created_at DESC,p.id DESC LIMIT 1", (owner, source_id, owner)).fetchone()
+            practice = conn.execute("SELECT p.id FROM repoviva.practice_sets p JOIN repoviva.sources s ON s.id=p.source_id WHERE p.owner=%s AND p.source_id=%s AND s.owner=%s AND s.active AND (s.selected_practice_id IS NULL OR s.selected_practice_id=p.id) ORDER BY p.created_at DESC,p.id DESC LIMIT 1", (owner, source_id, owner)).fetchone()
             if not practice:
                 return None
-            turns = conn.execute("SELECT id,payload FROM repoviva.turns WHERE practice_id=%s AND owner=%s ORDER BY position", (practice["id"], owner)).fetchall()
-            attempts = conn.execute("SELECT DISTINCT ON(a.turn_id) a.turn_id,a.answer,a.feedback FROM repoviva.attempts a JOIN repoviva.turns t ON t.id=a.turn_id WHERE t.practice_id=%s AND a.owner=%s ORDER BY a.turn_id,a.created_at DESC,a.id DESC", (practice["id"], owner)).fetchall()
-        return {"practice_id": practice["id"], "questions": [public_question(row["id"], row["payload"]) for row in turns],
-                "results": {row["turn_id"]: row["feedback"] for row in attempts},
-                "answers": {row["turn_id"]: row["answer"] for row in attempts}}
+            from backend.library import practice_snapshot
+            return practice_snapshot(conn, owner, practice["id"])
 
     def history(self, owner):
         with self.connection() as conn:
@@ -211,7 +215,7 @@ def main():
     parser.add_argument("command", choices=["migrate", "check"])
     args = parser.parse_args()
     try:
-        store = get_database()
+        store = get_database(migration=args.command == "migrate")
         store.migrate() if args.command == "migrate" else store.check()
         print("PostgreSQL migrations applied." if args.command == "migrate" else "PostgreSQL connection and schema verified.")
     except DatabaseUnavailable:
