@@ -1,0 +1,15 @@
+{
+  "date_ist": "2026-11-10",
+  "scope": "First curated SpeakSpin recording-duration challenge, with optional owned uploaded source context",
+  "backend_tests_passed": 94,
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "browser_widths": [1440, 768, 390, 360],
+  "baseline": "7 of 10 executable tests passed for the deliberately broken code",
+  "fixed": "10 of 10 tests passed after correcting the unit mismatch",
+  "route_focus": "Start challenge, History to run, and Back focus the destination main; browser assertions passed",
+  "transcript_copy": "Editable transcript and automatic saving described truthfully",
+  "review": "ship at two-fix scope; both material findings resolved",
+  "checked": ["syntax failures", "3-second infinite-loop termination", "runner frame cleanup", "network blocking", "app globals inaccessible", "forged worker messages ignored", "graduated hints", "fixture voice transcript editable", "transcription allowance only", "Neon-backed history and reload", "code edits invalidate prior results", "no overflow or runtime errors"],
+  "boundary": "Browser checks use isolated real PostgreSQL and Flask with simulated Google identity, AI, microphone and STT. Saved browser observations are not server-certified execution. Real Neon restart results are recorded separately in debugging_neon_result.json."
+}
