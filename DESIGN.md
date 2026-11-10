@@ -271,16 +271,18 @@ with the next midnight-UTC reset in local time. See
 ### Debugging practice
 
 An Operate extension of the study desk, with the editor and concrete test evidence
-carrying the visual weight. The curated SpeakSpin-inspired validator is clearly
-labeled as a separate practice copy. Optional uploaded text/source context lives
-in a disclosure with source lines; attaching it does not imply arbitrary project
-mutation. The dark monospace editor has a (12px) radius, visible border, resize
+carrying the visual weight. Debug starts from the student's active source or a
+direct source upload. The filename, section selector and original excerpt precede
+the generation action. Source-matched exercises retain filename and global line
+numbers. The dark monospace editor has a (12px) radius, visible border, resize
 handle and focus outline. Run tests is the primary action; reset and graduated
 hints remain quieter actions, with reset confirmed.
 
-Ten executed cases show inputs, expected values, actual returns and written
-pass/fail labels beside monochrome icons. Before and After counts start at the
-7/10 broken baseline and “Not run yet”; a correct repair reaches 10/10. Changing
+Generated JavaScript cases show inputs, expected values, actual returns and written
+pass/fail labels beside monochrome icons. Original code must pass all cases and
+practice code must fail at least one. Before and After counts reflect real runs.
+Other languages show a local test plan and download action, with execution marked
+unverified. Original source comparison is an explicit disclosure. Changing
 code visibly marks the old result stale until rerun. Three hints reveal one at a
 time, with an actual revealed count. Typed or transcribed hypothesis and
 explanation fields stay editable and autosave, matching the visible save status
@@ -291,8 +293,8 @@ Saved runs appear in Debug and History, with confirmed deletion. The evidence
 footer identifies the results as browser practice observations, not a certified
 assessment. The Worker runs inside an opaque sandboxed iframe with connections
 blocked and a three-second deadline; no submitted code runs on the server. Voice
-uses the existing transcription allowance; starting, hinting and testing use no
-question/review allowance. See [DEBUGGING.md](DEBUGGING.md) for the execution and
+uses the existing transcription allowance. Generation shares the question-set
+allowance; resuming, hinting and testing use no additional allowance. See [DEBUGGING.md](DEBUGGING.md) for the execution and
 storage boundary.
 
 ### Recorded verification boundary

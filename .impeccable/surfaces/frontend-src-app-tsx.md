@@ -7,7 +7,7 @@ related_targets: ["frontend/src/index.css","frontend/src/components/SourceUpload
 
 # Study workspace and saved practice
 
-Visitor mode: Operate. Route: / with Study/setup, Debug, History and Profile hash routes. Students upload source material, generate a practice set, answer by voice or text, then inspect evidence and a score. Debug adds a curated code-repair exercise. Preserve API contracts and the study flow's explicit transcript-review/submission behavior; Debug explanations autosave.
+Visitor mode: Operate. Route: / with Study/setup, Debug, History and Profile hash routes. Students upload source material, generate a practice set, answer by voice or text, then inspect evidence and a score. Debug derives a controlled code-repair exercise from the student's uploaded source. Preserve the study flow's explicit transcript-review/submission behavior; Debug explanations autosave.
 
 ## Direction contract
 
@@ -49,17 +49,19 @@ Closing material retains saved practice; permanent deletion is confirmed in Hist
 Verification: .impeccable/review/history/result.json; reviewed desktop and phone
 captures, real isolated DB and fixture identity, simulated AI/STT.
 
-## Curated debugging flow
+## Debugging from uploaded source
 
 Mode: Operate. The same silver/charcoal, Geist, focus and interactive dot-pattern
-world extends to Debug. The catalogue introduces one SpeakSpin-inspired recording
-validator, its concrete failing call and an optional owned text/source attachment
-as reference context. It is a separate practice function, not arbitrary project
-mutation or a detected defect in the learner's live project.
+world extends to Debug. The entry shows the student's active source file, a new
+upload action, section selector and original excerpt. No source produces a real
+upload empty state. Groq creates a deliberate change to an exact source excerpt,
+with its filename, global lines, hints and test plan. This is not a detected defect.
 
-A run places the code editor left and ten executable cases right on desktop,
-stacking below 900px with locally scrolling code. Before/After counts pair the
-7/10 broken baseline with the learner's result; the correct repair passes 10/10.
+A run places the code editor left and generated JavaScript cases right on desktop,
+stacking below 900px with locally scrolling code. Before/After counts are real;
+the original code must pass the cases and practice code must fail at least one.
+Other languages show local verification instructions and a download action,
+explicitly without execution claims. A disclosure can reveal the original source.
 Written pass/fail labels, actual returns and expected values keep evidence
 inspectable. Editing code makes the old verdict stale until rerun. Three
 graduated hints reveal individually. Hypothesis and why-the-fix-works fields
@@ -70,8 +72,8 @@ correctness verdict. Saved runs reopen from Debug and History; deletion is confi
 
 The browser executes learner code in a Worker inside an opaque sandboxed iframe,
 with CSP-blocked connections and a three-second deadline; no submitted code runs
-server-side. Results are client observations, not certified assessment. Starting,
-hinting and running tests use no question/review allowance; voice uses the daily
+server-side. Results are client observations, not certified assessment. Generation
+uses one question-set allowance; resuming, hinting and tests use no extra allowance. Voice uses the daily
 transcription allowance. Original source files remain unchanged.
 
 Verification: `.impeccable/review/debug/result.json` and

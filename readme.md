@@ -4,9 +4,10 @@ Practice explaining a project, with feedback grounded in its source code.
 
 **Latest features:** [History and Profile](HISTORY_PROFILE.md) restore saved files,
 drafts, practice and scores, with daily allowances of 10 question sets, 30 answer
-reviews and 10 transcriptions. [Debugging practice](DEBUGGING.md) adds a controlled
-SpeakSpin recording bug, graduated hints, executable browser tests and spoken
-reasoning. Build/lint and 94 backend tests pass; browser checks cover four widths.
+reviews and 10 transcriptions. [Debugging practice](DEBUGGING.md) generates a
+controlled exercise from the student's uploaded source, with graduated hints,
+JavaScript browser tests or a local test plan for other languages, and spoken
+reasoning. Exercise generation shares the question-set allowance.
 
 **November 10, 2026:** [Neon PostgreSQL](POSTGRES.md) now saves identities, material, practice and scores across restarts. The live upload, Groq question/grading, browser restoration, and server-restart flow is recorded in [the Neon check](checks/neon_result.json). Real Google account sign-in and public Render hosting remain separate checks.
 
