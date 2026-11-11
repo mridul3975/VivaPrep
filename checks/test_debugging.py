@@ -48,6 +48,18 @@ class DebuggingTests(unittest.TestCase):
         self.client.delete('/history/documents/' + source['source_id'])
         self.assertEqual(self.client.get('/debug/runs/' + run['id']).status_code, 404)
 
+    def test_old_sample_links_cannot_restore_or_mutate_sample(self):
+        with self.store.connection() as conn:
+            conn.execute("INSERT INTO repoviva.debug_runs(id,owner,scenario_id,state) VALUES(%s,%s,%s,'{}'::jsonb)",
+                         ('archived-check', 'google:db-one', 'recording-duration-v1'))
+        url = '/debug/runs/archived-check'
+        self.assertEqual(self.client.get('/debug/runs').get_json()['runs'], [])
+        self.assertEqual(self.other.get(url).status_code, 404)
+        for response in (self.client.get(url), self.client.patch(url, json={'code': 'anything'}), self.client.post(url + '/hint')):
+            self.assertEqual(response.status_code, 410)
+            self.assertIn('own source file', response.get_json()['error'])
+        self.assertEqual(self.client.delete(url).status_code, 204)
+
     def test_failure_refunds_allowance_without_creating_sample_and_enforces_limit(self):
         source = self.upload(CODE.encode(), 'tax.js')
         before = self.client.get('/profile').get_json()['usage']['allowances']['questions']['used']

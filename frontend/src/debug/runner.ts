@@ -38,7 +38,7 @@ self.onmessage = event => {
   send(results);
 };`
 
-export function runInSandbox(code: string, tests: DebugTest[], signal?: AbortSignal, functionName = 'validateRecording'): Promise<TestObservation[]> {
+export function runInSandbox(code: string, tests: DebugTest[], signal: AbortSignal | undefined, functionName: string): Promise<TestObservation[]> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) { reject(new DOMException('Cancelled', 'AbortError')); return }
     const frame = document.createElement('iframe')

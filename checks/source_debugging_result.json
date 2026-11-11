@@ -1,7 +1,7 @@
 {
   "date_ist": "2026-11-11",
   "scope": "Replace default SpeakSpin challenge with owned uploaded-source exercises",
-  "backend_suite": "102 tests passed before final validation refinements; 15 targeted generator/PostgreSQL checks passed after those refinements",
+  "backend_suite": "102 tests passed before final validation refinements; 16 targeted generator/PostgreSQL checks passed including retired bookmarks",
   "frontend_build": "passed",
   "frontend_lint": "0 warnings, 0 errors",
   "development_proxy": "13 requests passed",
@@ -17,6 +17,7 @@
       "History labels use actual filename and challenge title",
       "Edits invalidate old results",
       "Different Python upload produces Python practice code with local verification and no executed-test claim",
+      "Retired sample bookmark recovery opens own-source upload without showing a sample editor",
       "No page overflow at checked widths"
     ],
     "boundary": "Real isolated PostgreSQL/Flask persistence and browser sandbox. Disposable signed identity and deterministic provider fixture for UI workflow; not live Google sign-in or microphone verification."
@@ -32,5 +33,6 @@
   "runner": "Nested JSON, scalar outputs, non-finite rejection, app-window isolation and three-second timeout passed",
   "local_backend": "Reloaded existing Gunicorn worker; localhost:5173/health reports ok and postgresql",
   "storage": "Existing debug_runs JSONB supports source snapshots; no migration required",
-  "deployment": "Working-tree change only; not pushed or deployed to Render"
+  "render_before_final_cleanup": "Public HTTPS page served the source-derived build index-CEl-ziM8.js; /health returned ok and postgresql",
+  "deployment": "Main source-derived workflow already pushed; final legacy-retirement cleanup is verified locally. Deployment confirmation is reported separately after publication."
 }

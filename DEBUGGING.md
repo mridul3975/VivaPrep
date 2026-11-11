@@ -58,7 +58,8 @@ Migration 003's JSONB state already supports source-specific scenario snapshots;
 no new migration is required. Each run requires an authenticated owner, a valid
 owned source ID and CSRF for writes. The newest 20 source-derived runs are listed,
 with up to 100 per user. Legacy sample runs are kept as archived records but no
-longer offered in the Debug or History lists.
+longer offered in the Debug or History lists. Old bookmarks return HTTP 410 with
+a route back to choosing the student's own source; they cannot restore the sample.
 
 - GET `/debug/challenges`: empty list and `requires_source: true` for compatibility.
 - GET `/debug/runs`: recent source-derived exercises with filename/title.
