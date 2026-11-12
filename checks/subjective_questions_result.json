@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "date": "2026-11-12",
+  "behavior": [
+    "Prepared Python Study questions and follow-ups ask for explanations and code traces",
+    "Generated questions require reasoning; Boolean or output-only packages fail validation",
+    "Explanation criteria are graded by the source-backed AI evaluator",
+    "Prepared question creation remains free; subjective feedback uses one review allowance",
+    "Old Boolean demo sets remain historical and are not reused for new demo practice",
+    "Retrying an archived demo creates the explanatory version without changing old history",
+    "Each Debug answer box owns its recorder, playback and transcript review",
+    "Destination dropdown removed; only one recorder may capture or transcribe at a time",
+    "Cancellation sends no audio, edits reset only the affected confirmation, and speech never auto-submits"
+  ],
+  "backend": {
+    "command": "TEST_DATABASE_URL=<isolated repoviva_test> .venv/bin/python -m unittest discover -s checks -p test_*.py -q",
+    "output": "Ran 139 tests in 25.390s; OK",
+    "final_retry_history_regressions": "19 targeted tests passed after adding archived-demo retry upgrade"
+  },
+  "frontend": {
+    "build": "npm run build: passed",
+    "lint": "npm run lint: Found 0 warnings and 0 errors",
+    "browser": "passed at 1440, 390 and 360 pixels, without page overflow or runtime errors",
+    "private_evidence": ".impeccable/review/subjective/result.json"
+  },
+  "live_groq": {
+    "generated_open_ended_questions": 2,
+    "bare_false_score": 0,
+    "reasoned_answer_score": 100,
+    "evidence": "checks/subjective_questions_live_result.json"
+  },
+  "boundary": "Local Flask, isolated PostgreSQL and guest auth exercised with real browser MediaRecorder/WAV conversion and a simulated microphone. STT and UI grading used fixtures; live Groq was verified separately. Test-only guest caps were raised to exercise every recorder. Production default quotas stay unchanged. Physical microphone and live Prisma were not retested.",
+  "deployment": "Local only; no push or Render deployment performed",
+  "storage": "No new database migration"
+}
