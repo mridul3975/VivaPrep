@@ -166,6 +166,14 @@ def retry_practice(practice_id):
             raise StudyConflict("Practice not found.", 404)
         rows = conn.execute("SELECT payload FROM repoviva.turns WHERE practice_id=%s AND owner=%s AND NOT(payload ? 'parent_turn_id') ORDER BY position", (practice_id, owner)).fetchall()
     activate(owner, practice["source_id"], practice_id)
+    # Retrying an archived Boolean demo starts the current explanatory version;
+    # the old questions and scores stay untouched in that historical practice.
+    from backend import example
+    if rows and all(row['payload']['question_package'].get('prepared_example') in {'prime-v1', example.QUESTION_VERSION} for row in rows):
+        template = rows[0]['payload']
+        rows = [{'payload': {**template, 'question': package['question'], 'question_package': package,
+                             'snippet': next(item for item in template['snippets'] if str(item['id']) == package['rubric'][0]['snippet_id'])}}
+                for package in example.question_set(template['snippets'], min(len(rows), 3))]
     records = {uuid.uuid4().hex: {**row["payload"], "created": time.monotonic(), "busy": False} for row in rows}
     if not records:
         raise StudyConflict("This practice has no saved questions.", 409)
