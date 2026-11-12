@@ -1,0 +1,8 @@
+.uilora-effect { pointer-events: none; display: block; }
+.uilora-raster { position: fixed; inset: 0; width: 100%; height: 100dvh; z-index: -1; opacity: .28; }
+.uilora-aurora { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; border-radius: inherit; opacity: .6; }
+.material-panel, .start-panel, .brand-mark { position: relative; isolation: isolate; }
+.material-panel, .start-panel { overflow: hidden; }
+.debug-exercise-shell { background: transparent; }
+.debug-exercise-shell .brand-mark .uilora-aurora { display: none; }
+@media (forced-colors: active) { .uilora-effect { display: none; } }
