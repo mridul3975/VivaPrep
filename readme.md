@@ -6,8 +6,9 @@ Practice explaining a project, with feedback grounded in its source code.
 drafts, practice and scores, with daily allowances of 10 question sets, 30 answer
 reviews and 10 transcriptions. [Debugging practice](DEBUGGING.md) generates a
 controlled exercise from the student's uploaded source, with graduated hints,
-JavaScript browser tests or a local test plan for other languages, and spoken
-reasoning. Exercise generation shares the question-set allowance.
+JavaScript browser tests and in-app source comparison or AI review for other
+languages, with a saved score and spoken reasoning. Exercise generation shares
+the question-set allowance; AI repair reviews share the answer-review allowance.
 
 **November 10, 2026:** [Neon PostgreSQL](POSTGRES.md) now saves identities, material, practice and scores across restarts. The live upload, Groq question/grading, browser restoration, and server-restart flow is recorded in [the Neon check](checks/neon_result.json). Real Google account sign-in and public Render hosting remain separate checks.
 
