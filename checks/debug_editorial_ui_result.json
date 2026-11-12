@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-12",
+  "feature": "Debug exercise layout from user screenshot and pasted HTML",
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "browser": {
+    "status": "passed",
+    "widths": [1440, 1040, 390, 360],
+    "checks": ["Editable highlighted source and original line numbers", "Current, stale, incorrect and accepted solution states", "Source disclosure and hints collapse", "Vertical and horizontal editor scroll synchronization", "Save and Exercises navigation", "Real sandboxed JavaScript baseline and repair", "No horizontal overflow or runtime errors"],
+    "boundary": "Production React build in Chrome, mocked authentication and API responses; live backend, OAuth, voice and provider calls were not tested"
+  },
+  "fonts": "Self-hosted Newsreader, Work Sans and IBM Plex Mono from Google Fonts, with SIL OFL licenses",
+  "deployment": "Local changes; no Render deployment performed"
+}
