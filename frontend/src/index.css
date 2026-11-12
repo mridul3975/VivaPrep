@@ -4,7 +4,7 @@
   font-family: 'Geist Variable', sans-serif;
   color-scheme: dark;
   --bg: #111214;
-  --page-dot: rgb(165 166 174 / 0.3);
+
   --surface: #1a1b1e;
   --surface-raised: #222326;
   --surface-hover: #2c2d31;
@@ -32,76 +32,11 @@ body {
   margin: 0;
   min-width: 320px;
   background-color: var(--bg);
-  /* Base dots stay aligned with the interactive layers in DotPattern. */
-  background-image: radial-gradient(circle, var(--page-dot) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-attachment: fixed;
   color: var(--text);
   font-size: 14px;
   line-height: 1.6;
 }
-@property --dot-pointer-x {
-  syntax: '<length>';
-  initial-value: -1000px;
-  inherits: true;
-}
-@property --dot-pointer-y {
-  syntax: '<length>';
-  initial-value: -1000px;
-  inherits: true;
-}
-#root {
-  isolation: isolate;
-  min-height: 100dvh;
-}
-.dot-pattern {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-.dot-pattern[data-pointer-moving='true'] {
-  transition:
-    --dot-pointer-x 160ms ease-out,
-    --dot-pointer-y 160ms ease-out;
-}
-.dot-pattern-cursor,
-.dot-pattern-wave {
-  position: absolute;
-  inset: 0;
-  mask-repeat: repeat;
-  mask-size: 24px 24px;
-}
-.dot-pattern-cursor {
-  background: radial-gradient(
-    120px circle at var(--dot-pointer-x) var(--dot-pointer-y),
-    rgb(222 222 227 / 0.95),
-    rgb(222 222 227 / 0.5) 40%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(circle, #000 1.75px, transparent 1.75px);
-  opacity: 0;
-  transition: opacity 180ms ease-out;
-}
-.dot-pattern[data-pointer-active='true'] .dot-pattern-cursor {
-  opacity: 1;
-}
-.dot-pattern-wave {
-  background-image: linear-gradient(
-    115deg,
-    transparent 42%,
-    rgb(165 166 174 / 0.18) 50%,
-    transparent 58%
-  );
-  background-size: 300% 300%;
-  mask-image: radial-gradient(circle, #000 1px, transparent 1px);
-  animation: dot-pattern-wave 12s linear infinite;
-}
-.dot-pattern[data-visible='false'] .dot-pattern-wave {
-  animation-play-state: paused;
-}
-
+#root { isolation: isolate; min-height: 100dvh; }
 /* Shared pages extend the study desk's existing charcoal surfaces. */
 .debug-save-state { display: flex; align-items: center; gap: 16px; color: var(--muted); font-size: 12px; }
 .debug-save-state .text-button { font-size: 12px; }
@@ -292,18 +227,6 @@ body {
   .profile-save { align-items: flex-start; }
 }
 @media (max-width: 390px) { .page-back-bar { width: calc(100% - 40px); } }
-@keyframes dot-pattern-wave {
-  from { background-position: 100% 100%; }
-  to { background-position: 0% 0%; }
-}
-@media (hover: none), (pointer: coarse) {
-  .dot-pattern-cursor { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dot-pattern-wave { animation: none; }
-  .dot-pattern,
-  .dot-pattern-cursor { transition: none; }
-}
 button,
 input,
 textarea {
@@ -437,7 +360,7 @@ h3 {
   height: 40px;
   place-items: center;
   border-radius: 11px;
-  background: linear-gradient(145deg, #45464c, #26272b);
+  background: #111216;
   box-shadow: 0 3px 8px #0004;
   color: #ececf1;
 }
@@ -576,7 +499,7 @@ h3 {
   padding: 30px;
   border: 1px solid #3a3b40;
   border-radius: 16px;
-  background: linear-gradient(145deg, #242529, #1b1c1f 80%);
+  background: #111216;
 }
 .material-heading h2,
 .connection-panel h2 {
@@ -705,7 +628,7 @@ h3 {
   flex-direction: column;
   padding: 30px;
   border-radius: 16px;
-  background: linear-gradient(145deg, #2d2e33, #202125 75%);
+  background: #111216;
 }
 .start-panel > .icon {
   color: #c6c6d0;
@@ -2168,7 +2091,7 @@ pre {
   padding: 28px 30px;
   border: 1px solid #3e4048;
   border-radius: 16px;
-  background: linear-gradient(150deg, #383a42 0%, #202126 34%, #17181b 75%);
+  background: #111216;
 }
 .session-console-heading {
   display: flex;
