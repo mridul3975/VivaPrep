@@ -72,3 +72,48 @@ def resolve_review(owner, turn_id, metadata, require_confirmed=False):
     if require_confirmed and not metadata['reviewed']:
         raise StudyConflict('Confirm the transcript matches what you meant before submitting.',400)
     return {**row,'reviewed':metadata['reviewed']}
+
+
+DEBUG_FIELDS = {'hypothesis', 'explanation', 'failing_input'}
+
+
+def debug_context(owner, run_id, field):
+    if field not in DEBUG_FIELDS or not isinstance(run_id, str) or not run_id.strip():
+        raise StudyConflict('Choose a valid debugging transcript destination.', 400)
+    if not database_enabled():
+        raise StudyConflict('Saved debugging practice requires database storage.', 503)
+    with get_database().connection() as conn:
+        row = conn.execute('SELECT state FROM repoviva.debug_runs WHERE id=%s AND owner=%s', (run_id, owner)).fetchone()
+    if not row:
+        raise StudyConflict('Debugging practice not found.', 404)
+    scenario = row['state'].get('scenario', {})
+    if not scenario.get('reference_code'):
+        raise StudyConflict('Open a source-based debugging exercise first.', 409)
+    return [{'content': scenario['reference_code'].splitlines()}]
+
+
+def store_debug_review(owner, run_id, field, transcript, snippets):
+    record = {'receipt_id': uuid.uuid4().hex, 'original_transcript': transcript,
+              'checks': suggested_checks(transcript, snippets), 'reviewed': False}
+    with get_database().connection() as conn:
+        row = conn.execute('SELECT state FROM repoviva.debug_runs WHERE id=%s AND owner=%s FOR UPDATE', (run_id, owner)).fetchone()
+        if not row:
+            raise StudyConflict('Debugging practice was deleted. Open another exercise.', 404)
+        state = {**row['state']}
+        state['speech_receipts'] = {**state.get('speech_receipts', {}), field: record}
+        conn.execute('UPDATE repoviva.debug_runs SET state=%s WHERE id=%s AND owner=%s', (Jsonb(state), run_id, owner))
+    return record
+
+
+def resolve_debug_reviews(state, metadata):
+    if not isinstance(metadata, dict) or set(metadata) - DEBUG_FIELDS:
+        raise StudyConflict('Invalid debugging transcript reviews.', 400)
+    reviews = {}
+    for field, value in metadata.items():
+        if not isinstance(value, dict) or set(value) != {'receipt_id', 'reviewed'} or not isinstance(value['receipt_id'], str) or type(value['reviewed']) is not bool:
+            raise StudyConflict('Invalid debugging transcript review.', 400)
+        receipt = state.get('speech_receipts', {}).get(field)
+        if not receipt or receipt['receipt_id'] != value['receipt_id']:
+            raise StudyConflict('This recording was replaced. Record again or use a typed answer.', 409)
+        reviews[field] = {**receipt, 'reviewed': value['reviewed']}
+    return reviews
