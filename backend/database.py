@@ -37,6 +37,7 @@ def database_enabled():
 
 def public_question(turn_id, turn):
     return {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
+            'prepared_example': turn['question_package'].get('prepared_example'),
             'parent_turn_id': turn.get('parent_turn_id'), 'parent_answer': turn.get('parent_answer'),
             "evidence": turn["snippet"], "evidence_snippets": turn["snippets"]}
 
