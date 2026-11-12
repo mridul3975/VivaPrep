@@ -2,6 +2,11 @@
 
 Practice explaining a project, with feedback grounded in its source code.
 
+**Try as guest:** visitors can upload their material without Google sign-in, or
+use the free prepared Python prime checker in Study and Debug. Guest AI use is
+limited per visitor and globally. Valid guest work transfers on Google sign-in.
+See [guest access](GUEST_ACCESS.md) for limits, retention and migration 004.
+
 **Latest features:** [History and Profile](HISTORY_PROFILE.md) restore saved files,
 drafts, practice and scores, with daily allowances of 10 question sets, 30 answer
 reviews and 10 transcriptions. [Debugging practice](DEBUGGING.md) generates a
