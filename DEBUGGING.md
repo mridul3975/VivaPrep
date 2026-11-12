@@ -76,3 +76,5 @@ allowances/failure refunds and stale observations. Current evidence is recorded
 in `checks/source_debugging_result.json`; previous curated-exercise verification
 files are historical. Live Google sign-in and a Render deployment are separate
 from local signed-identity fixture checks.
+
+<!-- specs: solution checking requirements for non-JS languages -->
