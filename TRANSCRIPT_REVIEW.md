@@ -38,6 +38,9 @@ The Study client sends `turn_id` in multipart `/transcriptions`. The backend
 checks ownership before calling the provider and copies source context from
 the saved turn. Other existing clients, including Debug voice explanations,
 can still omit `turn_id` and receive the original transcript-only response.
+Debug now supplies `debug_run_id` and `debug_field` instead, retaining an owned
+per-field receipt in the existing run state. Its viva answers must be confirmed
+before review; original speech is kept out of the evaluator prompt. See DEBUGGING.md.
 Review suggestions use no extra AI request or allowance. Voice and final grading
 keep their existing allowances.
 
