@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import VoiceRecorder, { type RecordingPhase } from './components/VoiceRecorder'
 import VivaPurpose from './components/VivaPurpose'
+import useBackendConnection from './useBackendConnection'
 import BrandLogo from './components/BrandLogo'
 import DebugPage from './pages/DebugPage'
 import SourceUpload, { type SourceDocument } from './components/SourceUpload'
@@ -188,10 +189,8 @@ async function readResponse(response: Response): Promise<unknown> {
 export default function App({ initialAction, onEntryHandled }: { initialAction?: 'demo' | 'upload'; onEntryHandled?: () => void }) {
   const { apiFetch, storageMode } = useAuth()
   const { route, navigate, back, depth } = useNavigation()
-  const [backendReady, setBackendReady] = useState(false)
+  const { backendReady, backendError, incompatible, retryBackend } = useBackendConnection()
   const entryStarted = useRef(false)
-  const [backendError, setBackendError] = useState('')
-  const [backendAttempt, setBackendAttempt] = useState(0)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
   const [submittingAnswer, setSubmittingAnswer] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
@@ -256,41 +255,6 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
     window.addEventListener('pagehide', departing)
     return () => window.removeEventListener('pagehide', departing)
   }, [apiFetch, storageMode])
-  useEffect(() => {
-    let active = true
-    const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 30_000)
-    async function checkBackend() {
-      try {
-        const response = await fetch('/health', {
-          cache: 'no-store',
-          signal: controller.signal,
-        })
-        const data = await response.json()
-        if (!response.ok || data.api_version !== 'study-v2') {
-          throw new Error(
-            'The backend is running an older version. Restart Flask with python -m backend.app, then retry the connection.',
-          )
-        }
-        if (active) setBackendReady(true)
-      } catch (error) {
-        if (active)
-          setBackendError(
-            error instanceof Error && error.message.includes('older version')
-              ? error.message
-              : 'Cannot connect to the current backend. Start Flask, then retry the connection.',
-          )
-      } finally {
-        window.clearTimeout(timeout)
-      }
-    }
-    void checkBackend()
-    return () => {
-      active = false
-      controller.abort()
-      window.clearTimeout(timeout)
-    }
-  }, [backendAttempt])
   const handleSourceChange = useCallback((source: SourceDocument | null) => {
     draft.current = null
     setActiveSource(source)
@@ -373,7 +337,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
       !data.questions.every(isQuestionResponse)
     ) {
       throw new Error(
-        'The backend did not return the current question format. Restart Flask and reload, then upload your file again.',
+        'The question response could not be read. Please retry; if this continues, reload the page.',
       )
     }
     if (
@@ -382,7 +346,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
       )
     ) {
       throw new Error(
-        'The backend used a different source. Restart Flask, reload, and upload your material again.',
+        'The question did not match your selected file. Select your material again and retry.',
       )
     }
     setQuestionSet(data.questions)
@@ -806,7 +770,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
             {backendReady
               ? 'Ready to practice'
               : backendError
-                ? 'Backend unavailable'
+                ? 'Connection interrupted'
                 : 'Connecting…'}
           </div>
           <AccountControls disabled={busy} beforeSignIn={async () => { await saveDraft(); await debugSave.current?.() }} />
@@ -836,19 +800,18 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
           <div role="alert" className="error-banner">
             <Icon name="info" />
             <div>
-              <strong>Let’s try that again.</strong>
+              <strong>{backendError ? 'Reconnecting to your workspace' : 'Let’s try that again.'}</strong>
               <p>{error || backendError}</p>
               {backendError && (
                 <button
                   className="text-button"
                   type="button"
                   onClick={() => {
-                    setBackendError('')
-                    setBackendReady(false)
-                    setBackendAttempt((value) => value + 1)
+                    if (incompatible) window.location.reload()
+                    else retryBackend()
                   }}
                 >
-                  Retry connection <Icon name="refresh" size={15} />
+                  {incompatible ? 'Reload page' : 'Retry connection'} <Icon name="refresh" size={15} />
                 </button>
               )}
             </div>
@@ -877,7 +840,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
                 </div>
               </div>
             )}
-            {backendReady ? (
+            {backendReady || activeSource ? (
               <SourceUpload
                 restoredSource={sourceOverride}
                 beforeSourceChange={saveDraft}
@@ -902,7 +865,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
                 <h2>Your material starts here.</h2>
                 <p>
                   {backendError
-                    ? 'Reconnect to the backend to upload your material.'
+                    ? 'Waiting for the service to reconnect. Your work will stay on this page.'
                     : 'Getting your workspace ready…'}
                 </p>
                 <div className="skeleton-line" />
