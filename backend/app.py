@@ -22,7 +22,7 @@ from backend.evidence.retrieve import retrieve
 from backend.evidence.uploads import uploads, next_source_evidence, owned_source
 from backend.evidence.documents import DocumentError
 from backend.speech.transcriber import TranscriptionError, transcribe_wav
-from backend.speech.review import store_review, resolve_review
+from backend.speech.review import store_review, resolve_review, debug_context, store_debug_review
 from backend.auth import auth, protect_study_routes
 from backend.database import database_enabled, get_database, DatabaseUnavailable, StudyConflict, public_question
 from backend.account import account, allowance, UsageLimit, quota_error
@@ -342,7 +342,13 @@ def transcribe_upload():
     try:
         with allowance("transcriptions"):
             turn_id = request.form.get('turn_id')
+            debug_run_id = request.form.get('debug_run_id')
+            debug_field = request.form.get('debug_field')
+            if (turn_id and debug_run_id) or (debug_field and not debug_run_id):
+                raise StudyConflict('Choose one question or debugging exercise for the recording.', 400)
             evidence = None
+            if debug_run_id:
+                evidence = debug_context(g.user['id'], debug_run_id, debug_field)
             if turn_id:
                 if database_enabled():
                     with get_database().connection() as conn:
@@ -355,9 +361,11 @@ def transcribe_upload():
                 if evidence is None:
                     raise StudyConflict('Question not found. Return to your current practice.',404)
             transcript = transcribe_wav(audio, filename)
-            if turn_id and len(transcript) > 4000:
+            if (turn_id or debug_run_id) and len(transcript) > 4000:
                 raise TranscriptionError('Transcript exceeds the answer limit')
             review = store_review(g.user['id'],turn_id,transcript,evidence) if turn_id else None
+            if debug_run_id:
+                review = store_debug_review(g.user['id'], debug_run_id, debug_field, transcript, evidence)
     except TranscriptionError:
         app.logger.warning("Audio transcription failed")
         return jsonify({"error": "Unable to transcribe this recording. Please retry or type your answer."}), 502
