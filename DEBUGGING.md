@@ -79,3 +79,4 @@ from local signed-identity fixture checks.
 
 <!-- specs: solution checking requirements for non-JS languages -->
 <!-- specs: direct source comparison scoring model (100/0) -->
+<!-- specs: AI review flow for alternative repairs -->
