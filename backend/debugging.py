@@ -167,3 +167,4 @@ def hint(run_id):
 # feat(debug): update check_solution payload schema
 # feat(debug): wire quota deduction
 # feat(debug): ensure direct source match bypasses allowance
+# feat(debug): return verified score in check response
