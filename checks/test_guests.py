@@ -9,7 +9,7 @@ from backend.auth import guest_identities
 from backend.guest_limits import events
 from checks import test_auth as auth_tests
 from checks import test_postgres as pgtests
-from checks.quiz_fixtures import fake_question_set
+from checks.quiz_fixtures import fake_question_set, fake_grade
 from backend.interview.question_generator import QuestionGenerationError
 from backend.example import CODE
 
@@ -45,23 +45,25 @@ class GuestMemoryTests(unittest.TestCase):
         resumed = guest(self.client)
         self.assertEqual(resumed['user']['id'], first['user']['id'])
 
-    def test_prepared_questions_and_grades_remain_free_with_zero_budget(self):
+    def test_prepared_questions_free_but_subjective_feedback_uses_review_budget(self):
         guest(self.client)
         with patch.dict(os.environ, {'GUEST_QUESTION_LIMIT':'0','GUEST_REVIEW_LIMIT':'0','GUEST_DAILY_QUESTIONS_LIMIT':'0','GUEST_DAILY_ANSWERS_LIMIT':'0'}), patch('backend.app.generate_question_set') as provider, patch('backend.app.grade_answer') as grader:
             source = self.client.post('/sources/example').get_json()
             questions = self.client.post('/questions', json={'source_id': source['source_id']}).get_json()['questions']
             self.assertEqual(len(questions), 3)
-            for question, answer in zip(questions, ('False','True','False')):
-                result = self.client.post('/answers', json={'turn_id': question['turn_id'], 'answer': answer})
-                self.assertEqual(result.status_code, 200, result.get_json())
-                self.assertEqual(result.get_json()['score']['percentage'], 100)
-                self.assertIn(result.get_json()['criteria'][0]['quote'], CODE)
-            wrong = self.client.post('/answers', json={'turn_id': questions[0]['turn_id'], 'answer':'True'}).get_json()
-            self.assertEqual(wrong['score']['percentage'], 0)
+            for question in questions:
+                self.assertNotIn('Answer True or False', question['question'])
+                result = self.client.post('/answers', json={'turn_id': question['turn_id'], 'answer': 'The early return exits before the loop.'})
+                self.assertEqual(result.status_code, 429, result.get_json())
             repeated = self.client.post('/questions', json={'source_id': source['source_id']}).get_json()['questions']
             self.assertEqual(repeated, questions)
             provider.assert_not_called(); grader.assert_not_called()
             self.assertEqual(len(events), 1)  # Only session admission, no AI reservation.
+        with patch('backend.app.grade_answer', side_effect=fake_grade) as grader:
+            result = self.client.post('/answers', json={'turn_id': questions[0]['turn_id'], 'answer': 'Input 1 satisfies number < 2, so it returns before the loop.'})
+            self.assertEqual(result.status_code, 200, result.get_json())
+            self.assertEqual(grader.call_count, 1)
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['answers']['used'], 1)
 
     def test_network_creation_limit_does_not_block_existing_guest(self):
         first = guest(self.client)
@@ -79,7 +81,8 @@ class GuestMemoryTests(unittest.TestCase):
         self.assertFalse(response.get_json()['user']['is_guest'])
         self.client.environ_base['HTTP_X_CSRF_TOKEN'] = response.get_json()['csrf_token']
         self.assertEqual(self.client.get('/sources/current').get_json()['source_id'], source['source_id'])
-        self.assertEqual(self.client.post('/answers', json={'turn_id':question['turn_id'],'answer':'False'}).status_code, 200)
+        with patch('backend.app.grade_answer', side_effect=fake_grade):
+            self.assertEqual(self.client.post('/answers', json={'turn_id':question['turn_id'],'answer':'The early return exits before the loop.'}).status_code, 200)
         self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['questions']['limit'], 10)
 
 
@@ -146,7 +149,8 @@ class GuestPostgresTests(unittest.TestCase):
     def test_account_transfer_preserves_work_and_revokes_old_identity(self):
         source = self.client.post('/sources/example').get_json()
         question = self.client.post('/questions', json={'source_id':source['source_id']}).get_json()['questions'][0]
-        self.client.post('/answers', json={'turn_id':question['turn_id'],'answer':'False'})
+        with patch('backend.app.grade_answer', side_effect=fake_grade):
+            self.assertEqual(self.client.post('/answers', json={'turn_id':question['turn_id'],'answer':'The early return exits before the loop.'}).status_code, 200)
         run = self.client.post('/debug/runs', json={'source_id':source['source_id']}).get_json()
         old = self.client.get('/auth/session').get_json()['user']['id']
         with app.app_context():
