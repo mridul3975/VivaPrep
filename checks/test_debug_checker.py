@@ -22,3 +22,5 @@ class DebugCheckerTests(unittest.TestCase):
             self.assertIsNone(result['score'])
             self.assertEqual(result['method'], 'ai_review')
             provider.return_value = {'verdict': 'correct', 'explanation': ''}
+            with self.assertRaises(ValueError):
+                check_solution('different', exercise)
