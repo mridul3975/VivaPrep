@@ -209,7 +209,7 @@ export default function AuthGate() {
         headers,
         credentials: 'same-origin',
       })
-      if ((init.method ?? 'GET').toUpperCase() !== 'GET' && /^\/(questions|answers|transcriptions|debug\/runs)/.test(path)) window.dispatchEvent(new Event('repoviva-usage-changed'))
+      if ((init.method ?? 'GET').toUpperCase() !== 'GET' && /^\/(questions|answers|transcriptions|debug\/runs|viva\/turns)/.test(path)) window.dispatchEvent(new Event('repoviva-usage-changed'))
       if (
         response.status === 401 ||
         (response.status === 403 && response.headers.get('X-RepoViva-API'))
