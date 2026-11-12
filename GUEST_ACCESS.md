@@ -12,16 +12,24 @@ History, with at most one active source.
 ## The example
 
 Study and Debug both offer **Use Python example**. The backend supplies a correct
-`is_prime` function, explicitly labeled as prepared. Study has three True/False
-return-value questions and deterministic feedback. Debug changes the loop boundary
+`is_prime` function, explicitly labeled as prepared. Study has three open-ended
+questions about the early return, a loop trace and the perfect-square boundary.
+Each has an explanatory reference answer and two source-backed criteria, graded
+by the normal AI evaluator. A bare True/False is insufficient reasoning. Debug changes the loop boundary
 so 9 is accepted as prime. Restoring the source earns 100/100 without a provider
 request. Different repairs can receive a quota-controlled AI review. Reopening
 the sample reuses owned prepared practice/Debug where possible.
 
 Personal uploads use the existing source-grounded AI flow, without silent sample
-fallbacks. Prepared questions, Boolean feedback, exercise creation and source
-comparison remain free when personal or shared AI allowances are exhausted.
-Voice and AI review of alternative repairs still use their allowances.
+fallbacks. Prepared question creation, follow-up creation, Debug exercise creation
+and source comparison remain free when personal or shared AI allowances are
+exhausted. AI feedback on explanations uses one answer-review allowance per
+submission. Speech and AI reviews of alternative repairs/repair vivas also use
+their allowances. The UI discloses this distinction.
+
+New prepared questions carry `prime-explain-v2`. Cached Boolean sets are not reused
+for new practice or automatic demo restoration. Older sets and their recorded
+scores remain in History; their legacy grader is retained only for those saved turns.
 
 ## Limits
 
