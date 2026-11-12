@@ -10,3 +10,5 @@ class DebugCheckerTests(unittest.TestCase):
         self.assertFalse(matches_reference('def f(x):\n    return "a b"', 'def f(x):\n    return "ab"', 'Python'))
         self.assertFalse(matches_reference('def f(:', 'def f(x):\n    return x', 'Python'))
         self.assertFalse(matches_reference('function f(){return "a b"}', 'function f(){return "ab"}', 'JavaScript'))
+
+    def test_direct_repairs_do_not_call_provider_and_uncertain_has_no_score(self):
