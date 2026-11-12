@@ -1,5 +1,18 @@
 @import 'tailwindcss';
 [hidden] { display: none !important; }
+.transcript-review { padding: 18px; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 12px; }
+.transcript-review h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+.transcript-review p { color: var(--muted); line-height: 1.7; }
+.transcript-review details { margin-block: 14px; }
+.transcript-review summary { cursor: pointer; }
+.transcript-original { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 10px; }
+.transcript-review ul { list-style: none; padding: 0; margin-block: 15px; }
+.transcript-review li { padding-block: 12px; border-top: 1px solid var(--border); }
+.transcript-review li p { display: flex; gap: 12px; flex-wrap: wrap; }
+.transcript-review small { display: block; color: var(--muted); margin-block: 5px; }
+.transcript-review .text-button { font-size: 12px; }
+.transcript-confirm { display: flex; align-items: flex-start; gap: 10px; margin-block: 16px; cursor: pointer; }
+.transcript-confirm input { margin-top: 3px; accent-color: var(--silver); }
 .viva-answer-guide { margin-top: 16px; color: var(--muted); font-size: 12px; }
 .viva-parent-answer { margin-top: 16px; font-size: 12px; color: var(--muted); }
 .viva-parent-answer summary { cursor: pointer; }
