@@ -12,3 +12,9 @@ class DebugCheckerTests(unittest.TestCase):
         self.assertFalse(matches_reference('function f(){return "a b"}', 'function f(){return "ab"}', 'JavaScript'))
 
     def test_direct_repairs_do_not_call_provider_and_uncertain_has_no_score(self):
+        exercise = {'language': 'Python', 'contract': 'Add five', 'reference_code': 'def f(x):\n    return x + 5', 'starter_code': 'def f(x):\n    return x - 5'}
+        with patch('backend.interview.debug_checker.json_completion') as provider:
+            self.assertEqual(check_solution(exercise['reference_code'], exercise)['score'], 100)
+            self.assertEqual(check_solution(exercise['starter_code'], exercise)['score'], 0)
+            provider.assert_not_called()
+            provider.return_value = {'verdict': 'uncertain', 'explanation': 'Missing dependency context.'}
