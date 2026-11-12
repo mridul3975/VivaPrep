@@ -147,6 +147,41 @@ def upload_source():
     return jsonify(document), 201
 
 
+@uploads.post('/sources/example')
+def example_source():
+    from backend.example import CODE, FILENAME
+    document = extract_document(FILENAME, CODE.encode())
+    if database_enabled():
+        from backend.library import reuse_upload
+        existing = reuse_upload(g.user['id'], document['revision'], document['kind'], FILENAME)
+        if existing and existing.get('prepared_example'):
+            return jsonify(existing)
+    source_id = uuid.uuid4().hex
+    for number, snippet in enumerate(document['snippets'], 1):
+        snippet['id'] = f'{source_id}:{number}'
+    document.update(source_id=source_id, prepared_example='prime-v1', expires_in_seconds=SOURCE_TTL_SECONDS)
+    if database_enabled():
+        from backend.library import save_upload
+        document = save_upload(g.user['id'], document)
+        # An identical own upload remains source-based until explicitly choosing this demo.
+        if not document.get('prepared_example'):
+            from psycopg.types.json import Jsonb
+            document = {key: value for key, value in document.items() if key not in {'saved_practice', 'reused'}}
+            document['prepared_example'] = 'prime-v1'
+            with get_database().connection() as conn:
+                conn.execute('UPDATE repoviva.sources SET document=%s WHERE id=%s AND owner=%s', (Jsonb(document),document['source_id'],g.user['id']))
+    else:
+        with sources_lock:
+            _expire_sources()
+            for key in [key for key, value in sources.items() if value['owner'] == g.user['id']]:
+                del sources[key]
+            if len(sources) >= MAX_SOURCES:
+                return jsonify({'error': 'Upload storage is busy. Try again shortly.'}), 503
+            sources[source_id] = {'owner': g.user['id'], 'created': time.monotonic(), 'document': document}
+    session['active_source_id'] = document['source_id']
+    return jsonify(document), 200
+
+
 @uploads.get("/sources/current")
 def current_source():
     if database_enabled():
