@@ -203,6 +203,11 @@ def google_sign_in():
                     if value[0] == guest_owner:
                         memory_usage[key] = (user['id'], *value[1:])
                 memory_profiles.setdefault(user['id'], memory_profiles.pop(guest_owner, {}))
+            from backend.speech.review import receipts, lock as review_lock
+            with review_lock:
+                for key in list(receipts):
+                    if key[0] == guest_owner:
+                        receipts[(user['id'],key[1])] = receipts.pop(key)
     # Rotate the cookie, CSRF token and nonce; never retain the Google credential.
     session.clear()
     session["auth_session_id"] = new_session_id
