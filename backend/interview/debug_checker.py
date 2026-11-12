@@ -26,3 +26,5 @@ def check_solution(code, exercise):
         return {'verdict': 'incorrect', 'score': 0, 'method': 'reference',
                 'explanation': 'The deliberate practice change is still present. Edit the code and check your solution again.'}
     schema = object_schema({'verdict': {'type': 'string', 'enum': ['correct', 'incorrect', 'uncertain']},
+                            'explanation': {'type': 'string'}})
+    result = json_completion(
