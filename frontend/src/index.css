@@ -178,6 +178,9 @@ body {
 .debug-voice .voice-recorder { flex: 1; margin: 0; }
 .debug-completion { display: flex; align-items: center; gap: 12px; padding-top: 22px; margin-top: 24px; border-top: 1px solid var(--border); font-size: 14px; }
 .debug-completion .icon { flex-shrink: 0; }
+.debug-solution-result { padding-block: 0 22px; margin-bottom: 22px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.debug-solution-result h3 { margin: 0 0 10px; font-variant-numeric: tabular-nums; }
+.debug-solution-result p { margin: 8px 0 0; }
 .debug-notice { margin-top: 16px; color: var(--muted); font-size: 13px; }
 @media (max-width: 900px) { .challenge-intro, .debug-layout { grid-template-columns: minmax(0, 1fr); gap: 30px; } .challenge-case { border-top: 1px solid var(--border); padding-top: 22px; } }
 @media (max-width: 700px) {
