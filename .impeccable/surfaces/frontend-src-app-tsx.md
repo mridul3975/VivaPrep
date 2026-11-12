@@ -37,6 +37,16 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Saved study screens
 
+Guest refinement: Try as guest opens a real isolated session before optional
+Google sign-in. A compact bar reports backend allowances and offers upgrade;
+save drafts before switching to the upgrade screen. Study and Debug expose
+Use Python example beside own upload, with explicit prepared-example labeling.
+The prime-checker example's questions, Boolean feedback and restored-source
+checks are free. Guest Profile describes temporary access and remaining quota.
+Existing Uilora surfaces and responsive behavior apply. Browser evidence:
+`.impeccable/review/guests/result.json` (actual local guest creation/PostgreSQL,
+simulated own-file AI; real Google account and voice not exercised).
+
 Mode: Operate. Hash routes cover Study/setup, Debug/runs, History/files and Profile. Keep
 the study state mounted across navigation, persist drafts and restore selected
 saved sets. History and Profile use the incumbent visual world, without invented
