@@ -275,26 +275,31 @@ carrying the visual weight. Debug starts from the student's active source or a
 direct source upload. The filename, section selector and original excerpt precede
 the generation action. Source-matched exercises retain filename and global line
 numbers. The dark monospace editor has a (12px) radius, visible border, resize
-handle and focus outline. Run tests is the primary action; reset and graduated
+handle and focus outline. Check solution is the primary action; reset and graduated
 hints remain quieter actions, with reset confirmed.
 
 Generated JavaScript cases show inputs, expected values, actual returns and written
 pass/fail labels beside monochrome icons. Original code must pass all cases and
 practice code must fail at least one. Before and After counts reflect real runs.
-Other languages show a local test plan and download action, with execution marked
-unverified. Original source comparison is an explicit disclosure. Changing
+All languages show a Solution result with method, score and concrete feedback.
+Source restoration earns 100/100; unchanged broken code earns 0/100. Alternative
+repairs receive AI review, with no score when inconclusive and an explicit warning
+that code was not executed. JavaScript scores reflect the percentage of cases passed.
+After checking, the result receives focus and scrolls into view on phones.
+Original source comparison is an explicit disclosure. Changing
 code visibly marks the old result stale until rerun. Three hints reveal one at a
 time, with an actual revealed count. Typed or transcribed hypothesis and
 explanation fields stay editable and autosave, matching the visible save status
-and transcript copy. Completion means current tests pass and both explanations
-exist; no LLM supplies a correctness verdict.
+and transcript copy. Completion means a current accepted repair or passing test
+suite and both explanations exist. AI feedback is identified as review, not execution.
 
 Saved runs appear in Debug and History, with confirmed deletion. The evidence
 footer identifies the results as browser practice observations, not a certified
 assessment. The Worker runs inside an opaque sandboxed iframe with connections
 blocked and a three-second deadline; no submitted code runs on the server. Voice
 uses the existing transcription allowance. Generation shares the question-set
-allowance; resuming, hinting and testing use no additional allowance. See [DEBUGGING.md](DEBUGGING.md) for the execution and
+allowance; source checks, resuming, hinting and browser tests use no additional allowance.
+Alternative-repair AI review uses one answer-review allowance. See [DEBUGGING.md](DEBUGGING.md) for the execution and
 storage boundary.
 
 ### Recorded verification boundary
