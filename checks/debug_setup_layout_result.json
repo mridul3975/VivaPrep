@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-12",
+  "feature": "Pre-exercise Debug setup layout from user screenshot and HTML",
+  "scope": "Layout and typography only; current palette, Kinetic Raster and Aurora retained",
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "browser": {
+    "status": "passed",
+    "widths": [1440, 1040, 390, 360],
+    "checks": ["Empty source selection state", "Prepared Python selection", "Source preview preserves exact text and line numbers", "Own code upload and section switching to lines 41-80", "Preview disclosure", "Exercise creation and successful repair check", "Guest, Profile and navigation remain usable", "Body background token and Kinetic Raster retained", "Self-hosted Newsreader loads in Flask production serving", "No horizontal overflow or browser runtime errors"],
+    "boundary": "Production React build, actual local Flask and isolated PostgreSQL with anonymous guest auth. Own-file AI is a fixture. No real Google account or microphone exercised."
+  },
+  "font_serving": "Four bundled fonts return HTTP 200 without auth; path traversal returns 404",
+  "deployment": "Local changes; Render not redeployed"
+}
