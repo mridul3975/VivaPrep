@@ -155,6 +155,8 @@ def example_source():
         from backend.library import reuse_upload
         existing = reuse_upload(g.user['id'], document['revision'], document['kind'], FILENAME)
         if existing and existing.get('prepared_example'):
+            from backend.example import current_practice
+            existing['saved_practice'] = current_practice(existing.get('saved_practice'))
             return jsonify(existing)
     source_id = uuid.uuid4().hex
     for number, snippet in enumerate(document['snippets'], 1):
@@ -192,7 +194,11 @@ def current_source():
             return "", 204
         if session.get("active_source_id") != document["source_id"]:
             session["active_source_id"] = document["source_id"]
-        return jsonify({**document, "saved_practice": store.current_practice(g.user["id"], document["source_id"])})
+        practice = store.current_practice(g.user['id'], document['source_id'])
+        if document.get('prepared_example'):
+            from backend.example import current_practice
+            practice = current_practice(practice)
+        return jsonify({**document, 'saved_practice': practice})
     source_id = session.get("active_source_id")
     if not source_id:
         with sources_lock:
