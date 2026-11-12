@@ -2,6 +2,7 @@
 import hashlib
 import json
 import uuid
+from contextlib import nullcontext
 from flask import Blueprint, current_app, g, jsonify, request
 from psycopg.types.json import Jsonb
 from backend.database import get_database, StudyConflict
@@ -33,15 +34,19 @@ def public_run(row):
     report = state.get('test_result')
     current = report and report.get('code_sha256') == hashlib.sha256(state['code'].encode()).hexdigest()
     tests_passed = bool(exercise['tests'] and current and all(item['passed'] for item in report['results']))
+    solution = state.get('solution_result')
+    solution_current = bool(solution and solution.get('code_sha256') == hashlib.sha256(state['code'].encode()).hexdigest())
+    solved = tests_passed or bool(solution_current and solution['verdict'] == 'correct')
     public_state = {key: value for key, value in state.items() if key not in {'scenario', 'challenge_hints'}}
     return {'id': row['id'], 'source_id': row['source_id'], 'created_at': row['created_at'].isoformat(),
             'updated_at': row['updated_at'].isoformat(), **public_state, 'scenario': exercise,
             'hints': hints[:state.get('hints_revealed', 0)], 'total_hints': len(hints),
             'tests_current': bool(current), 'tests_passed': tests_passed,
-            'complete': bool(tests_passed and state.get('hypothesis', '').strip() and state.get('explanation', '').strip()),
+            'solution_current': solution_current, 'solution_passed': solved,
+            'complete': bool(solved and state.get('hypothesis', '').strip() and state.get('explanation', '').strip()),
             'verification': ('Browser-executed practice tests; saved results are client observations, not a server-certified assessment.'
                              if exercise.get('execution_mode', 'javascript') == 'javascript'
-                             else 'Local verification plan only. Test execution has not been verified by this application.')}
+                             else 'Source comparison or AI code review. Runtime behavior has not been verified by this application.')}
 
 
 def same_json(actual, expected):
@@ -77,7 +82,7 @@ def runs():
     with get_database().connection() as conn:
         if request.method == 'GET':
             rows = conn.execute('SELECT * FROM repoviva.debug_runs WHERE owner=%s AND scenario_id=%s ORDER BY updated_at DESC,id LIMIT 20', (g.user['id'], SOURCE_SCENARIO_ID)).fetchall()
-            return jsonify({'runs': [{**{key: value for key, value in public_run(row).items() if key in {'id','created_at','updated_at','complete','tests_passed'}}, 'title': row['state']['scenario']['title'], 'filename': row['state']['scenario']['project']} for row in rows]})
+            return jsonify({'runs': [{**{key: value for key, value in public_run(row).items() if key in {'id','created_at','updated_at','complete','tests_passed','solution_passed'}}, 'title': row['state']['scenario']['title'], 'filename': row['state']['scenario']['project']} for row in rows]})
     data = request.get_json(silent=True)
     source_id = data.get('source_id') if isinstance(data, dict) else None
     if not isinstance(source_id, str) or not source_id.strip():
@@ -154,6 +159,40 @@ def run(run_id):
     return jsonify(public_run(row))
 
 
+@debugging.post('/runs/<run_id>/check')
+def check(run_id):
+    require_storage()
+    request.max_content_length = 96 * 1024
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or set(data) != {'code'} or not isinstance(data['code'], str) or not data['code'].strip() or len(data['code']) > 12000:
+        raise StudyConflict('Send a non-empty solution of at most 12000 characters.', 400)
+    code = data['code']
+    fingerprint = hashlib.sha256(code.encode()).hexdigest()
+    with get_database().connection() as conn:
+        row = owned(conn, run_id)
+        exercise = source_scenario(row)
+        if row['state']['code'] != code:
+            raise StudyConflict('Your code changed. Save it and check again.', 409)
+        previous = row['state'].get('solution_result')
+        if previous and previous.get('code_sha256') == fingerprint:
+            return jsonify(public_run(row))
+    direct = matches_reference(code, exercise['reference_code'], exercise['language']) or code.replace('\r\n', '\n').strip('\n') == exercise['starter_code'].replace('\r\n', '\n').strip('\n')
+    try:
+        # Release the database connection during the provider call. Direct comparisons are free.
+        with nullcontext() if direct else allowance('answers'):
+            result = check_solution(code, exercise)
+            with get_database().connection() as conn:
+                row = owned(conn, run_id, True)
+                if row['state']['code'] != code:
+                    raise StudyConflict('Your code changed during the check. Check the latest version again.', 409)
+                state = {**row['state'], 'solution_result': {**result, 'code_sha256': fingerprint}}
+                row = conn.execute('UPDATE repoviva.debug_runs SET state=%s,updated_at=now() WHERE id=%s AND owner=%s RETURNING *', (Jsonb(state), run_id, g.user['id'])).fetchone()
+    except (ProviderError, ValueError, KeyError, TypeError) as error:
+        current_app.logger.warning('Debug solution review failed: %s', type(error).__name__)
+        return jsonify({'error': 'Solution review is temporarily unavailable. Your code is saved; retry shortly. No score was assigned.'}), 503 if isinstance(error, ProviderError) and error.status_code == 429 else 502
+    return jsonify(public_run(row))
+
+
 @debugging.post('/runs/<run_id>/hint')
 def hint(run_id):
     require_storage()
@@ -163,9 +202,3 @@ def hint(run_id):
         state = {**row['state'], 'hints_revealed': min(len(row['state']['challenge_hints']), row['state'].get('hints_revealed', 0) + 1)}
         row = conn.execute('UPDATE repoviva.debug_runs SET state=%s,updated_at=now() WHERE id=%s AND owner=%s RETURNING *', (Jsonb(state),run_id,g.user['id'])).fetchone()
     return jsonify(public_run(row))
-
-# feat(debug): update check_solution payload schema
-# feat(debug): wire quota deduction
-# feat(debug): ensure direct source match bypasses allowance
-# feat(debug): return verified score in check response
-# feat(debug): record solution_passed flag in session
