@@ -101,7 +101,8 @@ class DebuggingTests(unittest.TestCase):
         data = {'code': CODE, 'hypothesis': 'Subtracting tax.', 'explanation': 'Now adds tax.', 'test_result': {'tested_code': CODE, 'results': rows}}
         result = self.client.patch(url, json=data)
         self.assertEqual(result.status_code, 200, result.get_json())
-        self.assertTrue(result.get_json()['complete'])
+        self.assertTrue(result.get_json()['solution_passed'])
+        self.assertFalse(result.get_json()['complete'])  # A saved explanation still needs a viva review.
         rows[0]['actual'] = False
         self.assertFalse(self.client.patch(url, json=data).get_json()['tests_passed'])
         rows[0]['actual'] = 15
@@ -155,7 +156,7 @@ class DebuggingTests(unittest.TestCase):
             result = self.client.post(url + '/check', json={'code': CODE}).get_json()
             provider.assert_not_called()
         self.assertEqual(result['solution_result']['score'], 100)
-        self.assertTrue(result['complete']); self.assertFalse(result['tests_passed'])
+        self.assertTrue(result['solution_passed']); self.assertFalse(result['complete']); self.assertFalse(result['tests_passed'])
         self.assertTrue(self.client.get(url).get_json()['solution_current'])
         self.assertTrue(self.client.get('/debug/runs').get_json()['runs'][0]['solution_passed'])
         changed = self.client.patch(url, json={'code': CODE + '\n// changed'}).get_json()
