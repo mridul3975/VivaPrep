@@ -18,3 +18,7 @@ class DebugCheckerTests(unittest.TestCase):
             self.assertEqual(check_solution(exercise['starter_code'], exercise)['score'], 0)
             provider.assert_not_called()
             provider.return_value = {'verdict': 'uncertain', 'explanation': 'Missing dependency context.'}
+            result = check_solution('def f(x):\n    return helper(x)', exercise)
+            self.assertIsNone(result['score'])
+            self.assertEqual(result['method'], 'ai_review')
+            provider.return_value = {'verdict': 'correct', 'explanation': ''}
