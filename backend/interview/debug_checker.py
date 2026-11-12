@@ -36,3 +36,6 @@ def check_solution(code, exercise):
         json.dumps({'language': exercise['language'], 'contract': exercise['contract'], 'reference': reference,
                     'broken': exercise['starter_code'], 'student_solution': code}), schema, 'debug_repair_review')
     verdict, explanation = result.get('verdict'), result.get('explanation')
+    if verdict not in {'correct', 'incorrect', 'uncertain'} or not isinstance(explanation, str) or not explanation.strip() or len(explanation) > 2500:
+        raise ValueError('Invalid debugging review')
+    return {'verdict': verdict, 'score': {'correct': 100, 'incorrect': 0, 'uncertain': None}[verdict],
