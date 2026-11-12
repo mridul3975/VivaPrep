@@ -8,6 +8,7 @@ import UiloraEffect from './components/UiloraEffect'
 import type { OrbState } from 'thinking-orbs'
 import { useAuth } from './auth/context'
 import AccountControls from './auth/AccountControls'
+import GuestAccess from './auth/GuestAccess'
 import HistoryPage from './pages/HistoryPage'
 import ProfilePage from './pages/ProfilePage'
 import { useNavigation, type Route } from './navigation'
@@ -761,9 +762,10 @@ export default function App() {
                 ? 'Backend unavailable'
                 : 'Connecting…'}
           </div>
-          <AccountControls />
+          <AccountControls disabled={busy} beforeSignIn={async () => { await saveDraft(); await debugSave.current?.() }} />
         </div>
       </header>
+      <GuestAccess disabled={busy} beforeSignIn={async () => { await saveDraft(); await debugSave.current?.() }} />
       <div className="page-back-bar" hidden={route.page === 'debug' && !!route.runId}><button type="button" className="text-button back-button" disabled={busy || (depth === 0 && studyVisible && !turn)} onClick={() => {
         if (busy) return
         setNavigationError('')
