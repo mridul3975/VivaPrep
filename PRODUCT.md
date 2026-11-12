@@ -82,3 +82,5 @@ Generation consumes one question-set allowance, refunded on known failures.
 Resuming, testing and hinting use no additional allowance; voice transcription
 uses the existing daily transcription allowance. Original files are unchanged. See
 [DEBUGGING.md](DEBUGGING.md).
+
+<!-- specs: multi-language debug validation capabilities -->
