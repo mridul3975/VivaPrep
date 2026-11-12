@@ -110,9 +110,19 @@ class PostgresStore:
     def _session_hash(session_id):
         return hashlib.sha256(session_id.encode()).hexdigest()
 
-    def save_login(self, user, session_id, expires_at, old_session_id=None):
+    def save_login(self, user, session_id, expires_at, old_session_id=None, guest_owner=None):
         with self.connection() as conn:
             conn.execute("INSERT INTO repoviva.users(id, email, name) VALUES (%s,%s,%s) ON CONFLICT(id) DO UPDATE SET email=EXCLUDED.email, name=EXCLUDED.name, last_sign_in=now()", (user["id"], user["email"], user["name"]))
+            if guest_owner:
+                if not guest_owner.startswith('guest:'):
+                    raise ValueError('Only guest work can be transferred')
+                conn.execute('SELECT id FROM repoviva.users WHERE id=%s FOR UPDATE', (guest_owner,))
+                if conn.execute('SELECT 1 FROM repoviva.sources WHERE owner=%s AND active', (user['id'],)).fetchone():
+                    conn.execute('UPDATE repoviva.sources SET active=false WHERE owner=%s', (guest_owner,))
+                for table in ('sources', 'practice_sets', 'turns', 'attempts', 'drafts', 'debug_runs', 'api_usage'):
+                    conn.execute(f'UPDATE repoviva.{table} SET owner=%s WHERE owner=%s', (user['id'], guest_owner))
+                conn.execute("UPDATE repoviva.turns SET payload=jsonb_set(payload,'{owner}',to_jsonb(%s::text)) WHERE owner=%s AND payload->>'owner'=%s", (user['id'],user['id'],guest_owner))
+                conn.execute('DELETE FROM repoviva.users WHERE id=%s', (guest_owner,))
             conn.execute("DELETE FROM repoviva.login_sessions WHERE expires_at <= %s", (time.time(),))
             if old_session_id:
                 conn.execute("DELETE FROM repoviva.login_sessions WHERE token_hash=%s", (self._session_hash(old_session_id),))
