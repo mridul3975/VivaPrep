@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "date": "2026-11-12",
+  "backend": {
+    "command": "TEST_DATABASE_URL=<isolated repoviva_test> .venv/bin/python -m unittest discover -s checks -p test_*.py -q",
+    "output": "Ran 135 tests in 27.727s; OK",
+    "coverage": [
+      "Owned accepted repair and both answers required",
+      "Code ranges validated and quotes copied server-side",
+      "Scores computed from two explicit criteria; uncertainty has no score",
+      "CSRF, quotas, provider failure refunds and retryable leases",
+      "Concurrent edits and duplicate submissions",
+      "Cached review, persistence and stale results after edits",
+      "Owned speech receipts, confirmation, original transcripts and typed opt-out"
+    ]
+  },
+  "frontend": {
+    "build": "npm run build: passed",
+    "lint": "npm run lint: Found 0 warnings and 0 errors",
+    "browser": "passed against final production build",
+    "coverage": [
+      "Prepared Python repair and viva",
+      "Own uploaded JavaScript, actual sandbox tests and viva",
+      "Simulated microphone capture, WAV conversion and scoped transcription",
+      "Editable transcript and confirmation before explicit submission",
+      "Draft, speech review, score and completion restore through History",
+      "Answer edits hide the previous score as outdated",
+      "No runtime errors or page overflow at 1440, 390 and 360 pixels"
+    ],
+    "private_evidence": ".impeccable/review/debug-viva/result.json"
+  },
+  "live_provider": {
+    "provider": "Groq",
+    "correct_defense_score": 100,
+    "conflicting_defense_score": 0,
+    "citations": "all validated",
+    "evidence": "checks/debug_viva_live_result.json"
+  },
+  "limits": "A new viva review consumes one answer-review allowance, including the prepared Python example. Unchanged reviews are cached. Known failures refund the reservation.",
+  "storage": "Existing owned debug_runs JSONB; no additional migration",
+  "deployment": "Local implementation only; Render has not been redeployed",
+  "boundary": "Browser verification used real local Flask, isolated PostgreSQL and guest auth with STT/evaluator fixtures and a simulated microphone. Groq grading was tested live separately. No physical microphone or live STT was retested. Viva input outcomes use static reasoning; Python is not executed and browser test observations are not server-certified."
+}
