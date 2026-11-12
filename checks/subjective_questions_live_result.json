@@ -1,0 +1,306 @@
+{
+  "status": "passed",
+  "provider": "Live Groq",
+  "generated_questions": [
+    {
+      "question": "Explain step by step how the `is_prime` function determines whether a given integer is prime, including the purpose of each part of the code.",
+      "reference_answer": "The function first checks if the input `number` is less than 2; if so, it returns False because numbers below 2 are not prime (lines 3\u20114). It then initializes `divisor` to 2 (line 5). The while loop (line 6) runs while the square of `divisor` is less than or equal to `number`, which limits the search to possible factors up to the square root, because any larger factor would have a complementary smaller factor already checked. Inside the loop, the modulo operation (line 7) tests whether `divisor` evenly divides `number`; if it does, the function returns False (line 8) because a divisor other than 1 and the number itself means the number is composite. If no divisor is found, `divisor` is incremented (line 9) and the loop continues. After the loop finishes without finding a divisor, the function reaches the final statement and returns True (line 10), indicating that `number` is prime.",
+      "rubric": [
+        {
+          "description": "Identifies and explains the early return for numbers less than 2.",
+          "snippet_id": "prime:1",
+          "line_start": 3,
+          "line_end": 4,
+          "quote": "    if number < 2:\n        return False",
+          "id": "c1"
+        },
+        {
+          "description": "Describes the loop condition `divisor * divisor <= number` and why it checks up to the square root.",
+          "snippet_id": "prime:1",
+          "line_start": 6,
+          "line_end": 6,
+          "quote": "    while divisor * divisor <= number:",
+          "id": "c2"
+        },
+        {
+          "description": "Explains the modulo check and the immediate return of False when a divisor is found.",
+          "snippet_id": "prime:1",
+          "line_start": 7,
+          "line_end": 8,
+          "quote": "        if number % divisor == 0:\n            return False",
+          "id": "c3"
+        },
+        {
+          "description": "States that reaching the final return True means no divisor was found and the number is prime.",
+          "snippet_id": "prime:1",
+          "line_start": 10,
+          "line_end": 10,
+          "quote": "    return True",
+          "id": "c4"
+        }
+      ]
+    },
+    {
+      "question": "Discuss how `is_prime` handles the specific inputs 0, 1, 2, and a perfect square such as 9, and why the function produces the results it does for each case.",
+      "reference_answer": "For 0 and 1, the function hits the first conditional (`number < 2`) and returns False (lines 3\u20114), because these values are not considered prime. For 2, the initial divisor is set to 2 (line 5) but the while condition (`divisor * divisor <= number`) is false since 2*2 > 2 (line 6), so the loop body never executes and the function reaches the final return True (line 10), correctly identifying 2 as prime. For 9, the loop runs with `divisor` starting at 2. The condition remains true while `divisor` is 2 and 3 (since 3*3 <= 9). When `divisor` becomes 3, the modulo check (`9 % 3 == 0`) is true (line 7) and the function returns False (line 8), correctly detecting that 9 is composite because it has a divisor other than 1 and itself.",
+      "rubric": [
+        {
+          "description": "Explains the handling of inputs less than 2 (0 and 1) via the early return.",
+          "snippet_id": "prime:1",
+          "line_start": 3,
+          "line_end": 4,
+          "quote": "    if number < 2:\n        return False",
+          "id": "c1"
+        },
+        {
+          "description": "Describes why the input 2 bypasses the loop and results in True.",
+          "snippet_id": "prime:1",
+          "line_start": 5,
+          "line_end": 6,
+          "quote": "    divisor = 2\n    while divisor * divisor <= number:",
+          "id": "c2"
+        },
+        {
+          "description": "Shows how a perfect square like 9 triggers the modulo check and returns False.",
+          "snippet_id": "prime:1",
+          "line_start": 7,
+          "line_end": 8,
+          "quote": "        if number % divisor == 0:\n            return False",
+          "id": "c3"
+        },
+        {
+          "description": "Notes the final return True for numbers that pass all checks.",
+          "snippet_id": "prime:1",
+          "line_start": 10,
+          "line_end": 10,
+          "quote": "    return True",
+          "id": "c4"
+        }
+      ]
+    }
+  ],
+  "bare_boolean": {
+    "claims": [
+      {
+        "claim": "is_prime(1) returns False",
+        "label": "supported",
+        "explanation": "The source code shows that for number < 2 (line 3) the function returns False (line 4), and 1 is less than 2, so it returns False",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "id": "c1",
+        "description": "Explain the early return for inputs below 2, using input 1.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "status": "missed",
+        "points": 0,
+        "max_points": 1,
+        "explanation": "Student did not explain the early return for inputs below 2; only gave the result",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      },
+      {
+        "id": "c2",
+        "description": "Explain why that return prevents the loop from running.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 6,
+        "quote": "    if number < 2:\n        return False\n    divisor = 2\n    while divisor * divisor <= number:",
+        "status": "missed",
+        "points": 0,
+        "max_points": 1,
+        "explanation": "Student did not explain why the return prevents the loop from running",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 6,
+          "content": [
+            "    if number < 2:",
+            "        return False",
+            "    divisor = 2",
+            "    while divisor * divisor <= number:"
+          ]
+        }
+      }
+    ],
+    "reference_answer": "For 1 the number < 2 condition is true, so the function immediately returns False. The return exits the function before divisor initialization or the loop.",
+    "score": {
+      "earned": 0,
+      "possible": 2,
+      "percentage": 0,
+      "excluded_criteria": 0
+    }
+  },
+  "reasoned_answer": {
+    "claims": [
+      {
+        "claim": "The input 1 is smaller than 2.",
+        "label": "supported",
+        "explanation": "The source code checks `if number < 2:` (lines 3\u20114), which is true for the value 1.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      },
+      {
+        "claim": "The initial condition holds.",
+        "label": "supported",
+        "explanation": "Line\u202f3 of the source (`if number < 2:`) evaluates to true for input\u202f1.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      },
+      {
+        "claim": "The function returns False immediately.",
+        "label": "supported",
+        "explanation": "Line\u202f4 of the source contains `return False`, which exits the function as soon as the condition is true.",
+        "snippet_id": "prime:1",
+        "line_start": 4,
+        "line_end": 4,
+        "quote": "        return False",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 4,
+          "end_line": 4,
+          "content": [
+            "        return False"
+          ]
+        }
+      },
+      {
+        "claim": "A return exits the function.",
+        "label": "unverified",
+        "explanation": "The source shows a return statement but does not explicitly state that it exits the function; this behavior is inferred, not directly evidenced.",
+        "snippet_id": null,
+        "line_start": null,
+        "line_end": null,
+        "quote": null
+      },
+      {
+        "claim": "Divisor initialization and the loop are never reached.",
+        "label": "supported",
+        "explanation": "Because the early return on line\u202f4 occurs, execution never proceeds to lines\u202f5\u20116 where `divisor = 2` and the `while` loop are defined.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 6,
+        "quote": "    if number < 2:\n        return False\n    divisor = 2\n    while divisor * divisor <= number:",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 6,
+          "content": [
+            "    if number < 2:",
+            "        return False",
+            "    divisor = 2",
+            "    while divisor * divisor <= number:"
+          ]
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "id": "c1",
+        "description": "Explain the early return for inputs below 2, using input 1.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "status": "met",
+        "points": 1,
+        "max_points": 1,
+        "explanation": "The student explains that for input\u202f1 the condition `number < 2` is true and the function returns False immediately.",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      },
+      {
+        "id": "c2",
+        "description": "Explain why that return prevents the loop from running.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 6,
+        "quote": "    if number < 2:\n        return False\n    divisor = 2\n    while divisor * divisor <= number:",
+        "status": "met",
+        "points": 1,
+        "max_points": 1,
+        "explanation": "The student correctly states that this early return prevents the divisor initialization and the while\u2011loop from being executed.",
+        "evidence": {
+          "id": "prime:1",
+          "path": "example_prime.py",
+          "start_line": 3,
+          "end_line": 6,
+          "content": [
+            "    if number < 2:",
+            "        return False",
+            "    divisor = 2",
+            "    while divisor * divisor <= number:"
+          ]
+        }
+      }
+    ],
+    "reference_answer": "For 1 the number < 2 condition is true, so the function immediately returns False. The return exits the function before divisor initialization or the loop.",
+    "score": {
+      "earned": 2,
+      "possible": 2,
+      "percentage": 100,
+      "excluded_criteria": 0
+    }
+  },
+  "boundary": "Live subjective generation and rubric grading; no DB, user recordings or live STT."
+}
