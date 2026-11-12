@@ -11,7 +11,7 @@ from backend.interview.evaluator import EvaluationError
 SOURCE = {"id": "upload:2", "path": "code.py", "citation_type": "lines",
           "start_line": 41, "end_line": 44,
           "content": ["if ready:", "    first()", "", "    second()"]}
-PACKAGE = {"question": "What happens when ready is true?",
+PACKAGE = {"question": "Explain what happens when ready is true and why the calls run in that order.",
            "reference_answer": "Both functions run in order.",
            "rubric": [{"id": "c1", "description": "Both functions run.",
                        "snippet_id": "upload:2", "line_start": 2, "line_end": 4}]}
