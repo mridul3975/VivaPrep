@@ -34,11 +34,17 @@ or citation failures refund generation, release the lease and preserve the prior
 feedback. Students may retry or skip to the next original question. Guest shared
 ceilings apply as for ordinary question generation.
 
-The Python demo has an explicitly prepared, free Boolean follow-up that selects
-a contrasting prime/square input according to the answer. It does not claim to
-be AI-generated. Its grading stays deterministic. Guests still have one daily
-transcription by default; subsequent answers can be typed or the student can
-sign in for account allowances.
+The Python demo has explicitly prepared explanation questions and a free,
+contrasting follow-up: explain the perfect-square boundary after an early-return
+question, or trace input 17 after the square example. It does not claim AI question
+generation. Explanation grading uses the normal source-backed AI evaluator and
+one answer-review allowance. Guests still have one daily transcription by default;
+subsequent answers can be typed or the student can sign in for account allowances.
+
+Generated questions and follow-ups must explicitly request explanation, reasoning
+or a trace. Binary and output-only packages are rejected rather than silently
+accepted. Grading assesses the requested reasoning, accepts equivalent wording
+and Hinglish, and does not grant explanation credit for a bare result.
 
 ## Verification
 
