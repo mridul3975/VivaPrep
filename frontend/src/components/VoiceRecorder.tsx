@@ -4,6 +4,7 @@ import Icon from './Icon'
 import ActivityOrb from './ActivityOrb'
 export type RecordingPhase = 'idle' | 'permission' | 'recording' | 'processing'
 interface Props {
+  recordLabel?: string
   disabled: boolean
   onBusyChange: (busy: boolean) => void
   onRecording: (file: File) => Promise<void>
@@ -23,6 +24,7 @@ function release(capture: Capture) {
   capture.stream.getTracks().forEach((track) => track.stop())
 }
 export default function VoiceRecorder({
+  recordLabel = 'Record answer',
   disabled,
   onBusyChange,
   onRecording,
@@ -227,7 +229,7 @@ export default function VoiceRecorder({
               ? 'Waiting for microphone…'
               : phase === 'processing'
                 ? 'Preparing transcript…'
-                : 'Record answer'}
+                : recordLabel}
           </button>
         )}
         {(phase === 'recording' || phase === 'permission') && (
@@ -256,7 +258,7 @@ export default function VoiceRecorder({
       )}
       {recording && previewUrl && (
         <div className="recording-preview">
-          <audio controls src={previewUrl} aria-label="Your recorded answer" />
+          <audio controls src={previewUrl} aria-label={`${recordLabel} playback`} />
           <button
             type="button"
             disabled={disabled || phase !== 'idle'}
