@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from threading import Lock
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, g, jsonify, request, has_request_context
 from psycopg.types.json import Jsonb
 from backend.database import database_enabled, get_database
 
@@ -18,7 +18,8 @@ memory_lock = Lock()
 
 def limits():
     result = {}
-    for action, (setting, default) in DEFAULTS.items():
+    defaults = {'questions': ('GUEST_QUESTION_LIMIT', 1), 'answers': ('GUEST_REVIEW_LIMIT', 3), 'transcriptions': ('GUEST_TRANSCRIPTION_LIMIT', 1)} if has_request_context() and getattr(g, 'user', {}).get('id', '').startswith('guest:') else DEFAULTS
+    for action, (setting, default) in defaults.items():
         try:
             result[action] = max(0, min(10000, int(os.getenv(setting, str(default)))))
         except ValueError:
@@ -52,7 +53,8 @@ class UsageLimit(Exception):
 
 def quota_error(error):
     names = {"questions": "question sets", "answers": "answer reviews", "transcriptions": "transcriptions"}
-    response = jsonify({"error": f"Your daily allowance for {names[error.action]} is used up. Check Profile for the reset time.", "error_code": "daily_allowance_exceeded", "action": error.action, "usage": usage(g.user["id"])})
+    guest = g.user['id'].startswith('guest:')
+    response = jsonify({"error": f"Your guest allowance for {names[error.action]} is used up. Try the free Python example or sign in with Google to continue." if guest else f"Your daily allowance for {names[error.action]} is used up. Check Profile for the reset time.", "error_code": "guest_allowance_exceeded" if guest else "daily_allowance_exceeded", "action": error.action, "usage": usage(g.user["id"])})
     response.status_code = 429
     response.headers["Retry-After"] = str(max(1, int((period()[1] - datetime.now(timezone.utc)).total_seconds())))
     return response
@@ -60,6 +62,15 @@ def quota_error(error):
 
 @contextmanager
 def allowance(action):
+    from contextlib import nullcontext
+    from backend.guest_limits import guest_reservation
+    with guest_reservation(action) if g.user['id'].startswith('guest:') else nullcontext():
+        with personal_allowance(action):
+            yield
+
+
+@contextmanager
+def personal_allowance(action):
     owner, today = g.user["id"], period()[0]
     token, limit = uuid.uuid4().hex, limits()[action]
     persistent = database_enabled()
