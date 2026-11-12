@@ -37,6 +37,13 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Saved study screens
 
+Speech review extends the existing answer form without changing its colors or
+backgrounds. Preserve the original transcript, show optional source-name hints,
+and require confirmation before submitting a spoken answer. Editing clears
+confirmation. Draft restoration keeps the review; typed opt-out remains explicit.
+These are source-based checks, not acoustic confidence scores. Browser evidence:
+`.impeccable/review/transcript-review/result.json` with fixture STT.
+
 Viva extension: keep voice-to-editable-transcript and explicit submission.
 After answer review, offer one source/answer-grounded follow-up with an allowance
 note; the prepared example stays free. Show its earlier answer in a disclosure,
