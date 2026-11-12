@@ -3,7 +3,7 @@
 @font-face { font-family: 'Work Sans'; src: url('/fonts/debug/work-sans-medium.ttf') format('truetype'); font-weight: 500 700; font-display: swap; }
 @font-face { font-family: 'IBM Plex Mono'; src: url('/fonts/debug/plex-mono-regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 
-.debug-exercise-shell { background: #08090c; color: #e7e8ec; min-height: 100dvh; font-family: 'Work Sans', sans-serif; --border: #23262e; --muted: #a0a5b1; --subtle: #9298a5; }
+.debug-exercise-shell { background: transparent; color: #e7e8ec; min-height: 100dvh; font-family: 'Work Sans', sans-serif; --border: #23262e; --muted: #a0a5b1; --subtle: #9298a5; }
 .debug-exercise-shell .app-header { width: calc(100% - 64px); max-width: 1060px; height: 56px; display: flex; gap: 30px; border-color: #181a20; }
 .debug-exercise-shell .app-header .brand { font-size: 15px; gap: 9px; flex-shrink: 0; }
 .debug-exercise-shell .brand-mark { width: 8px; height: 8px; background: #22d3ee; border: 0; border-radius: 50%; box-shadow: none; }
