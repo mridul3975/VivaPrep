@@ -60,20 +60,24 @@ with its filename, global lines, hints and test plan. This is not a detected def
 A run places the code editor left and generated JavaScript cases right on desktop,
 stacking below 900px with locally scrolling code. Before/After counts are real;
 the original code must pass the cases and practice code must fail at least one.
-Other languages show local verification instructions and a download action,
-explicitly without execution claims. A disclosure can reveal the original source.
+Check solution is the primary action for every language. Its result gets focus
+and scrolls into view after checking. Other languages use direct source comparison
+or labeled AI review: accepted/incorrect scores are 100/0, inconclusive has no
+score. JavaScript scores are the percentage of cases passed. AI review explicitly
+does not execute code. A disclosure can reveal the original source.
 Written pass/fail labels, actual returns and expected values keep evidence
 inspectable. Editing code makes the old verdict stale until rerun. Three
 graduated hints reveal individually. Hypothesis and why-the-fix-works fields
 accept typed or editable voice transcripts and autosave with code, hints and
 observations. Save feedback and transcript copy must describe this behavior.
-Completion requires current passing tests and both explanations, without an LLM
-correctness verdict. Saved runs reopen from Debug and History; deletion is confirmed.
+Completion requires current passing tests or an accepted repair and both
+explanations. Saved runs reopen from Debug and History; deletion is confirmed.
 
 The browser executes learner code in a Worker inside an opaque sandboxed iframe,
 with CSP-blocked connections and a three-second deadline; no submitted code runs
 server-side. Results are client observations, not certified assessment. Generation
-uses one question-set allowance; resuming, hinting and tests use no extra allowance. Voice uses the daily
+uses one question-set allowance; alternative-repair AI review uses one answer-review
+allowance. Direct source checks, resuming, hinting and browser tests are free. Voice uses the daily
 transcription allowance. Original source files remain unchanged.
 
 Verification: `.impeccable/review/debug/result.json` and
