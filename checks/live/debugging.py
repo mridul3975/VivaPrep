@@ -46,7 +46,7 @@ try:
         code = run['scenario']['reference_code']
         report = {'tested_code':code,'results':[{'id':test['id'],'actual':test['expected'],'passed':True,'error':''} for test in run['scenario']['tests']]}
         result = call('PATCH',url,json={'code':code,'hypothesis':'Inspect the arithmetic in this uploaded function.','explanation':'Restoring the reference behavior matches the practice cases.','test_result':report})
-        assert result['complete']
+        assert result['solution_passed'] and not result['complete']  # Viva is a separate explicit submission.
         assert call('GET','/profile')['usage']['allowances']['questions']['used'] == before['questions']['used'] + 1
         checkpoint.parent.mkdir(parents=True, exist_ok=True)
         checkpoint.write_text(json.dumps({'owner':owner,'cookie':cookie,'csrf':csrf,'run_id':run['id'],'code':code,'starter':run['scenario']['starter_code']}))
@@ -55,7 +55,7 @@ try:
     else:
         url = '/debug/runs/'+saved['run_id']
         run = call('GET',url)
-        assert run['complete'] and len(run['hints']) == 1
+        assert run['solution_passed'] and not run['complete'] and len(run['hints']) == 1
         assert run['code'] == saved['code']
         assert call('GET','/debug/runs')['runs'][0]['id'] == run['id']
         changed = call('PATCH',url,json={'code':saved['starter']})
