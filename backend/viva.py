@@ -36,7 +36,7 @@ def follow_up(turn_id):
             attempt = conn.execute('SELECT answer FROM repoviva.attempts WHERE turn_id=%s AND owner=%s ORDER BY created_at DESC,id DESC LIMIT 1', (turn_id,g.user['id'])).fetchone()
         if not attempt:
             raise StudyConflict('Submit your answer before asking a follow-up.', 409)
-        prepared = parent['question_package'].get('prepared_example') == 'prime-v1'
+        prepared = parent['question_package'].get('prepared_example') in {'prime-v1', example.QUESTION_VERSION}
         with nullcontext() if prepared else allowance('questions'):
             package = example.followup(parent,attempt['answer']) if prepared else generate_followup(parent,attempt['answer'])
             primary = next(item for item in parent['snippets'] if item['id'] == package['rubric'][0]['snippet_id'])
