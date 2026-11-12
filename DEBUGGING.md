@@ -71,6 +71,11 @@ outcomes. They may type or record either answer. The optional starting hypothesi
 remains available but is not graded. Spoken answers have the same source-term
 checks and explicit transcript confirmation as Study. Original transcripts and
 corrected drafts persist with the run; speech suggestions are not confidence scores.
+Each answer box (including the optional hypothesis) has its own recording control,
+audio playback and transcript review. There is no destination dropdown. Only one
+recorder can capture/transcribe at a time; its transcript goes directly to that
+box. Cancelling a capture sends no audio, and editing a field resets only its own
+confirmation. Microphone capture never submits or grades an answer automatically.
 
 **Submit viva answers** reviews the saved repair, the actual broken/source code,
 contract and available test observations. Groq assesses each answer as understood,
