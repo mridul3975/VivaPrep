@@ -227,3 +227,5 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
     </>}
   </main>
 }
+
+// feat(ui): add state management for solution check
