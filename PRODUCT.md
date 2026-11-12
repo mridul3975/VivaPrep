@@ -1,5 +1,13 @@
 # RepoViva
 
+Guest entry lets visitors try their own files without Google or choose the free,
+explicitly prepared Python prime-checker example in Study and Debug. Independent
+identities keep files and quota separate. Guest AI limits are 1 set, 3 reviews
+and 1 transcription per UTC day, with a separate shared ceiling. Prepared demo
+questions/feedback and source repair checks use no provider quota. Guest work is
+temporary for up to 24 hours and transfers on valid Google sign-in. See
+[GUEST_ACCESS.md](GUEST_ACCESS.md) for admission, retention and deployment details.
+
 <!-- impeccable:product-schema 1 -->
 
 ## Platform
