@@ -9,6 +9,7 @@ from backend.library import require_storage
 from backend.account import allowance
 from backend.interview.debug_generator import SOURCE_SCENARIO_ID, generate_debug_challenge, source_excerpt
 from backend.interview.provider import ProviderError
+from backend.interview.debug_checker import check_solution, matches_reference
 
 debugging = Blueprint('debugging', __name__, url_prefix='/debug')
 
