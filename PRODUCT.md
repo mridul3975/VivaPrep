@@ -68,19 +68,21 @@ there. Students select a section; Groq introduces one controlled change to an
 exact source excerpt, with source lines, three graduated hints and a test plan.
 Self-contained JavaScript functions run generated JSON tests in the browser;
 the original must pass and the broken version must fail before tests are accepted.
-Other languages and dependencies require local testing, explicitly unverified here.
+Check solution gives all supported languages an in-app score: source restoration
+is checked directly, while alternative repairs receive a labeled AI review.
+An inconclusive review assigns no score. JavaScript scores use passed test cases.
 Typed or transcribed hypotheses and explanations remain editable and autosave
 with the code, hints and observations. Saved runs reopen from Debug or History.
-Code edits mark previous results stale until tests run again.
+Code edits mark previous results stale until checked again.
 
 Every new exercise is bound to an owned code source, not optional context for a
 preset example. PDFs and notes remain Study material. Learner JavaScript runs
 in a Worker inside an opaque sandboxed iframe, with blocked connections and a
 three-second deadline; submitted code is never executed server-side. Results
-are browser observations rather than certified correctness or an LLM verdict.
+identify browser execution, source comparison or AI review as their method;
+AI reviews can be wrong and do not establish runtime behavior.
 Generation consumes one question-set allowance, refunded on known failures.
-Resuming, testing and hinting use no additional allowance; voice transcription
+Resuming, source comparisons, browser testing and hinting use no additional allowance;
+alternative-repair AI reviews use one answer-review allowance. Voice transcription
 uses the existing daily transcription allowance. Original files are unchanged. See
 [DEBUGGING.md](DEBUGGING.md).
-
-<!-- specs: multi-language debug validation capabilities -->
