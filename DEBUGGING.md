@@ -78,3 +78,4 @@ files are historical. Live Google sign-in and a Render deployment are separate
 from local signed-identity fixture checks.
 
 <!-- specs: solution checking requirements for non-JS languages -->
+<!-- specs: direct source comparison scoring model (100/0) -->
