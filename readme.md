@@ -2,6 +2,11 @@
 
 Practice explaining a project, with feedback grounded in its source code.
 
+**Short spoken viva:** record or type an answer, correct its transcript, submit
+for review, then continue with one follow-up based on that submitted answer and
+the original source. Follow-ups and scores persist in the same practice set.
+See [VIVA.md](VIVA.md) for migration 005, allowances and verification boundaries.
+
 **Try as guest:** visitors can upload their material without Google sign-in, or
 use the free prepared Python prime checker in Study and Debug. Guest AI use is
 limited per visitor and globally. Valid guest work transfers on Google sign-in.

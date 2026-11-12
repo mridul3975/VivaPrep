@@ -37,6 +37,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Saved study screens
 
+Viva extension: keep voice-to-editable-transcript and explicit submission.
+After answer review, offer one source/answer-grounded follow-up with an allowance
+note; the prepared example stays free. Show its earlier answer in a disclosure,
+focus the new question, and preserve typing/recording. Restore follow-ups directly
+after their original question in the same saved practice. No recursive branches.
+Evidence: `.impeccable/review/viva/result.json`, actual local guest/Flask/PostgreSQL
+with STT fixture; physical microphone and live STT not exercised in this change.
+
 Guest refinement: Try as guest opens a real isolated session before optional
 Google sign-in. A compact bar reports backend allowances and offers upgrade;
 save drafts before switching to the upgrade screen. Study and Debug expose
@@ -60,6 +68,14 @@ Verification: .impeccable/review/history/result.json; reviewed desktop and phone
 captures, real isolated DB and fixture identity, simulated AI/STT.
 
 ## Debugging from uploaded source
+
+Pre-exercise setup follows the user's second screenshot/HTML: a serif heading,
+1:2 example/configuration row, full-width numbered/highlighted preview, then
+full-width creation action. Maximum content width is 1060px, stacking below
+760px. Use current palette variables and existing Kinetic Raster/Aurora;
+the reference's background and colors are not adopted. Preserve source upload,
+section selection, free example, empty states and saved runs. Real local
+Flask/PostgreSQL browser evidence: `.impeccable/review/debug-setup-layout/`.
 
 November 12 active-exercise refinement: user-supplied screenshot and pasted HTML
 are the visual authority for this route. Use the solid #08090c canvas, compact
