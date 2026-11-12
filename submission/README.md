@@ -1,3 +1,7 @@
+# Latest demo with the new features
+
+Use **RepoViva-Updated-60s.mp4** for the current 60-second, narrated and captioned demo. It uses the latest local build and a generated stock voiceover. The matching SRT and RepoViva-Updated-60s-Narration.md are supplied. Earlier videos below are preserved, including your original voice recordings.
+
 # Gnani demo package
 
 ## Final version with your recordings

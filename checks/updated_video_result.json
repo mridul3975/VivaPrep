@@ -1,0 +1,21 @@
+{
+  "file": "submission/RepoViva-Updated-60s.mp4",
+  "duration_seconds": 60,
+  "resolution": [1920, 1080],
+  "fps": 30,
+  "video_frames": 1800,
+  "video_codec": "H.264 yuv420p",
+  "audio_codec": "AAC mono 48kHz",
+  "bytes": 8245954,
+  "voiceover": "Generated stock Gnani Timbre v3.0 Yashraj voice; no voice cloning",
+  "audio_loudness_lufs": -15.99,
+  "audio_true_peak_dbtp": -1.47,
+  "captions": "Burned in; editable SRT and narration script supplied",
+  "features": ["Refined RV branding and clear purpose", "Guest entry", "Own source upload and prepared Python example", "Subjective explanation questions", "Browser recording and real Prisma transcription", "Editable transcript and explicit confirmation", "Source-backed Groq grading", "Subjective follow-up", "Actual uploaded-source debugging mutation", "Graduated hint", "JavaScript tests before and after repair", "Per-answer record buttons", "Separate repair-viva feedback", "Saved History", "Profile usage allowance"],
+  "live_operations": {"upload": 201, "prepared_questions": 200, "Prisma_STT": 200, "Groq_study_review": 200, "prepared_followup": 201, "Groq_debug_generation": 201, "hint": 200, "Groq_debug_viva_review": 200},
+  "actual_results": {"study_score": 100, "debug_tests_before": "4/5", "debug_tests_after": "5/5", "viva_score": 75},
+  "verification": {"full_ffmpeg_decode": "passed without errors", "browser_playback": "duration 60; 1920x1080; audio decoded; playback advances; no MediaError", "range_requests": 206, "download_response": "200 with attachment disposition", "visual_review": "Opening, transcript, debugging/viva and closing frames inspected"},
+  "boundary": "Current local build and real providers, isolated PostgreSQL and guest identity. Prerecorded synthetic learner answer and scripted repair defense are illustrative. Processing waits omitted and disclosed. No real student learning outcomes or live Google sign-in claimed. Voiceover TTS is external production tooling, not an in-app feature. No deployment or social posting performed.",
+  "download_copy": "C:/Users/mridu/Downloads/RepoViva-Updated-60s-2026-11-12.mp4",
+  "local_player": "http://localhost:8766"
+}
