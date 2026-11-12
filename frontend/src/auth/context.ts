@@ -4,6 +4,7 @@ export interface Student {
   id: string
   name: string
   email: string
+  is_guest?: boolean
 }
 
 export interface AuthSession {
@@ -21,6 +22,7 @@ export interface AuthContextValue {
   storageMode: 'postgresql' | 'memory'
   apiFetch: (path: string, init?: RequestInit) => Promise<Response>
   signOut: () => Promise<void>
+  beginSignIn: () => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
