@@ -203,11 +203,17 @@ export default function AuthGate() {
         csrfToken
       )
         headers.set('X-CSRF-Token', csrfToken)
-      const response = await fetch(path, {
-        ...init,
-        headers,
-        credentials: 'same-origin',
-      })
+      let response: Response
+      try {
+        response = await fetch(path, { ...init, headers, credentials: 'same-origin' })
+      } catch (failure) {
+        if (!init.signal?.aborted) window.dispatchEvent(new Event('repoviva-connection-lost'))
+        throw failure
+      }
+      if ([502, 503, 504].includes(response.status)) {
+        const body = await response.clone().json().catch(() => null)
+        if (!body || body.error_code === 'database_unavailable') window.dispatchEvent(new Event('repoviva-connection-lost'))
+      }
       if ((init.method ?? 'GET').toUpperCase() !== 'GET' && /^\/(questions|answers|transcriptions|debug\/runs|viva\/turns)/.test(path)) window.dispatchEvent(new Event('repoviva-usage-changed'))
       if (
         response.status === 401 ||
