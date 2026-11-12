@@ -140,3 +140,5 @@ class DebuggingTests(unittest.TestCase):
             self.assertEqual(self.client.post(url + '/hint').status_code, 403)
         finally:
             self.client.environ_base['HTTP_X_CSRF_TOKEN'] = csrf
+
+# test(debug): expand debugging test suite with solution checker
