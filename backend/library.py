@@ -164,7 +164,7 @@ def retry_practice(practice_id):
         practice = conn.execute("SELECT source_id FROM repoviva.practice_sets WHERE id=%s AND owner=%s", (practice_id, owner)).fetchone()
         if not practice:
             raise StudyConflict("Practice not found.", 404)
-        rows = conn.execute("SELECT payload FROM repoviva.turns WHERE practice_id=%s AND owner=%s ORDER BY position", (practice_id, owner)).fetchall()
+        rows = conn.execute("SELECT payload FROM repoviva.turns WHERE practice_id=%s AND owner=%s AND NOT(payload ? 'parent_turn_id') ORDER BY position", (practice_id, owner)).fetchall()
     activate(owner, practice["source_id"], practice_id)
     records = {uuid.uuid4().hex: {**row["payload"], "created": time.monotonic(), "busy": False} for row in rows}
     if not records:
