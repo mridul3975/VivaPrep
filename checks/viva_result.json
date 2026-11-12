@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-12",
+  "feature": "Submitted-answer-aware viva follow-up",
+  "backend_tests": {"status": "passed", "count": 122},
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "live_groq": {"status": "passed", "calls": 1, "result": "Incorrect odd-implies-prime answer received a source-cited is_prime(9) trace question"},
+  "browser": {
+    "status": "passed",
+    "widths": [1440, 390, 360],
+    "checks": ["WAV transcript is editable and not auto-submitted", "Corrected answer submitted explicitly", "Follow-up preserves earlier answer context", "Child answer and feedback survive reload", "No recursive follow-up", "Next continues original sequence", "No overflow or runtime errors"],
+    "boundary": "Real local Flask/PostgreSQL and guest cookies; STT/provider fixtures for browser checks. Physical microphone and live STT not exercised."
+  },
+  "migration": "005_viva_followups.sql",
+  "deployment": "Local changes; Render not redeployed"
+}
