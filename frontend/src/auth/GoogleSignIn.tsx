@@ -12,6 +12,9 @@ export default function GoogleSignIn({
   error,
   onCredential,
   onRetry,
+  onGuest,
+  enteringGuest = false,
+  onCancel,
 }: {
   session: AuthSession | null
   loading: boolean
@@ -19,6 +22,9 @@ export default function GoogleSignIn({
   error: string
   onCredential: (credential: string) => Promise<void>
   onRetry: () => void
+  onGuest?: () => Promise<void>
+  enteringGuest?: boolean
+  onCancel?: () => void
 }) {
   const target = useRef<HTMLDivElement>(null)
   const [scriptError, setScriptError] = useState('')
@@ -109,12 +115,13 @@ export default function GoogleSignIn({
           <Icon name="book" size={28} />
           <h2 id="sign-in-title">Your study desk awaits.</h2>
           <p>
-            Sign in with Google to upload your material and start practicing.
+            {onCancel ? 'Sign in with Google to keep your guest work and get your account allowance.' : 'Try the Python example or upload your own material. No Google account needed for guest access.'}
           </p>
+          {onGuest && <><button className="button button-primary guest-start" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest() }}>{enteringGuest ? 'Opening guest session…' : 'Try as guest'}<Icon name="arrow" size={16} /></button><p className="guest-entry-note">Free prepared example · Your own files welcome · Limited AI allowance</p></>}
           <div
             className="google-sign-in"
             ref={target}
-            inert={signingIn}
+            inert={signingIn || enteringGuest}
             aria-busy={signingIn}
           />
           {(loading ||
@@ -136,7 +143,7 @@ export default function GoogleSignIn({
           )}
           {!loading && !clientId && !error && (
             <p className="auth-error" role="status">
-              Google sign-in isn’t available yet. Please try again later.
+              Google sign-in isn’t available yet. You can still try as a guest.
             </p>
           )}
           {(message || (!loading && !clientId)) && (
@@ -153,10 +160,11 @@ export default function GoogleSignIn({
             </button>
           )}
           <p className="auth-session-note">
-            {session?.storage_mode === 'postgresql'
-              ? 'Your uploaded material and submitted answers are saved to your Google account.'
+            {onCancel ? 'Your guest files and progress will move into your account.' : session?.storage_mode === 'postgresql'
+              ? 'Guest work is temporary for up to 24 hours. Sign in with Google to keep it.'
               : 'Practice sessions are temporary. Your material and progress clear after an hour or a server restart.'}
           </p>
+          {onCancel && <button className="text-button" disabled={signingIn} onClick={onCancel}>Continue as guest</button>}
         </section>
       </main>
     </div>
