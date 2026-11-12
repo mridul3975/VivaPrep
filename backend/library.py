@@ -54,6 +54,9 @@ def save_upload(owner, document):
             source_id = existing["id"]
         else:
             source_id = document["source_id"]
+        if not existing and owner.startswith('guest:') and not document.get('prepared_example'):
+            if conn.execute("SELECT count(*) AS n FROM repoviva.sources WHERE owner=%s AND NOT(document ? 'prepared_example')", (owner,)).fetchone()['n'] >= 5:
+                raise StudyConflict('Guest storage holds up to five files. Delete an older file from History or sign in with Google.', 429)
         conn.execute("UPDATE repoviva.sources SET active=false WHERE owner=%s AND active AND id<>%s", (owner, source_id))
         if existing:
             conn.execute("UPDATE repoviva.sources SET active=true,last_opened_at=now() WHERE id=%s AND owner=%s", (source_id, owner))
