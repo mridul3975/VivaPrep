@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import patch
 from checks import test_postgres as pg
-from checks.quiz_fixtures import fake_question_set
+from checks.quiz_fixtures import fake_question_set, fake_grade
 from backend.app import app
 from backend.interview.followup import generate_followup
 from backend.interview.provider import ProviderError
@@ -66,11 +66,13 @@ class VivaTests(unittest.TestCase):
     def test_prepared_example_free_and_persisted_after_root(self):
         source=self.client.post('/sources/example').get_json()
         roots=self.client.post('/questions',json={'source_id':source['source_id']}).get_json()['questions']
-        self.client.post('/answers',json={'turn_id':roots[0]['turn_id'],'answer':'False'})
+        with patch('backend.app.grade_answer', side_effect=fake_grade):
+            self.assertEqual(self.client.post('/answers',json={'turn_id':roots[0]['turn_id'],'answer':'The early return exits before the loop.'}).status_code, 200)
         with patch('backend.viva.generate_followup') as provider:
             child=self.client.post('/viva/turns/'+roots[0]['turn_id']+'/follow-up').get_json()
             provider.assert_not_called()
-        self.assertIn('is_prime(3)',child['question'])
+        self.assertIn('is_prime(9)',child['question'])
+        self.assertIn('explain',child['question'])
         saved=self.client.get('/sources/current').get_json()['saved_practice']
         self.assertEqual([item['turn_id'] for item in saved['questions']],[roots[0]['turn_id'],child['turn_id'],roots[1]['turn_id'],roots[2]['turn_id']])
 
