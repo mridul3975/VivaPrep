@@ -107,6 +107,17 @@
 .debug-viva-criterion pre { overflow: auto; max-width: 100%; font: 12px/1.8 'IBM Plex Mono', monospace; padding: 14px; background: #0d0f14; }
 .debug-explanation-grid > div { min-width: 0; }
 .debug-exercise .transcript-confirm { display: flex; flex-direction: row; }
+.debug-answer-field { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.debug-answer-field > label { font-size: 13px; font-weight: 500; }
+.debug-answer-field > .voice-recorder { margin: 0; }
+.debug-answer-field .voice-controls { flex-wrap: wrap; gap: 8px; }
+.debug-answer-field .voice-controls .button { min-height: 34px; padding: 7px 11px; font-size: 12px; }
+.debug-answer-field .voice-limit { font-size: 10px; }
+.debug-answer-field .recording-preview { flex-wrap: wrap; }
+.debug-answer-field .recording-preview audio { width: 100%; min-width: 0; }
+.debug-answer-field > .transcript-review { margin: 0; }
+.debug-hypothesis .debug-answer-field { padding-top: 12px; max-width: 65ch; }
+.debug-hypothesis textarea { width: 100%; padding: 16px; resize: vertical; border: 1px solid #303541; border-radius: 12px; color: var(--text); }
 @media (forced-colors: active) { .exercise-code-input pre { display: none; } .exercise-code-input textarea { color: CanvasText; -webkit-text-fill-color: CanvasText; caret-color: CanvasText; } }
 @media (max-width: 1000px) { .debug-exercise-shell .account-email { display: none; } .debug-exercise .debug-layout { gap: 24px; } .editor-action-caption { display: none; } }
 @media (max-width: 760px) {
