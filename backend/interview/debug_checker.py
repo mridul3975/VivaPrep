@@ -23,3 +23,6 @@ def check_solution(code, exercise):
         return {'verdict': 'correct', 'score': 100, 'method': 'reference',
                 'explanation': 'Correct! You restored the uploaded implementation. This verifies the practice repair by source comparison; it does not execute the code.'}
     if code.replace('\r\n', '\n').strip('\n') == exercise['starter_code'].replace('\r\n', '\n').strip('\n'):
+        return {'verdict': 'incorrect', 'score': 0, 'method': 'reference',
+                'explanation': 'The deliberate practice change is still present. Edit the code and check your solution again.'}
+    schema = object_schema({'verdict': {'type': 'string', 'enum': ['correct', 'incorrect', 'uncertain']},
