@@ -7,10 +7,13 @@ from io import BytesIO
 from pathlib import Path
 from threading import Lock
 from datetime import timedelta
+from contextlib import nullcontext
+from backend import example
 
 from flask import Flask, g, jsonify, request, send_from_directory, session
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from backend.interview.question_generator import QuestionGenerationError, generate_question_set
 from backend.interview.evaluator import EvaluationError
@@ -43,9 +46,15 @@ except ImportError:
 
 app = Flask(__name__, static_folder=None)
 app.secret_key = os.getenv("SESSION_SECRET") or secrets.token_hex(32)
+try:
+    trusted_hops = max(0, min(10, int(os.getenv('TRUSTED_PROXY_HOPS', '0'))))
+except ValueError:
+    trusted_hops = 0
+if trusted_hops:
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=trusted_hops, x_proto=0, x_host=0, x_port=0, x_prefix=0)
 app.config.update(SESSION_COOKIE_NAME="repoviva_session", SESSION_COOKIE_HTTPONLY=True,
                   SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE") == "1",
-                  PERMANENT_SESSION_LIFETIME=timedelta(hours=1), SESSION_REFRESH_EACH_REQUEST=False)
+                  PERMANENT_SESSION_LIFETIME=timedelta(hours=24), SESSION_REFRESH_EACH_REQUEST=False)
 app.register_blueprint(auth)
 app.before_request(protect_study_routes)
 app.register_blueprint(uploads)
@@ -166,15 +175,28 @@ def generate_questions():
     count = data.get("count", 3)
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         return jsonify({"error": "Question count must be between 1 and 3."}), 400
-    if owned_source(source_id) is None:
+    document = owned_source(source_id)
+    if document is None:
         return jsonify({"error": "Upload not found or expired. Please upload the file again."}), 404
+    if example.is_example(document) and database_enabled():
+        previous = get_database().current_practice(g.user['id'], source_id)
+        if previous:
+            with get_database().connection() as conn:
+                prepared = conn.execute("SELECT bool_and(payload->'question_package'->>'prepared_example'='prime-v1') AS prepared FROM repoviva.turns WHERE practice_id=%s AND owner=%s", (previous['practice_id'],g.user['id'])).fetchone()['prepared']
+            if prepared:
+                return jsonify({'api_version': API_VERSION, 'source_id': source_id, 'source_revision': document['revision'], 'practice_id': previous['practice_id'], 'questions': previous['questions'][:count]})
+    elif example.is_example(document):
+        with turns_lock:
+            existing = {key: turn for key, turn in turns.items() if turn['owner'] == g.user['id'] and turn['source_id'] == source_id and time.monotonic() - turn['created'] < TURN_TTL_SECONDS}
+        if len(existing) >= count:
+            return jsonify({'api_version': API_VERSION, 'source_id': source_id, 'source_revision': document['revision'], 'practice_id': None, 'questions': [public_question(key, turn) for key, turn in list(existing.items())[:count]]})
     try:
-        with allowance("questions"):
+        with nullcontext() if example.is_example(document) else allowance("questions"):
             selected = next_source_evidence(source_id)
             if selected is None:
                 raise StudyConflict("Upload not found or expired. Please upload the file again.", 404)
             snippets, revision = selected
-            packages = generate_question_set(snippets, count=count)
+            packages = example.question_set(snippets, count) if example.is_example(document) else generate_question_set(snippets, count=count)
             now, records = time.monotonic(), {}
             for package in packages:
                 turn_id = uuid.uuid4().hex
@@ -240,8 +262,9 @@ def submit_answer():
             turn["busy"] = True
 
     try:
-        with allowance("answers"):
-            result = grade_answer(turn["question_package"], answer, turn["snippets"])
+        prepared = turn['question_package'].get('prepared_example') == 'prime-v1'
+        with nullcontext() if prepared else allowance("answers"):
+            result = example.grade(turn['question_package'], answer, turn['snippets']) if prepared else grade_answer(turn["question_package"], answer, turn["snippets"])
             payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
                        "evidence": turn["snippet"], "evidence_snippets": turn["snippets"], **result}
             if persistent:
