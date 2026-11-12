@@ -6,8 +6,9 @@ import ActivityOrb from '../components/ActivityOrb'
 import VoiceRecorder, { type RecordingPhase } from '../components/VoiceRecorder'
 import type { SourceDocument } from '../components/SourceUpload'
 import { runInSandbox, type DebugTest, type TestObservation } from '../debug/runner'
-import CodeEditor from '../debug/CodeEditor'
+import CodeEditor, { CodeTokens } from '../debug/CodeEditor'
 import '../debug/exercise.css'
+import '../debug/setup.css'
 
 interface Scenario {
   id: string; title: string; project: string; language: string; starter_code: string; tests: DebugTest[]; contract: string; provenance: string
@@ -216,23 +217,22 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
   async function chooseExercise() {
     try { await save(); onOpen('') } catch { setError('Your draft could not be saved. Retry before leaving.') }
   }
-  return <main className={`workspace debug-page ${runId ? 'debug-exercise' : ''}`} id="debug-page" tabIndex={-1}>
+  return <main className={`workspace debug-page ${runId ? 'debug-exercise' : 'debug-setup'}`} id="debug-page" tabIndex={-1}>
     {runId ? <div className="exercise-toolbar"><button className="text-button" disabled={busy} onClick={() => { void chooseExercise() }}><Icon name="arrow" size={14} className="rotate-180" />Exercises</button><div className="debug-save-state" role="status"><span className={saveStatus === 'Saved' ? 'save-indicator is-saved' : 'save-indicator'} />{saveStatus}<span aria-hidden="true">·</span><button type="button" className="text-button" disabled={busy} onClick={() => { void save().catch(() => {}) }}>Save progress</button></div></div> : <div className="page-heading"><div><h1>Debug your project</h1><p>Start with your uploaded code or choose a new source file.</p></div></div>}
     {loading && <p className="page-loading" role="status"><ActivityOrb state="searching" /> Loading challenge…</p>}
     {error && <div className="error-banner" role="alert"><Icon name="info" /><div><p>{error}</p>{loading === false && !scenario && <><button className="text-button" onClick={() => { setError(''); setLoading(true); setAttempt(value => value + 1) }}>Retry</button>{runId && <button className="text-button" onClick={() => onOpen('')}>Choose your source file</button>}</>}</div></div>}
     {!loading && !runId && <>
       <section className="debug-source-setup" aria-labelledby="debug-source-heading">
-        <div className="example-choice"><button type="button" className="button button-secondary" disabled={busy} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>Try the same prime checker from Study, with a prepared bug to repair. No AI generation allowance needed.</p></div>
-        <div className="section-heading"><h2 id="debug-source-heading">{source ? source.filename : 'Choose your source file'}</h2><label className="button button-secondary debug-file-picker">{source ? 'Upload another file' : 'Upload source file'}<input aria-label="Upload debugging source" type="file" accept=".py,.js,.jsx,.ts,.tsx,.java,.c,.cpp,.h,.hpp,.mjs,.cjs,.go,.rs,.rb,.php,.cs,.swift,.kt,.sql,.sh" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void upload(file) }} /></label></div>
-        {!source && <p className="panel-description">Upload the code you implemented. You can also reopen a source file from History and return here.</p>}
-        {source && !codeFile && <p className="inline-error" role="status">This material is for Study. Upload a source code file to create a debugging exercise.</p>}
+        <div className="debug-setup-options">
+          <div className="debug-example-option"><button type="button" className="button button-secondary" disabled={busy} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>Try the same prime checker from Study, with a prepared bug to repair. No AI generation allowance needed.</p></div>
+          <div className="debug-file-option">
+            <div className="debug-file-option-heading"><div><h2 id="debug-source-heading">{source ? source.filename : 'Choose your source file'}</h2><p>{!source ? 'Upload your own code or choose the Python example.' : !codeFile ? 'This material is for Study. Upload a source code file for Debug.' : source.prepared_example ? 'Prepared Python example: repair one deliberate bug in the prime checker.' : 'AI will introduce one deliberate bug for you to diagnose and repair.'}</p></div><label className="button button-secondary debug-file-picker">{source ? 'Upload another file' : 'Upload source file'}<input aria-label="Upload debugging source" type="file" accept=".py,.js,.jsx,.ts,.tsx,.java,.c,.cpp,.h,.hpp,.mjs,.cjs,.go,.rs,.rb,.php,.cs,.swift,.kt,.sql,.sh" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void upload(file) }} /></label></div>
+            {codeFile && source && <div className="debug-section-config"><div><label htmlFor="debug-section-select">Start from section</label><p>The selected section and up to two following sections are used to find a complete function.</p></div><select id="debug-section-select" aria-label="Source section" disabled={busy} value={selectedSection?.id ?? ''} onChange={event => setSectionId(event.target.value)}>{source.snippets.map(item => <option key={item.id} value={item.id}>Lines {item.start_line}–{item.end_line}</option>)}</select></div>}
+          </div>
+        </div>
         {codeFile && source && <>
-          <p className="panel-description">{source.prepared_example ? 'Prepared Python example: repair one deliberate bug in the prime checker.' : 'AI will introduce one deliberate bug in an excerpt of this file for you to diagnose and repair.'}</p>
-          <label className="debug-section-picker">Start from section<select aria-label="Source section" disabled={busy} value={selectedSection?.id ?? ''} onChange={event => setSectionId(event.target.value)}>{source.snippets.map(item => <option key={item.id} value={item.id}>Lines {item.start_line}–{item.end_line}</option>)}</select></label>
-          <p className="field-note">The selected section and up to two following sections are used to find a complete function.</p>
-          {selectedSection && <details className="debug-project-context" open><summary>Uploaded code · lines {selectedSection.start_line}–{selectedSection.end_line}</summary><pre>{selectedSection.content.join('\n')}</pre></details>}
-          <div className="debug-editor-actions"><button className="button button-primary" disabled={busy} onClick={() => { void start() }}>{working ? <><ActivityOrb state="composing" />Creating your exercise…</> : <>Create debugging exercise<Icon name="arrow" size={18} /></>}</button></div>
-          <p className="field-note">{source.prepared_example ? 'Prepared exercise and restoring the original are free. A different repair may use an AI review allowance.' : 'Uses 1 question-set allowance. Check your repair here: JavaScript runs tests; other languages use source comparison or AI review.'}</p>
+          {selectedSection && <details className="debug-setup-preview" open><summary>Uploaded code · lines {selectedSection.start_line}–{selectedSection.end_line}</summary><div className="debug-preview-code"><div className="debug-preview-lines" aria-hidden="true">{selectedSection.content.map((_, index) => <div key={index}>{(selectedSection.start_line ?? 1) + index}</div>)}</div><pre tabIndex={0} aria-label="Uploaded source code"><CodeTokens code={selectedSection.content.join('\n')} /></pre></div></details>}
+          <div className="debug-setup-create"><button className="button button-primary" disabled={busy} onClick={() => { void start() }}>{working ? <><ActivityOrb state="composing" />Creating your exercise…</> : <>Create debugging exercise<Icon name="arrow" size={17} /></>}</button><p>{source.prepared_example ? 'Prepared exercise and restoring the original are free. A different repair may use an AI review allowance.' : 'Uses 1 question-set allowance. JavaScript runs tests here; other languages use source comparison or AI review.'}</p></div>
         </>}
       </section>
       <section className="debug-saved"><h2>Saved debugging practice</h2>{runs.length ? <div className="history-list">{runs.map(item => <button className="history-file" key={item.id} disabled={busy} onClick={() => onOpen(item.id)}><Icon name="code" size={23} /><span className="history-file-title"><strong>{item.title}</strong><span>{item.filename} · {item.complete ? 'Solution accepted · Explanation saved' : item.solution_passed ? 'Solution accepted · Explanation pending' : 'In progress'} · {date(item.updated_at)}</span></span><span>Resume</span><Icon name="arrow" size={17} /></button>)}</div> : <p className="field-note">Exercises from your files will appear here and in History.</p>}</section>
