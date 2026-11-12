@@ -270,6 +270,30 @@ with the next midnight-UTC reset in local time. See
 
 ### Debugging practice
 
+Study viva extension: preserve the existing recording, editable transcript and
+explicit Submit Answer flow. Answer review exposes Continue with a follow-up
+with its generation cost (or a free prepared-example label). The child question
+uses a Viva follow-up label and a disclosure of the earlier submitted answer.
+Focus/scroll bring the new question into view; typing and recording remain
+available. Children restore directly after their parent and cannot branch again.
+Existing colors, backgrounds, layout and score presentation apply. Evidence:
+`.impeccable/review/viva/result.json`; browser STT is simulated, not live audio.
+
+Debug setup layout (November 12): the user's second screenshot/pasted HTML
+defines the pre-exercise composition only. Preserve the existing palette,
+Kinetic Raster canvas and Aurora placements. Align the guest banner, Back link
+and setup content to a 1060px maximum width. Use the existing self-hosted
+Newsreader for the heading and Work Sans/IBM Plex Mono for UI/source metadata.
+The example chooser occupies one third of the desktop setup row; the remaining
+two thirds hold filename, upload and source-section controls. A full-width,
+read-only highlighted source preview follows, with original line numbers and
+local scrolling, then a full-width create action and its real allowance note.
+Stack setup options below 760px. Keep empty/non-code-source and saved-run states.
+This refinement does not restyle active exercises or other app pages. Verification:
+`.impeccable/review/debug-setup-layout/` has desktop/phone captures and real
+local guest/backend checks; external provider and Google account calls were not
+exercised.
+
 Guest entry (November 12): the existing sign-in panel offers Try as guest before
 the optional Google control. Inside the app, a compact Guest session bar shows
 real remaining AI uses and a save-before-upgrade action. Study and Debug offer
