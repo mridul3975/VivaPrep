@@ -230,3 +230,4 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
 
 // feat(ui): add state management for solution check
 // feat(ui): add focus indicator and score pill styling
+// feat(ui): implement Check Solution primary action
