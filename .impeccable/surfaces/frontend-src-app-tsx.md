@@ -51,6 +51,19 @@ captures, real isolated DB and fixture identity, simulated AI/STT.
 
 ## Debugging from uploaded source
 
+November 12 active-exercise refinement: user-supplied screenshot and pasted HTML
+are the visual authority for this route. Use the solid #08090c canvas, compact
+navigation, Newsreader rose-accented title, Work Sans controls, IBM Plex Mono
+editor, source line numbers and a quiet result panel. All content and result
+colors derive from the actual saved exercise. Place full-width hint/source
+disclosures below the 7:5 editor/result split; stack below 760px. Keep reasoning,
+voice, autosave and quota disclosure. Other routes retain the dotted charcoal
+world. Fonts and their licenses live in `frontend/public/fonts/debug`.
+Verified with production-build Chrome at 1440/1040/390/360px, API fixtures and
+real browser JavaScript tests; evidence is in
+`.impeccable/review/editorial-debug/result.json`. This overrides the older visual
+description for active runs only.
+
 Mode: Operate. The same silver/charcoal, Geist, focus and interactive dot-pattern
 world extends to Debug. The entry shows the student's active source file, a new
 upload action, section selector and original excerpt. No source produces a real
