@@ -9,6 +9,7 @@ import type { OrbState } from 'thinking-orbs'
 import { useAuth } from './auth/context'
 import AccountControls from './auth/AccountControls'
 import GuestAccess from './auth/GuestAccess'
+import TranscriptReview, { type SpeechReview } from './components/TranscriptReview'
 import HistoryPage from './pages/HistoryPage'
 import ProfilePage from './pages/ProfilePage'
 import { useNavigation, type Route } from './navigation'
@@ -23,6 +24,8 @@ interface Evidence {
   content: string[]
 }
 interface QuestionResponse {
+  parent_turn_id?: string | null
+  parent_answer?: string | null
   turn_id: string
   question: string
   evidence: Evidence
@@ -52,6 +55,7 @@ interface Claim {
   quote: string | null
 }
 interface AnswerResponse {
+  speech_review?: SpeechReview
   turn_id: string
   question: string
   claims: Claim[]
@@ -128,6 +132,7 @@ function isAnswerResponse(value: unknown): value is AnswerResponse {
   )
 }
 interface SavedPractice {
+  speech_reviews?: Record<string, SpeechReview>
   practice_id?: string
   drafts?: Record<string, string>
   resume_turn_id?: string | null
@@ -200,6 +205,8 @@ export default function App() {
   const [results, setResults] = useState<Record<string, AnswerResponse>>({})
   const [answer, setAnswer] = useState('')
   const [feedback, setFeedback] = useState<AnswerResponse | null>(null)
+  const [speechReviews, setSpeechReviews] = useState<Record<string, SpeechReview>>({})
+  const speechReview = storedTurn ? speechReviews[storedTurn.turn_id] : undefined
   const [showEvidence, setShowEvidence] = useState(true)
   const [sourceOverride, setSourceOverride] = useState<SourceDocument | null | undefined>()
   const [draftError, setDraftError] = useState('')
@@ -207,7 +214,7 @@ export default function App() {
   const [debugBusy, setDebugBusy] = useState(false)
   const debugSave = useRef<(() => Promise<void>) | null>(null)
   const registerDebugSave = useCallback((handler: (() => Promise<void>) | null) => { debugSave.current = handler }, [])
-  const draft = useRef<{ turnId: string; answer: string; dirty: boolean } | null>(null)
+  const draft = useRef<{ turnId: string; answer: string; dirty: boolean; speech_review?: { receipt_id: string; reviewed: boolean } } | null>(null)
   const draftChain = useRef<Promise<void>>(Promise.resolve())
   const saveDraft = useCallback(async () => {
     const pending = draft.current
@@ -215,7 +222,7 @@ export default function App() {
     pending.dirty = false
     const operation = draftChain.current.catch(() => {}).then(async () => {
       const response = await apiFetch(`/history/turns/${encodeURIComponent(pending.turnId)}/draft`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: pending.answer }),
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: pending.answer, speech_review: pending.speech_review }),
       })
       await readResponse(response)
     })
@@ -230,10 +237,10 @@ export default function App() {
   useEffect(() => {
     if (!storedTurn || feedback || storageMode !== 'postgresql') { draft.current = null; return }
     if (submittingAnswer) return
-    draft.current = { turnId: storedTurn.turn_id, answer, dirty: true }
+    draft.current = { turnId: storedTurn.turn_id, answer, dirty: true, speech_review: speechReview ? {receipt_id:speechReview.receipt_id,reviewed:speechReview.reviewed} : undefined }
     const timer = window.setTimeout(() => { void saveDraft().catch(() => {}) }, 600)
     return () => window.clearTimeout(timer)
-  }, [storedTurn, answer, feedback, storageMode, submittingAnswer, saveDraft])
+  }, [storedTurn, answer, feedback, storageMode, submittingAnswer, saveDraft, speechReview])
   useEffect(() => {
     const departing = () => {
       const pending = draft.current
@@ -301,6 +308,7 @@ export default function App() {
         return
       }
       const saved = source.saved_practice
+      setSpeechReviews({ ...Object.fromEntries(Object.entries(saved.results).filter(([,result]) => result.speech_review).map(([id,result]) => [id,result.speech_review!])), ...saved.speech_reviews })
       const unanswered = saved.questions.findIndex(
         (question) => !saved.results[question.turn_id],
       )
@@ -434,6 +442,21 @@ export default function App() {
     setFeedback(null)
     setError(null)
     setTranscriptionNotice('')
+  }
+  async function askFollowup() {
+    if (!turn || !feedback || busy || turn.parent_turn_id) return
+    setLoadingQuestion(true); setError(null)
+    try {
+      const response = await apiFetch(`/viva/turns/${encodeURIComponent(turn.turn_id)}/follow-up`, { method: 'POST' })
+      const child = await readResponse(response)
+      if (!isQuestionResponse(child) || child.parent_turn_id !== turn.turn_id || child.source_id !== turn.source_id) throw new Error('The follow-up did not match this question. Retry.')
+      const next = questionSet.filter(question => question.turn_id !== child.turn_id)
+      const index = next.findIndex(question => question.turn_id === turn.turn_id) + 1
+      next.splice(index, 0, child)
+      setQuestionSet(next); setQuestionIndex(index); setTurn(child); setAnswer(''); setFeedback(results[child.turn_id] ?? null); setTranscriptionNotice(''); draft.current = null
+      window.requestAnimationFrame(() => { const heading = document.getElementById('question-heading'); heading?.focus({ preventScroll: true }); heading?.scrollIntoView({ block: 'start', behavior: 'instant' }) })
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not prepare the follow-up. Your answer is saved.') }
+    finally { setLoadingQuestion(false) }
   }
   async function uploadAudio(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0]
@@ -731,7 +754,7 @@ export default function App() {
     document.getElementById(destination)?.focus({ preventScroll: true })
   }, [route.page, route.sourceId, route.runId])
   return (
-    <div className={`app-shell ${route.page === 'debug' && route.runId ? 'debug-exercise-shell' : ''}`}>
+    <div className={`app-shell ${route.page === 'debug' ? route.runId ? 'debug-exercise-shell' : 'debug-setup-shell' : ''}`}>
       <a className="skip-link" href="#workspace" onClick={event => {
         event.preventDefault()
         document.getElementById(studyVisible ? 'workspace' : `${route.page}-page`)?.focus()
@@ -878,7 +901,7 @@ export default function App() {
               >
                 <div className="question-meta">
                   <span>
-                    Question {questionIndex + 1} of {questionSet.length}
+                    {turn.parent_turn_id ? 'Viva follow-up' : 'Question'} {questionIndex + 1} of {questionSet.length}
                   </span>
                   {activity.active && (
                     <span
@@ -891,7 +914,9 @@ export default function App() {
                     </span>
                   )}
                 </div>
-                <h2 id="question-heading">{turn.question}</h2>
+                <h2 id="question-heading" tabIndex={-1}>{turn.question}</h2>
+                {turn.parent_turn_id && <details className="viva-parent-answer"><summary>Your earlier answer</summary><p>{turn.parent_answer}</p></details>}
+                {!feedback && <p className="viva-answer-guide">Record your answer or type below. Review the transcript before submitting.</p>}
               </section>
               <section
                 className="answer-panel"
@@ -1120,8 +1145,9 @@ export default function App() {
                       </span>
                     )}
                   </div>
+                  {!turn.parent_turn_id && storageMode === 'postgresql' && <div className="viva-followup"><button type="button" className="button button-secondary" disabled={busy} onClick={() => { void askFollowup() }}>{loadingQuestion ? 'Preparing follow-up…' : questionSet.some(question => question.parent_turn_id === turn.turn_id) ? 'Open viva follow-up' : 'Continue with a follow-up'}<Icon name="arrow" size={16} /></button><p>{activeSource?.prepared_example ? 'Prepared example follow-up · Free' : 'One follow-up based on your submitted answer and source. Uses 1 question-set allowance; reopening it is free.'}</p></div>}
                   <p className="assessment-note">
-                    AI feedback. Verify uncertain results against the source.
+                    {activeSource?.prepared_example ? 'Prepared example feedback. Check the return value against the source.' : 'AI feedback. Verify uncertain results against the source.'}
                   </p>
                 </section>
               )}
