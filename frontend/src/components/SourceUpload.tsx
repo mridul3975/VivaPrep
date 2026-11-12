@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import Icon from './Icon'
+import UiloraEffect from './UiloraEffect'
 import { useAuth } from '../auth/context'
 interface Snippet {
   id: string
@@ -296,6 +297,7 @@ export default function SourceUpload({
       className={`material-panel ${compact ? 'material-panel-compact' : ''} ${embedded ? 'material-panel-embedded' : ''}`}
       aria-labelledby="material-heading"
     >
+      {!embedded && <UiloraEffect variant="aurora" />}
       {!compact && !embedded && (
         <div className="material-heading">
           <h2 id="material-heading">Start with your material.</h2>
