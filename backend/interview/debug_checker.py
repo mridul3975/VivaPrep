@@ -39,3 +39,4 @@ def check_solution(code, exercise):
     if verdict not in {'correct', 'incorrect', 'uncertain'} or not isinstance(explanation, str) or not explanation.strip() or len(explanation) > 2500:
         raise ValueError('Invalid debugging review')
     return {'verdict': verdict, 'score': {'correct': 100, 'incorrect': 0, 'uncertain': None}[verdict],
+            'method': 'ai_review', 'explanation': explanation.strip()}
