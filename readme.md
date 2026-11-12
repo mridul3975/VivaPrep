@@ -2,6 +2,11 @@
 
 Practice explaining a project, with feedback grounded in its source code.
 
+**Transcript review:** spoken answers keep their original transcript, offer
+optional source-term spelling checks and require confirmation before grading.
+Only the corrected final answer is assessed. See
+[TRANSCRIPT_REVIEW.md](TRANSCRIPT_REVIEW.md) for migration 006 and limitations.
+
 **Short spoken viva:** record or type an answer, correct its transcript, submit
 for review, then continue with one follow-up based on that submitted answer and
 the original source. Follow-ups and scores persist in the same practice set.
