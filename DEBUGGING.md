@@ -41,8 +41,7 @@ and expected behavior. A correct review gives 100/100, an incorrect review gives
 AI review is static reasoning, can be wrong, and never claims to execute code.
 JavaScript scores are the percentage of generated test cases passed. These are
 practice scores against the uploaded baseline, not proof of whole-app correctness.
-Current accepted solutions plus both explanations complete an exercise, including
-non-JavaScript exercises. Saved results are bound to the checked code fingerprint;
+An accepted solution enables the repair viva described below. Saved solution results are bound to the checked code fingerprint;
 editing code makes them stale. Provider failures assign no new score.
 
 JavaScript executes in a fresh Worker inside an opaque sandboxed iframe. CSP
@@ -64,6 +63,35 @@ default); direct source checks are free. Rechecking unchanged saved code reuses
 its review. Known provider/validation failures refund the review allowance.
 Raw voice recordings are not saved by the app.
 
+## Defend the repair
+
+After checking a repair, the student answers two questions: why the broken code
+failed and how the fix works; then a concrete input with its broken and repaired
+outcomes. They may type or record either answer. The optional starting hypothesis
+remains available but is not graded. Spoken answers have the same source-term
+checks and explicit transcript confirmation as Study. Original transcripts and
+corrected drafts persist with the run; speech suggestions are not confidence scores.
+
+**Submit viva answers** reviews the saved repair, the actual broken/source code,
+contract and available test observations. Groq assesses each answer as understood,
+partial, missed or uncertain. The server validates local code ranges and copies
+the cited quotes itself. It computes a separate reasoning score: 2/1/0 points per
+answer, converted to a percentage; any uncertain criterion yields no overall
+score. This is AI static reasoning and does not execute a proposed input.
+
+Completion requires a currently accepted repair and both viva answers understood.
+Saving text alone no longer marks a run complete. Editing code or either assessed
+answer makes its previous viva feedback stale. Feedback, speech drafts and status
+restore through Debug and History. Older runs remain available and can take the
+new viva without regenerating the exercise.
+
+A new viva review uses **one answer-review allowance**, including for the prepared
+Python example; that example's generation and direct repair checks remain free.
+Unchanged submissions reuse their saved review. Provider, malformed-citation and
+concurrent-edit failures refund the reservation. A temporary per-run lease prevents
+duplicate concurrent reviews and expires after two minutes if interrupted.
+The extension uses existing owned JSONB run state and needs no new SQL migration.
+
 Migration 003's JSONB state already supports source-specific scenario snapshots;
 no new migration is required. Each run requires an authenticated owner, a valid
 owned source ID and CSRF for writes. The newest 20 source-derived runs are listed,
@@ -79,6 +107,14 @@ a route back to choosing the student's own source; they cannot restore the sampl
 - POST `/debug/runs/<id>/check`: `{code}` checks the saved version, returning a
   persisted `solution_result` with verdict, score, method and explanation. Stale
   saves or changes during review return 409; another user's run returns 404.
+- POST `/debug/runs/<id>/defend`: `{}` reviews saved `explanation` and
+  `failing_input` only after the current repair passes. Returns the saved
+  `defense_result` and `defense_current`; missing answers/unconfirmed speech return
+  400, unfixed/concurrently changed work returns 409, provider failures 502/503.
+- PATCH also accepts `failing_input` and `speech_reviews` metadata keyed by answer
+  field (`receipt_id`, `reviewed`). Original transcripts are resolved server-side.
+- POST `/transcriptions` accepts optional `debug_run_id` and `debug_field` multipart
+  fields for owned-run speech receipts. It does not save an answer or grade it.
 
 ## Checks
 
@@ -89,3 +125,8 @@ allowances/failure refunds and stale observations. Current evidence is recorded
 in `checks/source_debugging_result.json`; previous curated-exercise verification
 files are historical. Live Google sign-in and a Render deployment are separate
 from local signed-identity fixture checks.
+
+Repair-viva regression coverage is in `checks/test_debug_viva.py`, browser evidence
+in `checks/debug_viva_result.json`, and opt-in live Groq evidence in
+`checks/debug_viva_live_result.json` (`PYTHONPATH=. .venv/bin/python checks/live/debug_viva.py`).
+That live script uses two provider requests and no database or learner records.
