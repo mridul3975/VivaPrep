@@ -729,7 +729,7 @@ export default function App() {
     document.getElementById(destination)?.focus({ preventScroll: true })
   }, [route.page, route.sourceId, route.runId])
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${route.page === 'debug' && route.runId ? 'debug-exercise-shell' : ''}`}>
       <a className="skip-link" href="#workspace" onClick={event => {
         event.preventDefault()
         document.getElementById(studyVisible ? 'workspace' : `${route.page}-page`)?.focus()
@@ -763,7 +763,7 @@ export default function App() {
           <AccountControls />
         </div>
       </header>
-      <div className="page-back-bar"><button type="button" className="text-button back-button" disabled={busy || (depth === 0 && studyVisible && !turn)} onClick={() => {
+      <div className="page-back-bar" hidden={route.page === 'debug' && !!route.runId}><button type="button" className="text-button back-button" disabled={busy || (depth === 0 && studyVisible && !turn)} onClick={() => {
         if (busy) return
         setNavigationError('')
         void saveDraft().then(() => debugSave.current?.()).then(() => { if (depth === 0 && turn && studyVisible) navigate({ page: 'setup' }); else back() }).catch(() => setNavigationError('Your draft could not be saved, so this page stayed open. Please try again.'))
