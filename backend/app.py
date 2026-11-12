@@ -22,11 +22,13 @@ from backend.evidence.retrieve import retrieve
 from backend.evidence.uploads import uploads, next_source_evidence, owned_source
 from backend.evidence.documents import DocumentError
 from backend.speech.transcriber import TranscriptionError, transcribe_wav
+from backend.speech.review import store_review, resolve_review
 from backend.auth import auth, protect_study_routes
 from backend.database import database_enabled, get_database, DatabaseUnavailable, StudyConflict, public_question
 from backend.account import account, allowance, UsageLimit, quota_error
 from backend.library import library
 from backend.debugging import debugging
+from backend.viva import viva
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
@@ -61,6 +63,7 @@ app.register_blueprint(uploads)
 app.register_blueprint(account)
 app.register_blueprint(library)
 app.register_blueprint(debugging)
+app.register_blueprint(viva)
 app.register_error_handler(UsageLimit, quota_error)
 turns = {}
 turns_lock = Lock()
@@ -87,6 +90,11 @@ def frontend_asset(filename):
 @app.get("/favicon.svg")
 def frontend_favicon():
     return send_from_directory(FRONTEND_DIST, "favicon.svg")
+
+
+@app.get('/fonts/<path:filename>')
+def frontend_fonts(filename):
+    return send_from_directory(FRONTEND_DIST / 'fonts', filename, max_age=86400)
 
 
 @app.errorhandler(404)
@@ -262,11 +270,14 @@ def submit_answer():
             turn["busy"] = True
 
     try:
+        speech_review = resolve_review(g.user['id'],turn_id,data.get('speech_review'),require_confirmed=True)
         prepared = turn['question_package'].get('prepared_example') == 'prime-v1'
         with nullcontext() if prepared else allowance("answers"):
             result = example.grade(turn['question_package'], answer, turn['snippets']) if prepared else grade_answer(turn["question_package"], answer, turn["snippets"])
             payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
                        "evidence": turn["snippet"], "evidence_snippets": turn["snippets"], **result}
+            if speech_review:
+                payload['speech_review'] = {**speech_review,'final_answer':answer,'corrections_made':answer != speech_review['original_transcript']}
             if persistent:
                 get_database().save_attempt(g.user["id"], turn_id, lease, answer, payload)
                 attempt_saved = True
@@ -330,12 +341,28 @@ def transcribe_upload():
 
     try:
         with allowance("transcriptions"):
+            turn_id = request.form.get('turn_id')
+            evidence = None
+            if turn_id:
+                if database_enabled():
+                    with get_database().connection() as conn:
+                        row = conn.execute('SELECT payload FROM repoviva.turns WHERE id=%s AND owner=%s', (turn_id,g.user['id'])).fetchone()
+                    evidence = row['payload']['snippets'] if row else None
+                else:
+                    with turns_lock:
+                        row = turns.get(turn_id)
+                        evidence = row['snippets'] if row and row['owner'] == g.user['id'] else None
+                if evidence is None:
+                    raise StudyConflict('Question not found. Return to your current practice.',404)
             transcript = transcribe_wav(audio, filename)
+            if turn_id and len(transcript) > 4000:
+                raise TranscriptionError('Transcript exceeds the answer limit')
+            review = store_review(g.user['id'],turn_id,transcript,evidence) if turn_id else None
     except TranscriptionError:
         app.logger.warning("Audio transcription failed")
         return jsonify({"error": "Unable to transcribe this recording. Please retry or type your answer."}), 502
 
-    return jsonify({"transcript": transcript}), 200
+    return jsonify({"transcript": transcript, **({'speech_review':review} if review else {})}), 200
     
 
 
