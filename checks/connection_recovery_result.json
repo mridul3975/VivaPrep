@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "root_cause": "Single 30-second health check permanently latched readiness false; non-200 health responses incorrectly classified as old API versions; development-only Flask instructions shown to public users.",
+  "live_observation": "Hosted /health returned HTTP 200 study-v2 PostgreSQL in 1.86 seconds; historical hosting logs unavailable. Free-tier cold start is a possible trigger, not confirmed as the cause of prior incidents.",
+  "unit_checks": "Safe GET retry after 503, HTML warm-up page and timeout; bounded attempts; terminal 401; cancellation. Passed via node frontend/scripts/check-connection.mjs.",
+  "build": "npm run build passed",
+  "lint": "npm run lint: 0 warnings, 0 errors",
+  "browser_checks": ["Transient auth 503 recovered", "Health database 503 and warm-up HTML recovered", "Persistent database outage correctly displayed", "Automatic 30-second health retry cleared outage", "Existing answer draft preserved", "Real 25-second timed-out request recovered", "Version mismatch displayed separately", "No automatic POST replay", "No runtime errors"],
+  "private_evidence": ".impeccable/review/connection/result.json",
+  "verification_boundary": "Real isolated local Flask/PostgreSQL/guest sessions with browser network fault injection. Live production outage not reproduced. Frontend repair only; no infrastructure settings changed.",
+  "deployment": "Not deployed; rebuild and redeploy frontend to apply"
+}
