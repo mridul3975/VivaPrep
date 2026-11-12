@@ -14,6 +14,7 @@ CODE = '''def is_prime(number):
     return True
 '''
 FILENAME = 'example_prime.py'
+QUESTION_VERSION = 'prime-explain-v2'
 
 
 def is_example(document):
@@ -21,16 +22,36 @@ def is_example(document):
 
 
 def question_set(snippets, count):
-    cases = [(1, False, 3, 4), (2, True, 10, 10), (9, False, 6, 8)]
-    return [{'question': f'Prepared Python example: What does is_prime({number}) return? Answer True or False.',
-             'reference_answer': f'False' if not expected else 'True', 'prepared_example': 'prime-v1',
-             'rubric': [{'id': 'result', 'description': f'Identify the return value for {number}.', 'snippet_id': snippets[0]['id'],
-                        'line_start': start, 'line_end': end, 'quote': '\n'.join(snippets[0]['content'][start-1:end])}]}
-            for number, expected, start, end in cases[:count]]
+    cases = [
+        ('Explain how is_prime handles numbers below 2. Walk through input 1 and explain why the loop is never reached.',
+         'For 1 the number < 2 condition is true, so the function immediately returns False. The return exits the function before divisor initialization or the loop.',
+         [('Explain the early return for inputs below 2, using input 1.', 3, 4), ('Explain why that return prevents the loop from running.', 3, 6)]),
+        ('Walk through is_prime(2). Explain why it returns True even though the loop body never runs.',
+         'The input 2 does not satisfy number < 2. divisor starts at 2, and 2 * 2 <= 2 is false, so the loop is skipped. Execution reaches return True.',
+         [('Explain why input 2 passes the initial guard.', 3, 4), ('Trace the initial divisor, false loop condition, and final return.', 5, 10)]),
+        ('Trace is_prime(9) through the loop. Explain how the function finds a divisor and why the loop condition includes equality.',
+         'divisor starts at 2; 4 <= 9 is true and 9 % 2 is nonzero, so divisor becomes 3. Since 3 * 3 <= 9 includes equality, divisor 3 is tested. 9 % 3 is zero, so the function returns False. Without equality, that square-root divisor would be skipped.',
+         [('Trace divisor 2 and the increment to 3.', 5, 9), ('Explain the equality boundary and the return when divisor 3 divides 9.', 6, 8)]),
+    ]
+    return [_package(snippets, question, reference, criteria) for question, reference, criteria in cases[:count]]
+
+
+def _package(snippets, question, reference, criteria):
+    return {'question': question, 'reference_answer': reference, 'prepared_example': QUESTION_VERSION,
+            'rubric': [{'id': f'c{index}', 'description': description, 'snippet_id': snippets[0]['id'],
+                        'line_start': start, 'line_end': end, 'quote': '\n'.join(snippets[0]['content'][start - 1:end])}
+                       for index, (description, start, end) in enumerate(criteria, 1)]}
+
+
+def current_practice(practice):
+    # Keep historical Boolean practice accessible in History, but start the new demo fresh.
+    if practice and all(item.get('prepared_example') == QUESTION_VERSION for item in practice['questions']):
+        return practice
+    return None
 
 
 def grade(package, answer, snippets):
-    # This prepared quiz intentionally asks a Boolean answer, not free-form reasoning.
+    # Compatibility only for explicitly reopened historical prime-v1 turns.
     text = answer.strip().lower().rstrip('.! ')
     match = re.fullmatch(r'(?:(?:it |the function )?(?:returns? |is ))?(true|false)', text)
     correct = bool(match and match[1] == package['reference_answer'].lower())
@@ -53,9 +74,10 @@ def challenge(document):
 
 
 def followup(turn, answer):
-    answered_true = bool(re.search(r'\btrue\b', answer, re.I))
-    package = question_set(turn['snippets'], 3)[2 if answered_true else 1]
-    number = 25 if answered_true else 3
-    package['question'] = f'Prepared follow-up to your answer: What does is_prime({number}) return? Answer True or False.'
-    package['rubric'][0]['description'] = f'Identify the return value for {number}.'
-    return package
+    if 'below 2' in turn['question'] or 'loop body never runs' in turn['question']:
+        return _package(turn['snippets'], 'Contrast your earlier explanation with is_prime(9). Trace the divisor checks and explain why equality in the loop condition matters.',
+                        question_set(turn['snippets'], 3)[2]['reference_answer'],
+                        [('Trace divisor 2 and the increment to 3.', 5, 9), ('Explain why equality allows divisor 3 to reject 9.', 6, 8)])
+    return _package(turn['snippets'], 'Building on your trace, explain why is_prime(17) reaches the final return. Walk through the candidate divisors and the stopping condition.',
+                    'For 17, divisors 2, 3 and 4 are checked and each leaves a nonzero remainder. divisor then becomes 5; 25 <= 17 is false. No divisor caused an early return, so the final return True is reached.',
+                    [('Trace the tested divisors and their nonzero remainders.', 5, 9), ('Explain why divisor 5 stops the loop and execution returns True.', 6, 10)])
