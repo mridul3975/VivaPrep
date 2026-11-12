@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-12",
+  "feature": "Source-term transcript review before grading",
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "targeted_tests": {"count": 4, "status": "passed"},
+  "full_backend_suite": {"count": 126, "status": "passed"},
+  "browser": {"status": "passed", "widths": [1440,390,360], "checks": ["Original transcript remains available", "Optional source identifier correction", "Submission requires confirmation", "Editing resets confirmation", "Original, edited draft and confirmation restore", "Explicit submission and follow-up still work", "No overflow or runtime errors"], "boundary": "Real local Flask/PostgreSQL and guest cookies; valid WAV with fixture STT. No physical microphone or live STT confidence tested."},
+  "confidence": "Source-based heuristic suggestions; no acoustic confidence claimed",
+  "migration": "006_transcript_review.sql",
+  "deployment": "Local changes; Render not redeployed"
+}
