@@ -14,11 +14,13 @@ def practice_snapshot(conn, owner, practice_id):
     if not practice:
         raise StudyConflict("Practice not found.", 404)
     turns = conn.execute("SELECT id,payload FROM repoviva.turns WHERE practice_id=%s AND owner=%s ORDER BY position", (practice_id, owner)).fetchall()
+    children = {row['payload']['parent_turn_id']: row for row in turns if row['payload'].get('parent_turn_id')}
+    turns = [item for row in turns if not row['payload'].get('parent_turn_id') for item in ([row,children[row['id']]] if row['id'] in children else [row])]
     attempts = conn.execute("SELECT DISTINCT ON(a.turn_id) a.turn_id,a.answer,a.feedback FROM repoviva.attempts a JOIN repoviva.turns t ON t.id=a.turn_id WHERE t.practice_id=%s AND a.owner=%s ORDER BY a.turn_id,a.created_at DESC,a.id DESC", (practice_id, owner)).fetchall()
-    drafts = conn.execute("SELECT d.turn_id,d.answer FROM repoviva.drafts d JOIN repoviva.turns t ON t.id=d.turn_id WHERE t.practice_id=%s AND d.owner=%s", (practice_id, owner)).fetchall()
+    drafts = conn.execute("SELECT d.turn_id,d.answer,d.speech_review FROM repoviva.drafts d JOIN repoviva.turns t ON t.id=d.turn_id WHERE t.practice_id=%s AND d.owner=%s", (practice_id, owner)).fetchall()
     return {"practice_id": practice_id, "questions": [public_question(row["id"], row["payload"]) for row in turns],
             "results": {row["turn_id"]: row["feedback"] for row in attempts}, "answers": {row["turn_id"]: row["answer"] for row in attempts},
-            "drafts": {row["turn_id"]: row["answer"] for row in drafts}, "resume_turn_id": practice["last_turn_id"]}
+            "drafts": {row["turn_id"]: row["answer"] for row in drafts}, 'speech_reviews': {row['turn_id']:row['speech_review'] for row in drafts if row['speech_review']}, "resume_turn_id": practice["last_turn_id"]}
 
 
 def restored_document(owner, source_id):
@@ -178,13 +180,15 @@ def save_draft(turn_id):
     data = request.get_json(silent=True)
     if not isinstance(data, dict) or not isinstance(data.get("answer"), str) or len(data["answer"]) > 4000:
         raise StudyConflict("Draft must be text up to 4,000 characters.", 400)
+    from backend.speech.review import resolve_review
+    speech = resolve_review(g.user['id'],turn_id,data.get('speech_review'))
     with get_database().connection() as conn:
         turn = conn.execute("SELECT practice_id,busy_until>now() AS busy FROM repoviva.turns WHERE id=%s AND owner=%s FOR UPDATE", (turn_id, g.user["id"])).fetchone()
         if not turn:
             raise StudyConflict("Question not found.", 404)
         if turn["busy"]:
             raise StudyConflict("This answer is being reviewed. Please wait.", 409)
-        conn.execute("INSERT INTO repoviva.drafts(turn_id,owner,answer) VALUES(%s,%s,%s) ON CONFLICT(turn_id) DO UPDATE SET answer=EXCLUDED.answer,updated_at=now()", (turn_id, g.user["id"], data["answer"]))
+        conn.execute("INSERT INTO repoviva.drafts(turn_id,owner,answer,speech_review) VALUES(%s,%s,%s,%s) ON CONFLICT(turn_id) DO UPDATE SET answer=EXCLUDED.answer,speech_review=EXCLUDED.speech_review,updated_at=now()", (turn_id, g.user["id"], data["answer"],Jsonb(speech) if speech else None))
         conn.execute("UPDATE repoviva.practice_sets SET last_turn_id=%s WHERE id=%s AND owner=%s", (turn_id, turn["practice_id"], g.user["id"]))
     return jsonify({"saved": True})
 
