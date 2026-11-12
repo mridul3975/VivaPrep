@@ -163,3 +163,5 @@ def hint(run_id):
         state = {**row['state'], 'hints_revealed': min(len(row['state']['challenge_hints']), row['state'].get('hints_revealed', 0) + 1)}
         row = conn.execute('UPDATE repoviva.debug_runs SET state=%s,updated_at=now() WHERE id=%s AND owner=%s RETURNING *', (Jsonb(state),run_id,g.user['id'])).fetchone()
     return jsonify(public_run(row))
+
+# feat(debug): update check_solution payload schema
