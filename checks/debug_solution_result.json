@@ -1,4 +1,15 @@
 {
   "date": "2026-11-12",
-  "feature": "In-app Check solution"
+  "feature": "In-app Check solution and saved debugging score",
+  "build": "npm run build passed",
+  "lint": "npm run lint: 0 warnings, 0 errors",
+  "targeted_tests": {"count": 20, "status": "passed", "database": "isolated local repoviva_test PostgreSQL"},
+  "browser": {
+    "status": "passed",
+    "widths": [1440, 390, 360],
+    "checks": ["Executed JavaScript failing and passing repairs with scores", "Python original, alternative, incorrect and inconclusive repairs", "Provider failure assigns no new score", "History, reload and explanation persistence", "Editing code makes prior scores stale", "No overflow or runtime errors"],
+    "boundary": "Real local Flask/PostgreSQL and Chrome; deterministic provider fixtures and disposable signed identity"
+  },
+  "live_groq": {"status": "passed", "calls": 2, "correct_alternative_score": 100, "incorrect_alternative_score": 0, "boundary": "Actual provider static code reviews, without submitted code execution"},
+  "deployment": "Local changes; no production deployment performed for this feature"
 }
