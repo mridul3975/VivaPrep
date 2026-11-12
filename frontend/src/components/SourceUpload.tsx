@@ -193,7 +193,7 @@ export default function SourceUpload({
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Could not open the example.')
       if (!isDocument(result)) throw new Error('The example could not be read. Retry.')
-      setSource(result); onSourceChange(result); setSelected(0); setNotice('Prepared Python example selected. No AI allowance is used for its questions or True/False feedback.')
+      setSource(result); onSourceChange(result); setSelected(0); setNotice('Prepared Python example selected. Questions are free; AI feedback on your explanations uses 1 answer review per submission.')
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open the example.') }
     finally { setLoading(false); onBusyChange(false) }
   }
@@ -312,7 +312,7 @@ export default function SourceUpload({
       aria-labelledby="material-heading"
     >
       {!embedded && <UiloraEffect variant="aurora" />}
-      {!compact && !source?.prepared_example && <div className="example-choice"><button type="button" className="button button-secondary" disabled={disabled || loading} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>A short prime checker. Prepared questions and source repair checks are free.</p></div>}
+      {!compact && !source?.prepared_example && <div className="example-choice"><button type="button" className="button button-secondary" disabled={disabled || loading} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>A short prime checker with explanation questions. Questions and source checks are free; AI feedback uses a review allowance.</p></div>}
       {source?.prepared_example && <p className="example-label">Prepared Python example · No AI generation needed</p>}
       {!compact && !embedded && (
         <div className="material-heading">
