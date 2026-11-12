@@ -50,3 +50,12 @@ def challenge(document):
             'verification_steps': [], 'source': {'filename': document['filename'], 'start_line': 1, 'end_line': 10},
             'provenance': 'Prepared Python example with one deliberate practice change. No AI request is used to create this exercise.',
             '_hints': ['Trace the loop for number = 9 and divisor = 3.', 'The loop must test a divisor whose square equals the number.', 'Inspect whether the loop comparison includes equality.']}
+
+
+def followup(turn, answer):
+    answered_true = bool(re.search(r'\btrue\b', answer, re.I))
+    package = question_set(turn['snippets'], 3)[2 if answered_true else 1]
+    number = 25 if answered_true else 3
+    package['question'] = f'Prepared follow-up to your answer: What does is_prime({number}) return? Answer True or False.'
+    package['rubric'][0]['description'] = f'Identify the return value for {number}.'
+    return package
