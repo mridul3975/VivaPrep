@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import App from '../App'
 import GoogleSignIn from './GoogleSignIn'
 import { AuthContext, type AuthSession } from './context'
+import { bootstrapGet } from '../connection'
 
 // A suspended cloud database can take longer to connect than a local database.
-const AUTH_REQUEST_TIMEOUT_MS = 30_000
+const AUTH_REQUEST_TIMEOUT_MS = 90_000
 
 async function readSession(response: Response): Promise<AuthSession> {
   const data = await response.json()
@@ -35,11 +36,7 @@ async function readSession(response: Response): Promise<AuthSession> {
 }
 
 function requestSession(signal = AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS)) {
-  return fetch('/auth/session', {
-    credentials: 'same-origin',
-    cache: 'no-store',
-    signal,
-  }).then(readSession)
+  return bootstrapGet('/auth/session', signal).then(readSession)
 }
 
 export default function AuthGate() {
