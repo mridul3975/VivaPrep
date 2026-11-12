@@ -16,3 +16,7 @@ def matches_reference(code, reference, language):
             return False
     return False
 
+
+def check_solution(code, exercise):
+    reference = exercise['reference_code']
+    if matches_reference(code, reference, exercise['language']):
