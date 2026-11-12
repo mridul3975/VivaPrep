@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../components/Icon'
+import UiloraEffect from '../components/UiloraEffect'
 import ActivityOrb from '../components/ActivityOrb'
 import { loadGoogleIdentity } from './google'
 import type { AuthSession } from './context'
@@ -84,7 +85,7 @@ export default function GoogleSignIn({
     <div className="auth-shell">
       <header className="auth-header">
         <a className="brand" href="/" aria-label="RepoViva home">
-          <span className="brand-mark">
+          <span className="brand-mark"><UiloraEffect variant="aurora" />
             <Icon name="book" size={22} />
           </span>
           <span>
