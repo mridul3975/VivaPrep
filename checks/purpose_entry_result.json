@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "phase": "Make the purpose clear immediately",
+  "headline": "You built it. Can you explain it?",
+  "changes": [
+    "Shared purpose statement and upload-explain-repair-defend journey on entry and workspace",
+    "Try a spoken viva opens guest access, prepared Python source and the first subjective question in one action",
+    "Upload your project preserves the own-file path and opens the file picker from the workspace",
+    "Removed duplicate example selection and empty disabled generation action from welcome card",
+    "Entry choice is consumed once so later account upgrade does not restart the demo",
+    "Existing colours, background, gradients and theme retained"
+  ],
+  "build": "npm run build: passed",
+  "lint": "npm run lint: Found 0 warnings and 0 errors",
+  "browser_checks": [
+    "Anonymous purpose and four-step journey",
+    "Real guest cookie, prepared source and first explanation question",
+    "Recorder available without automatic microphone access",
+    "Refresh restores the prepared question",
+    "Own-file entry focuses upload without selecting the example",
+    "Workspace upload button opens file picker and generates source-matched questions",
+    "Existing guest can start prepared demo from welcome",
+    "Demo failure gives a retryable error",
+    "No page overflow at 1440, 768, 390 and 360 pixels",
+    "No browser runtime errors"
+  ],
+  "private_visual_evidence": ".impeccable/review/purpose",
+  "boundary": "Real local Flask, isolated PostgreSQL and guest authentication. Prepared questions are real; own-file question generation is a fixture. Google script deliberately blocked to verify independent guest access; live Google authentication, microphone capture and provider APIs were not retested. Backend code was unchanged.",
+  "deployment": "Local implementation only; no push or deployment performed"
+}

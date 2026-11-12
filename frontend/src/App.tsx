@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import VoiceRecorder, { type RecordingPhase } from './components/VoiceRecorder'
+import VivaPurpose from './components/VivaPurpose'
 import DebugPage from './pages/DebugPage'
 import SourceUpload, { type SourceDocument } from './components/SourceUpload'
 import Icon from './components/Icon'
@@ -183,10 +184,11 @@ async function readResponse(response: Response): Promise<unknown> {
   return data
 }
 // ── App ────────────────────────────────────────────────────────────────────
-export default function App() {
+export default function App({ initialAction, onEntryHandled }: { initialAction?: 'demo' | 'upload'; onEntryHandled?: () => void }) {
   const { apiFetch, storageMode } = useAuth()
   const { route, navigate, back, depth } = useNavigation()
   const [backendReady, setBackendReady] = useState(false)
+  const entryStarted = useRef(false)
   const [backendError, setBackendError] = useState('')
   const [backendAttempt, setBackendAttempt] = useState(0)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
@@ -325,10 +327,10 @@ export default function App() {
     }
   }, [])
   // 1. Generate Question
-  async function generateQuestion() {
+  async function generateQuestion(source = activeSource) {
     if (
       !backendReady ||
-      !activeSource ||
+      !source ||
       loadingQuestion ||
       submittingAnswer ||
       transcribing ||
@@ -341,40 +343,7 @@ export default function App() {
     setTranscriptionNotice('')
     try {
       await saveDraft()
-      const res = await apiFetch('/questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_id: activeSource.source_id, count: 3 }),
-      })
-      const data = await readResponse(res)
-      if (
-        !data ||
-        typeof data !== 'object' ||
-        !('questions' in data) ||
-        !Array.isArray(data.questions) ||
-        !data.questions.length ||
-        !data.questions.every(isQuestionResponse)
-      ) {
-        throw new Error(
-          'The backend did not return the current question format. Restart Flask and reload, then upload your file again.',
-        )
-      }
-      if (
-        !data.questions.every(
-          (item) => item.source_id === activeSource.source_id,
-        )
-      ) {
-        throw new Error(
-          'The backend used a different source. Restart Flask, reload, and upload your material again.',
-        )
-      }
-      setQuestionSet(data.questions)
-      setQuestionIndex(0)
-      setResults({})
-      setTurn(data.questions[0])
-      setFeedback(null)
-      setAnswer('')
-      navigate({ page: 'study' })
+      await loadQuestions(source)
     } catch (error) {
       setError(
         error instanceof TypeError
@@ -387,6 +356,70 @@ export default function App() {
       setLoadingQuestion(false)
     }
   }
+  async function loadQuestions(source: SourceDocument) {
+    const res = await apiFetch('/questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_id: source.source_id, count: 3 }),
+    })
+    const data = await readResponse(res)
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      !('questions' in data) ||
+      !Array.isArray(data.questions) ||
+      !data.questions.length ||
+      !data.questions.every(isQuestionResponse)
+    ) {
+      throw new Error(
+        'The backend did not return the current question format. Restart Flask and reload, then upload your file again.',
+      )
+    }
+    if (
+      !data.questions.every(
+        (item) => item.source_id === source.source_id,
+      )
+    ) {
+      throw new Error(
+        'The backend used a different source. Restart Flask, reload, and upload your material again.',
+      )
+    }
+    setQuestionSet(data.questions)
+    setQuestionIndex(0)
+    setResults({})
+    setTurn(data.questions[0])
+    setFeedback(null)
+    setAnswer('')
+    navigate({ page: 'study' })
+  }
+  async function startDemo() {
+    if (!backendReady || loadingQuestion || uploadingSource || recordingBusy || submittingAnswer || transcribing) return
+    setLoadingQuestion(true); setError(null)
+    try {
+      await saveDraft()
+      const source = await apiFetch('/sources/example', { method: 'POST' }).then(readResponse) as SourceDocument
+      if (!source?.source_id || !Array.isArray(source.snippets)) throw new Error('The Python example could not be opened. Please retry.')
+      handleSourceChange(source); setSourceOverride(source)
+      await loadQuestions(source)
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open the viva. Please retry.') }
+    finally { setLoadingQuestion(false) }
+  }
+  function focusUpload(openPicker = false) {
+    const input = document.getElementById('source-file') as HTMLInputElement | null
+    input?.scrollIntoView({ block: 'center', behavior: 'instant' }); input?.focus()
+    if (openPicker) input?.click()
+  }
+  const openEntry = useEffectEvent((action: 'demo' | 'upload') => {
+    onEntryHandled?.()
+    if (action === 'demo') void startDemo()
+    else { navigate({ page: 'setup' }); focusUpload() }
+  })
+  useEffect(() => {
+    if (!initialAction || entryStarted.current || !backendReady || uploadingSource) return
+    // Wait for the restored upload control to paint before acting on the entry choice.
+    const frame = window.requestAnimationFrame(() => { entryStarted.current = true; openEntry(initialAction) })
+    return () => window.cancelAnimationFrame(frame)
+  }, [initialAction, backendReady, uploadingSource])
   // 2. Submit Answer
   async function submitAnswer(e: React.FormEvent) {
     e.preventDefault()
@@ -674,22 +707,7 @@ export default function App() {
   const workspaceHeading = (
     <div className={`workspace-heading ${!turn ? 'study-introduction' : ''}`}>
       <div>
-        <h1>
-          {turn ? (
-            'Practice'
-          ) : (
-            <>
-              <span>Know it.</span>
-              <span>Explain it.</span>
-            </>
-          )}
-        </h1>
-        {!turn && (
-          <p>
-            Practice with questions built from your notes. Explain them in your
-            own words, then check the evidence.
-          </p>
-        )}
+        {turn ? <h1>Practice</h1> : <><VivaPurpose /><div className="viva-entry-actions"><button className="button button-primary" disabled={!backendReady || busy} onClick={() => { void startDemo() }}>{loadingQuestion ? 'Opening your viva…' : 'Try a spoken viva'}<Icon name="arrow" size={18} /></button><button className="button button-secondary" disabled={!backendReady || busy} onClick={() => focusUpload(true)}>Upload your project<Icon name="upload" size={18} /></button></div><p className="viva-entry-note">Start with a short Python example. Questions are free; AI feedback and speech use your allowance.</p></>}
       </div>
       {turn && (
         <div
@@ -845,7 +863,7 @@ export default function App() {
           <section
             className={`material-area ${!turn ? 'start-panel session-console' : ''}`}
             id="source-material"
-            aria-labelledby={!turn ? 'session-heading' : undefined}
+            aria-label={!turn ? 'Upload your project' : undefined}
           >
             {!turn && <UiloraEffect variant="aurora" />}
             {!turn && (
@@ -897,7 +915,7 @@ export default function App() {
             )}
             {!turn && (
               <div className="start-action">
-                {generationButton}
+                {activeSource && generationButton}
               </div>
             )}
           </section>

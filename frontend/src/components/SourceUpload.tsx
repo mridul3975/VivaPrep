@@ -312,7 +312,7 @@ export default function SourceUpload({
       aria-labelledby="material-heading"
     >
       {!embedded && <UiloraEffect variant="aurora" />}
-      {!compact && !source?.prepared_example && <div className="example-choice"><button type="button" className="button button-secondary" disabled={disabled || loading} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>A short prime checker with explanation questions. Questions and source checks are free; AI feedback uses a review allowance.</p></div>}
+      {!compact && !embedded && !source?.prepared_example && <div className="example-choice"><button type="button" className="button button-secondary" disabled={disabled || loading} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>A short prime checker with explanation questions. Questions and source checks are free; AI feedback uses a review allowance.</p></div>}
       {source?.prepared_example && <p className="example-label">Prepared Python example · No AI generation needed</p>}
       {!compact && !embedded && (
         <div className="material-heading">
@@ -360,7 +360,7 @@ export default function SourceUpload({
               ? 'Getting your material ready…'
               : loading
                 ? 'Reading your material…'
-                : 'Drop your material here'}
+                : embedded ? 'Upload your project' : 'Drop your material here'}
           </strong>
           <span>
             {loading ? (

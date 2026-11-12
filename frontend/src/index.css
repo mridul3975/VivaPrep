@@ -363,6 +363,15 @@ h3 {
 .skip-link:focus {
   transform: none;
 }
+
+.viva-journey { display: flex; flex-wrap: wrap; gap: 10px 18px; list-style: none; padding: 0; margin: 28px 0 0; color: var(--silver); font-size: 12px; line-height: 1.8; }
+.viva-journey li { display: flex; align-items: center; gap: 18px; }
+.viva-journey li + li::before { content: ''; width: 5px; height: 5px; border-top: 1px solid var(--muted); border-right: 1px solid var(--muted); transform: rotate(45deg); }
+.viva-entry-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.auth-panel .viva-entry-actions { flex-direction: column; gap: 10px; margin-top: 24px; }
+.auth-panel .viva-entry-actions .button { margin-top: 0; width: 100%; justify-content: center; }
+.auth-panel .viva-entry-actions .guest-entry-note { margin-top: 4px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.workspace-welcome .study-introduction .viva-entry-note { font-size: 12px; line-height: 1.8; margin-top: 16px; max-width: 48ch; }
 .app-shell {
   display: grid;
   grid-template-columns: 216px minmax(0, 1fr);

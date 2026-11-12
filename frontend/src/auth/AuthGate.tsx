@@ -49,6 +49,8 @@ export default function AuthGate() {
   const [error, setError] = useState('')
   const [enteringGuest, setEnteringGuest] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
+  const [entryAction, setEntryAction] = useState<'demo' | 'upload' | undefined>()
+  const entryHandled = useCallback(() => setEntryAction(undefined), [])
   const authGeneration = useRef(0)
   const currentUserId = useRef<string | null>(null)
   const signInPending = useRef(false)
@@ -236,7 +238,7 @@ export default function AuthGate() {
     setError('')
   }, [csrfToken, applySession])
 
-  async function startGuest() {
+  async function startGuest(action?: 'demo' | 'upload') {
     if (!csrfToken || signInPending.current) return
     signInPending.current = true; setEnteringGuest(true); setError('')
     const generation = ++authGeneration.current
@@ -245,7 +247,7 @@ export default function AuthGate() {
       const accepted = await readSession(response)
       const confirmed = await requestSession()
       if (!accepted.user || confirmed.user?.id !== accepted.user.id) throw new Error('Your guest session could not be kept. Enable cookies and retry.')
-      if (generation === authGeneration.current) { ++authGeneration.current; applySession(confirmed) }
+      if (generation === authGeneration.current) { ++authGeneration.current; setEntryAction(action); applySession(confirmed) }
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open guest access. Retry.'); await refresh().catch(() => {}) }
     finally { signInPending.current = false; setEnteringGuest(false) }
   }
@@ -273,7 +275,7 @@ export default function AuthGate() {
         beginSignIn: () => { setError(''); setUpgrading(true) },
       }}
     >
-      <div hidden={upgrading}><App key={session.user.id} /></div>
+      <div hidden={upgrading}><App key={session.user.id} initialAction={entryAction} onEntryHandled={entryHandled} /></div>
       {upgrading && <GoogleSignIn session={session} loading={false} signingIn={signingIn} error={error} onCredential={signIn} onRetry={reload} onCancel={() => setUpgrading(false)} />}
     </AuthContext.Provider>
   )

@@ -4,6 +4,7 @@ import UiloraEffect from '../components/UiloraEffect'
 import ActivityOrb from '../components/ActivityOrb'
 import { loadGoogleIdentity } from './google'
 import type { AuthSession } from './context'
+import VivaPurpose from '../components/VivaPurpose'
 
 export default function GoogleSignIn({
   session,
@@ -22,7 +23,7 @@ export default function GoogleSignIn({
   error: string
   onCredential: (credential: string) => Promise<void>
   onRetry: () => void
-  onGuest?: () => Promise<void>
+  onGuest?: (action?: 'demo' | 'upload') => Promise<void>
   enteringGuest?: boolean
   onCancel?: () => void
 }) {
@@ -102,22 +103,15 @@ export default function GoogleSignIn({
       <div className="auth-back-bar"><button type="button" className="text-button back-button" disabled={window.history.length <= 1} onClick={() => window.history.back()}><Icon name="arrow" size={17} className="rotate-180" />Back</button></div>
       <main className="auth-layout">
         <div className="auth-introduction">
-          <h1>
-            <span>Know it.</span>
-            <span>Explain it.</span>
-          </h1>
-          <p>
-            Practice with questions built from your material. Answer in your own
-            words, then check the evidence.
-          </p>
+          <VivaPurpose />
         </div>
         <section className="auth-panel" aria-labelledby="sign-in-title">
           <Icon name="book" size={28} />
-          <h2 id="sign-in-title">Your study desk awaits.</h2>
+          <h2 id="sign-in-title">{onCancel ? 'Keep your practice.' : 'Start with a short viva.'}</h2>
           <p>
-            {onCancel ? 'Sign in with Google to keep your guest work and get your account allowance.' : 'Try the Python example or upload your own material. No Google account needed for guest access.'}
+            {onCancel ? 'Sign in with Google to keep your guest work and get your account allowance.' : 'Explain a prepared Python example, or bring your own project. No Google account needed.'}
           </p>
-          {onGuest && <><button className="button button-primary guest-start" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest() }}>{enteringGuest ? 'Opening guest session…' : 'Try as guest'}<Icon name="arrow" size={16} /></button><p className="guest-entry-note">Free prepared example · Your own files welcome · Limited AI allowance</p></>}
+          {onGuest && <div className="viva-entry-actions"><button className="button button-primary guest-start" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest('demo') }}>{enteringGuest ? 'Opening your workspace…' : 'Try a spoken viva'}<Icon name="arrow" size={16} /></button><button className="button button-secondary" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest('upload') }}>Upload your project<Icon name="upload" size={16} /></button><p className="guest-entry-note">Guest access · Free prepared questions · Limited AI feedback and transcription</p></div>}
           <div
             className="google-sign-in"
             ref={target}
