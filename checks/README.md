@@ -127,3 +127,11 @@ proxy configuration with 13 GET/write requests against a disposable HTTP backend
 It uses an isolated temporary dependency cache and no database. This catches
 missing proxy prefixes that production Flask-only browser tests cannot detect.
 `dev_navigation_result.json` records the actual localhost:5173 regression check.
+## In-app debugging repair checks
+
+`python -m unittest checks.test_debug_checker checks.test_debug_generator checks.test_debugging -v`
+covers safe source comparison, alternative review validation, owned saves, stale
+results, review quotas, cached reviews, failure refunds and concurrent edits.
+Integration tests require `TEST_DATABASE_URL` pointing to the isolated
+`repoviva_test` database; never use production storage.
+`debug_solution_result.json` records the local browser and live Groq boundaries.
