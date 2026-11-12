@@ -1,0 +1,34 @@
+/* Setup composition only: inherit the existing palette, surfaces and effects. */
+.debug-setup-shell .guest-access, .debug-setup-shell .page-back-bar, .workspace.debug-setup { max-width: 1060px; width: calc(100% - 112px); }
+.workspace.debug-setup { padding-top: 6px; font-family: 'Work Sans', sans-serif; }
+.debug-setup .page-heading { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.debug-setup .page-heading h1 { font: 500 clamp(34px, 4vw, 48px)/1.1 Newsreader, Georgia, serif; letter-spacing: -.035em; }
+.debug-setup .page-heading p { margin-top: 10px; font-size: 14px; }
+.debug-setup .debug-source-setup { border: 0; padding: 0; }
+.debug-setup-options { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 18px; }
+.debug-setup-options > div { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); min-width: 0; padding: 20px; }
+.debug-example-option { display: flex; flex-direction: column; justify-content: space-between; gap: 28px; }
+.debug-example-option .button { width: 100%; justify-content: center; font-size: 13px; padding: 10px 12px; min-height: 42px; }
+.debug-example-option p, .debug-file-option-heading p { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.debug-file-option-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.debug-file-option-heading > div { min-width: 0; }
+.debug-setup .debug-file-option-heading h2 { font: 500 16px/1.5 'IBM Plex Mono', monospace; margin: 0 0 5px; overflow-wrap: anywhere; }
+.debug-file-option-heading .debug-file-picker { flex-shrink: 0; font-size: 11px; min-height: 36px; padding: 8px 12px; }
+.debug-section-config { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+.debug-section-config > div { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 8px; }
+.debug-section-config label { flex-shrink: 0; font-size: 12px; }
+.debug-section-config p { font-size: 10px; color: var(--subtle); line-height: 1.6; }
+.debug-section-config select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: 11px 'IBM Plex Mono', monospace; }
+.debug-section-config select:focus-visible, .debug-preview-code pre:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.debug-setup-preview { margin-top: 24px; }
+.debug-setup-preview summary { cursor: pointer; font: 11px/1.6 'IBM Plex Mono', monospace; color: var(--text); margin-bottom: 14px; }
+.debug-preview-code { display: flex; align-items: flex-start; max-height: 420px; min-height: 220px; overflow: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); padding: 24px; }
+.debug-preview-lines { flex-shrink: 0; user-select: none; min-width: 24px; padding-right: 22px; text-align: right; color: var(--subtle); font: 11px/22px 'IBM Plex Mono', monospace; }
+.debug-preview-code pre { padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; flex: 1; min-width: max-content; white-space: pre; font: 11px/22px 'IBM Plex Mono', monospace; tab-size: 4; }
+.debug-setup-create { padding: 20px; margin-top: 18px; border: 1px solid var(--border); border-radius: 14px; }
+.debug-setup-create .button { width: 100%; justify-content: center; font-size: 13px; min-height: 44px; }
+.debug-setup-create p { font-size: 11px; color: var(--muted); margin-top: 12px; text-align: center; line-height: 1.7; }
+.debug-setup .debug-saved { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 30px; }
+.debug-setup .debug-saved > h2 { font-size: 18px; }
+@media (max-width: 1100px) { .debug-setup-shell .guest-access, .debug-setup-shell .page-back-bar, .workspace.debug-setup { width: calc(100% - 64px); } .debug-file-option-heading { gap: 12px; } .debug-section-config > div { flex-direction: column; gap: 5px; } }
+@media (max-width: 760px) { .debug-setup-shell .guest-access, .debug-setup-shell .page-back-bar, .workspace.debug-setup { width: calc(100% - 40px); } .debug-setup-options { grid-template-columns: minmax(0, 1fr); gap: 14px; } .debug-example-option { gap: 14px; } .debug-file-option-heading { flex-wrap: wrap; } .debug-preview-code { padding: 18px 12px; } .debug-setup-create { padding: 16px; } }
