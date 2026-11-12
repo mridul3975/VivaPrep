@@ -9,3 +9,10 @@ def matches_reference(code, reference, language):
     # Preserve indentation and whitespace inside strings. Never strip all whitespace.
     if code.replace('\r\n', '\n').strip('\n') == reference.replace('\r\n', '\n').strip('\n'):
         return True
+    if language.lower() == 'python':
+        try:
+            return ast.dump(ast.parse(textwrap.dedent(code))) == ast.dump(ast.parse(textwrap.dedent(reference)))
+        except (SyntaxError, ValueError, RecursionError):
+            return False
+    return False
+
