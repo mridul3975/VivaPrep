@@ -190,12 +190,12 @@ def generate_questions():
         previous = get_database().current_practice(g.user['id'], source_id)
         if previous:
             with get_database().connection() as conn:
-                prepared = conn.execute("SELECT bool_and(payload->'question_package'->>'prepared_example'='prime-v1') AS prepared FROM repoviva.turns WHERE practice_id=%s AND owner=%s", (previous['practice_id'],g.user['id'])).fetchone()['prepared']
+                prepared = conn.execute("SELECT bool_and(payload->'question_package'->>'prepared_example'=%s) AS prepared FROM repoviva.turns WHERE practice_id=%s AND owner=%s", (example.QUESTION_VERSION,previous['practice_id'],g.user['id'])).fetchone()['prepared']
             if prepared:
                 return jsonify({'api_version': API_VERSION, 'source_id': source_id, 'source_revision': document['revision'], 'practice_id': previous['practice_id'], 'questions': previous['questions'][:count]})
     elif example.is_example(document):
         with turns_lock:
-            existing = {key: turn for key, turn in turns.items() if turn['owner'] == g.user['id'] and turn['source_id'] == source_id and time.monotonic() - turn['created'] < TURN_TTL_SECONDS}
+            existing = {key: turn for key, turn in turns.items() if turn['owner'] == g.user['id'] and turn['source_id'] == source_id and turn['question_package'].get('prepared_example') == example.QUESTION_VERSION and time.monotonic() - turn['created'] < TURN_TTL_SECONDS}
         if len(existing) >= count:
             return jsonify({'api_version': API_VERSION, 'source_id': source_id, 'source_revision': document['revision'], 'practice_id': None, 'questions': [public_question(key, turn) for key, turn in list(existing.items())[:count]]})
     try:
