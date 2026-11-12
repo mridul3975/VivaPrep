@@ -2,6 +2,7 @@
 import hashlib
 import json
 import uuid
+import time
 from contextlib import nullcontext
 from flask import Blueprint, current_app, g, jsonify, request
 from psycopg.types.json import Jsonb
@@ -11,6 +12,8 @@ from backend.account import allowance
 from backend.interview.debug_generator import SOURCE_SCENARIO_ID, generate_debug_challenge, source_excerpt
 from backend.interview.provider import ProviderError
 from backend.interview.debug_checker import check_solution, matches_reference
+from backend.interview.debug_viva import evaluate_defense, fingerprint
+from backend.speech.review import resolve_debug_reviews
 from backend import example
 
 debugging = Blueprint('debugging', __name__, url_prefix='/debug')
@@ -38,13 +41,16 @@ def public_run(row):
     solution = state.get('solution_result')
     solution_current = bool(solution and solution.get('code_sha256') == hashlib.sha256(state['code'].encode()).hexdigest())
     solved = tests_passed or bool(solution_current and solution['verdict'] == 'correct')
-    public_state = {key: value for key, value in state.items() if key not in {'scenario', 'challenge_hints'}}
+    defense = state.get('defense_result')
+    defense_current = bool(defense and defense.get('fingerprint') == fingerprint(state) and solved)
+    public_state = {key: value for key, value in state.items() if key not in {'scenario', 'challenge_hints', 'speech_receipts', 'defense_lease'}}
     return {'id': row['id'], 'source_id': row['source_id'], 'created_at': row['created_at'].isoformat(),
             'updated_at': row['updated_at'].isoformat(), **public_state, 'scenario': exercise,
             'hints': hints[:state.get('hints_revealed', 0)], 'total_hints': len(hints),
             'tests_current': bool(current), 'tests_passed': tests_passed,
             'solution_current': solution_current, 'solution_passed': solved,
-            'complete': bool(solved and state.get('hypothesis', '').strip() and state.get('explanation', '').strip()),
+            'defense_current': defense_current,
+            'complete': bool(defense_current and defense['passed']),
             'verification': ('Browser-executed practice tests; saved results are client observations, not a server-certified assessment.'
                              if exercise.get('execution_mode', 'javascript') == 'javascript'
                              else 'Source comparison or AI code review. Runtime behavior has not been verified by this application.')}
@@ -134,8 +140,8 @@ def run(run_id):
         source_scenario(row)
         if request.method == 'PATCH':
             data = request.get_json(silent=True)
-            fields = {'code': 12000, 'hypothesis': 4000, 'explanation': 4000}
-            if not isinstance(data, dict) or not data or set(data) - {*fields, 'test_result'}:
+            fields = {'code': 12000, 'hypothesis': 4000, 'explanation': 4000, 'failing_input': 4000}
+            if not isinstance(data, dict) or not data or set(data) - {*fields, 'test_result', 'speech_reviews'}:
                 raise StudyConflict('Send valid code, explanation or test results.', 400)
             state = {**row['state']}
             for key, maximum in fields.items():
@@ -143,6 +149,12 @@ def run(run_id):
                     if not isinstance(data[key], str) or len(data[key]) > maximum:
                         raise StudyConflict(f'{key} must be text of at most {maximum} characters.', 400)
                     state[key] = data[key]
+            if 'speech_reviews' in data:
+                state['speech_reviews'] = resolve_debug_reviews(state, data['speech_reviews'])
+            # Editing a spoken answer always requires confirmation again.
+            for key, review in state.get('speech_reviews', {}).items():
+                if key in data and data[key] != row['state'].get(key) and not data.get('speech_reviews', {}).get(key, {}).get('reviewed'):
+                    state['speech_reviews'][key] = {**review, 'reviewed': False}
             if 'test_result' in data:
                 report = data['test_result']
                 tests = state['scenario']['tests']
@@ -195,6 +207,49 @@ def check(run_id):
     except (ProviderError, ValueError, KeyError, TypeError) as error:
         current_app.logger.warning('Debug solution review failed: %s', type(error).__name__)
         return jsonify({'error': 'Solution review is temporarily unavailable. Your code is saved; retry shortly. No score was assigned.'}), 503 if isinstance(error, ProviderError) and error.status_code == 429 else 502
+    return jsonify(public_run(row))
+
+
+@debugging.post('/runs/<run_id>/defend')
+def defend(run_id):
+    require_storage()
+    request.max_content_length = 1024
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or data:
+        raise StudyConflict('Save your explanations, then submit an empty JSON object for review.', 400)
+    lease = uuid.uuid4().hex
+    with get_database().connection() as conn:
+        row = owned(conn, run_id, True)
+        public = public_run(row)
+        state = row['state']
+        if not public['solution_passed']:
+            raise StudyConflict('Check and accept the current repair before defending it.', 409)
+        if any(not state.get(key, '').strip() for key in ('explanation', 'failing_input')):
+            raise StudyConflict('Explain the fix and give an input that exposes the bug.', 400)
+        if any(not review['reviewed'] for key, review in state.get('speech_reviews', {}).items() if key in {'explanation', 'failing_input'}):
+            raise StudyConflict('Confirm each spoken answer matches what you meant before submitting.', 400)
+        if public['defense_current']:
+            return jsonify(public)
+        if state.get('defense_lease', {}).get('expires', 0) > time.time():
+            raise StudyConflict('A viva review is already running. Wait a moment and reload.', 409)
+        snapshot = fingerprint(state)
+        conn.execute('UPDATE repoviva.debug_runs SET state=%s WHERE id=%s AND owner=%s',
+                     (Jsonb({**state, 'defense_lease': {'id': lease, 'expires': time.time() + 120}}), run_id, g.user['id']))
+    try:
+        with allowance('answers'):
+            result = evaluate_defense(state)
+            with get_database().connection() as conn:
+                row = owned(conn, run_id, True)
+                if fingerprint(row['state']) != snapshot or row['state'].get('defense_lease', {}).get('id') != lease or not public_run(row)['solution_passed']:
+                    raise StudyConflict('The repair or answers changed during review. Submit the saved version again.', 409)
+                row = conn.execute('UPDATE repoviva.debug_runs SET state=%s,updated_at=now() WHERE id=%s AND owner=%s RETURNING *',
+                                   (Jsonb({**row['state'], 'defense_result': {**result, 'fingerprint': snapshot}}), run_id, g.user['id'])).fetchone()
+    except (ProviderError, ValueError, KeyError, TypeError) as error:
+        current_app.logger.warning('Debug viva review failed: %s', type(error).__name__)
+        return jsonify({'error': 'Viva review is temporarily unavailable. Your answers are saved; retry shortly. No score was assigned.'}), 503 if isinstance(error, ProviderError) and error.status_code == 429 else 502
+    finally:
+        with get_database().connection() as conn:
+            conn.execute("UPDATE repoviva.debug_runs SET state=state-'defense_lease' WHERE id=%s AND owner=%s AND state->'defense_lease'->>'id'=%s", (run_id, g.user['id'], lease))
     return jsonify(public_run(row))
 
 
