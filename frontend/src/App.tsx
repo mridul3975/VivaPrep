@@ -926,7 +926,7 @@ export default function App() {
                 </div>
                 <h2 id="question-heading" tabIndex={-1}>{turn.question}</h2>
                 {turn.parent_turn_id && <details className="viva-parent-answer"><summary>Your earlier answer</summary><p>{turn.parent_answer}</p></details>}
-                {!feedback && <p className="viva-answer-guide">Record your answer or type below. Review the transcript before submitting.</p>}
+                {!feedback && <p className="viva-answer-guide">Explain your reasoning in your own words. Record your answer or type below, then review it before submitting.</p>}
               </section>
               <section
                 className="answer-panel"
@@ -1157,7 +1157,7 @@ export default function App() {
                   </div>
                   {!turn.parent_turn_id && storageMode === 'postgresql' && <div className="viva-followup"><button type="button" className="button button-secondary" disabled={busy} onClick={() => { void askFollowup() }}>{loadingQuestion ? 'Preparing follow-up…' : questionSet.some(question => question.parent_turn_id === turn.turn_id) ? 'Open viva follow-up' : 'Continue with a follow-up'}<Icon name="arrow" size={16} /></button><p>{activeSource?.prepared_example ? 'Prepared example follow-up · Free' : 'One follow-up based on your submitted answer and source. Uses 1 question-set allowance; reopening it is free.'}</p></div>}
                   <p className="assessment-note">
-                    {activeSource?.prepared_example ? 'Prepared example feedback. Check the return value against the source.' : 'AI feedback. Verify uncertain results against the source.'}
+                    {activeSource?.prepared_example ? 'Source-backed feedback. Check the explanation against the code.' : 'AI feedback. Verify uncertain results against the source.'}
                   </p>
                 </section>
               )}
