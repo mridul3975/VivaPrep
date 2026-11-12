@@ -270,6 +270,14 @@ with the next midnight-UTC reset in local time. See
 
 ### Debugging practice
 
+Study transcript review: retain the existing editable answer area and palette.
+A quiet Check what was heard section preserves the original in a disclosure,
+offers deliberate source-term replacements, and requires a confirmation checkbox.
+Editing resets confirmation; students may explicitly use a typed answer instead.
+The source-name hints are labeled as suggestions, not speech-confidence scores.
+Keep the review with draft restoration and final feedback. Evidence:
+`.impeccable/review/transcript-review/result.json` (local STT fixture).
+
 Study viva extension: preserve the existing recording, editable transcript and
 explicit Submit Answer flow. Answer review exposes Continue with a follow-up
 with its generation cost (or a free prepared-example label). The child question
