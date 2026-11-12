@@ -1,0 +1,115 @@
+{
+  "status": "passed",
+  "provider": "Live Groq",
+  "correct_score": 100,
+  "incorrect_score": 0,
+  "correct_feedback": {
+    "criteria": [
+      {
+        "id": "explanation",
+        "question": "Why did the broken code fail, and why does your change fix it?",
+        "status": "met",
+        "points": 2,
+        "explanation": "The bug is caused by the loop condition `while divisor * divisor < number` which stops before testing the divisor whose square equals the number. For a perfect square like 9, the loop exits when divisor becomes 3 because 3*3 == 9 is not less than 9, so the divisibility test never runs and the function incorrectly returns True. The repair changes the condition to `<=`, ensuring the divisor whose square equals the input is still checked, causing the modulo test to detect the factor and correctly return False.",
+        "evidence": [
+          {
+            "version": "broken",
+            "line_start": 6,
+            "line_end": 6,
+            "quote": "    while divisor * divisor < number:"
+          },
+          {
+            "version": "repair",
+            "line_start": 6,
+            "line_end": 6,
+            "quote": "    while divisor * divisor <= number:"
+          }
+        ]
+      },
+      {
+        "id": "failing_input",
+        "question": "Which input exposes the bug? Give the broken and repaired outcomes and explain why they differ.",
+        "status": "met",
+        "points": 2,
+        "explanation": "Input: 9. Broken outcome: True (the loop stops before checking divisor 3, so no divisor found and function returns True). Repaired outcome: False (the `<=` condition causes divisor 3 to be checked, 9 % 3 == 0, so function returns False). Trace: broken \u2013 divisor=2 (2*2<9 true) \u2192 check 9%2 !=0 \u2192 divisor=3; condition 3*3<9 false \u2192 exit loop \u2192 return True. Repair \u2013 divisor=2 (2*2<=9 true) \u2192 check 9%2 !=0 \u2192 divisor=3; condition 3*3<=9 true \u2192 check 9%3 ==0 \u2192 return False.",
+        "evidence": [
+          {
+            "version": "broken",
+            "line_start": 6,
+            "line_end": 6,
+            "quote": "    while divisor * divisor < number:"
+          },
+          {
+            "version": "repair",
+            "line_start": 6,
+            "line_end": 6,
+            "quote": "    while divisor * divisor <= number:"
+          }
+        ]
+      }
+    ],
+    "score": 100,
+    "passed": true,
+    "method": "ai_review",
+    "answers": {
+      "explanation": "The strict < loop skips a divisor when its square equals the input. Changing it to <= checks that boundary, so perfect squares are rejected by the divisibility check.",
+      "failing_input": "For 9 the broken loop checks 2, increments to 3, then stops because 9 < 9 is false and returns True. With <= it checks 3, finds remainder zero and returns False."
+    },
+    "speech_reviews": {}
+  },
+  "incorrect_feedback": {
+    "criteria": [
+      {
+        "id": "explanation",
+        "question": "Why did the broken code fail, and why does your change fix it?",
+        "status": "missed",
+        "points": 0,
+        "explanation": "The answer describes a tax\u2011subtraction bug, which does not exist in the supplied code. The real defect is the loop condition `while divisor * divisor < number:` in the broken version, which stops one iteration early and allows a perfect square (e.g., 9) to be reported as prime. The repair changes the condition to `<=` so the divisor equal to the square root is tested, correctly rejecting squares. The explanation therefore does not address the actual cause nor why the repair restores the contract.",
+        "evidence": [
+          {
+            "version": "broken",
+            "line_start": 6,
+            "line_end": 6,
+            "quote": "    while divisor * divisor < number:"
+          },
+          {
+            "version": "repair",
+            "line_start": 6,
+            "line_end": 6,
+            "quote": "    while divisor * divisor <= number:"
+          }
+        ]
+      },
+      {
+        "id": "failing_input",
+        "question": "Which input exposes the bug? Give the broken and repaired outcomes and explain why they differ.",
+        "status": "missed",
+        "points": 0,
+        "explanation": "The supplied failing input (number\u202f=\u202f2) is incorrect; both versions return True for 2. A proper failing case is `number = 9`. In the broken version the loop condition `<` stops before testing divisor\u202f=\u202f3, so the function reaches the final `return True` and incorrectly reports 9 as prime. In the repaired version the `<=` condition includes divisor\u202f=\u202f3, the `if number % divisor == 0` branch triggers, and the function returns False, correctly rejecting 9. This concrete input, broken outcome (True), repaired outcome (False), and the differing trace at lines 6\u20118 demonstrate the fix.",
+        "evidence": [
+          {
+            "version": "broken",
+            "line_start": 6,
+            "line_end": 9,
+            "quote": "    while divisor * divisor < number:\n        if number % divisor == 0:\n            return False\n        divisor += 1"
+          },
+          {
+            "version": "repair",
+            "line_start": 6,
+            "line_end": 9,
+            "quote": "    while divisor * divisor <= number:\n        if number % divisor == 0:\n            return False\n        divisor += 1"
+          }
+        ]
+      }
+    ],
+    "score": 0,
+    "passed": false,
+    "method": "ai_review",
+    "answers": {
+      "explanation": "The code failed because it subtracts tax. I changed it to addition.",
+      "failing_input": "For 2, the broken function returns False and the repaired function returns 100."
+    },
+    "speech_reviews": {}
+  },
+  "boundary": "Static reasoning and validated code citations. This does not execute Python or verify live microphone/STT."
+}
