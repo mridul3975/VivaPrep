@@ -20,3 +20,6 @@ def matches_reference(code, reference, language):
 def check_solution(code, exercise):
     reference = exercise['reference_code']
     if matches_reference(code, reference, exercise['language']):
+        return {'verdict': 'correct', 'score': 100, 'method': 'reference',
+                'explanation': 'Correct! You restored the uploaded implementation. This verifies the practice repair by source comparison; it does not execute the code.'}
+    if code.replace('\r\n', '\n').strip('\n') == exercise['starter_code'].replace('\r\n', '\n').strip('\n'):
