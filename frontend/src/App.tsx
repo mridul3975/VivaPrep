@@ -4,6 +4,7 @@ import DebugPage from './pages/DebugPage'
 import SourceUpload, { type SourceDocument } from './components/SourceUpload'
 import Icon from './components/Icon'
 import ActivityOrb from './components/ActivityOrb'
+import UiloraEffect from './components/UiloraEffect'
 import type { OrbState } from 'thinking-orbs'
 import { useAuth } from './auth/context'
 import AccountControls from './auth/AccountControls'
@@ -738,7 +739,7 @@ export default function App() {
       </a>
       <header className="app-header">
         <a className="brand" href="#/study" aria-label="RepoViva study desk" onClick={event => { event.preventDefault(); void go({ page: 'study' }) }}>
-          <span className="brand-mark">
+          <span className="brand-mark"><UiloraEffect variant="aurora" />
             <Icon name="book" size={22} />
           </span>
           <span>
@@ -811,6 +812,7 @@ export default function App() {
             id="source-material"
             aria-labelledby={!turn ? 'session-heading' : undefined}
           >
+            {!turn && <UiloraEffect variant="aurora" />}
             {!turn && (
               <div
                 className="session-console-heading flex items-center justify-center min-h-[150px]"
@@ -847,6 +849,7 @@ export default function App() {
                 className="material-panel connection-panel"
                 aria-label="Material upload"
               >
+                <UiloraEffect variant="aurora" />
                 <h2>Your material starts here.</h2>
                 <p>
                   {backendError
