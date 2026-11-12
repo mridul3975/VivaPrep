@@ -93,6 +93,20 @@
 .debug-exercise .debug-reasoning h2 { font-size: 16px; }
 .debug-exercise .debug-reasoning textarea { background: #0d0f14; border-color: #303541; font-size: 13px; }
 .debug-exercise .debug-completion { font-size: 12px; }
+.debug-hypothesis { margin-bottom: 30px; }
+.debug-hypothesis summary { cursor: pointer; font-size: 12px; padding-block: 12px; }
+.debug-exercise .debug-reasoning > p { max-width: 72ch; font-size: 13px; }
+.debug-viva-feedback:not(:empty) { margin-top: 32px; padding-top: 24px; border-top: 1px solid #303541; }
+.debug-viva-feedback { outline-offset: 6px; overflow-wrap: anywhere; }
+.debug-viva-feedback .section-heading h3 { font-size: 16px; }
+.debug-viva-feedback .section-heading > span { font: 12px 'IBM Plex Mono', monospace; }
+.debug-viva-criterion { margin-top: 24px; }
+.debug-viva-criterion h4 { font-size: 14px; line-height: 1.6; }
+.debug-viva-criterion p { font-size: 13px; line-height: 1.8; max-width: 72ch; }
+.debug-viva-criterion summary { cursor: pointer; font-size: 12px; padding-block: 10px; }
+.debug-viva-criterion pre { overflow: auto; max-width: 100%; font: 12px/1.8 'IBM Plex Mono', monospace; padding: 14px; background: #0d0f14; }
+.debug-explanation-grid > div { min-width: 0; }
+.debug-exercise .transcript-confirm { display: flex; flex-direction: row; }
 @media (forced-colors: active) { .exercise-code-input pre { display: none; } .exercise-code-input textarea { color: CanvasText; -webkit-text-fill-color: CanvasText; caret-color: CanvasText; } }
 @media (max-width: 1000px) { .debug-exercise-shell .account-email { display: none; } .debug-exercise .debug-layout { gap: 24px; } .editor-action-caption { display: none; } }
 @media (max-width: 760px) {
