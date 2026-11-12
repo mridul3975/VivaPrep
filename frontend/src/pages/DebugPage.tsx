@@ -3,8 +3,8 @@ import { useAuth } from '../auth/context'
 import { apiJson } from '../api'
 import Icon from '../components/Icon'
 import ActivityOrb from '../components/ActivityOrb'
-import VoiceRecorder, { type RecordingPhase } from '../components/VoiceRecorder'
-import TranscriptReview, { type SpeechReview } from '../components/TranscriptReview'
+import type { SpeechReview } from '../components/TranscriptReview'
+import DebugAnswerField, { type AnswerField } from '../debug/DebugAnswerField'
 import DebugDefenseResult, { type DefenseResult } from '../debug/DebugDefenseResult'
 import type { SourceDocument } from '../components/SourceUpload'
 import { runInSandbox, type DebugTest, type TestObservation } from '../debug/runner'
@@ -26,7 +26,6 @@ interface DebugRun {
   failing_input?: string; speech_reviews?: Record<string, SpeechReview>; defense_result?: DefenseResult; defense_current: boolean
   test_result?: { results: TestObservation[] }; context?: { filename: string; snippet: { content: string[]; start_line: number; end_line: number } }
 }
-type AnswerField = 'hypothesis' | 'explanation' | 'failing_input'
 type Draft = Pick<DebugRun, 'code' | 'hypothesis' | 'explanation'> & { failing_input: string; speech_reviews: Record<string, SpeechReview> }
 const draftPayload = (draft: Draft) => ({ ...draft, speech_reviews: Object.fromEntries(Object.entries(draft.speech_reviews).map(([key, review]) => [key, { receipt_id: review.receipt_id, reviewed: review.reviewed }])) })
 const vivaSpeech = (reviews?: Record<string, SpeechReview>) => JSON.stringify(['explanation', 'failing_input'].map(key => reviews?.[key] ?? null))
@@ -48,8 +47,11 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
   const [checkedCode, setCheckedCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [working, setWorking] = useState(false)
-  const [recordingBusy, setRecordingBusy] = useState(false)
-  const [voiceTarget, setVoiceTarget] = useState<AnswerField>('explanation')
+  const [activeRecording, setActiveRecording] = useState<AnswerField | null>(null)
+  const recordingBusy = activeRecording !== null
+  const recordingChange = useCallback((field: AnswerField, value: boolean) => {
+    setActiveRecording(current => value ? field : current === field ? null : current)
+  }, [])
   const [reviewing, setReviewing] = useState(false)
   const [sectionId, setSectionId] = useState('')
   const [validation, setValidation] = useState<'checking' | 'ready' | 'invalid'>('checking')
@@ -185,15 +187,15 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
     } catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : 'Could not check this solution. Retry.') }
     finally { if (mounted.current) setWorking(false) }
   }
-  async function transcribe(file: File) {
+  async function transcribe(field: AnswerField, file: File) {
     setError(''); setNotice('')
     try {
       if (!runId || !draft) return
       await save()
-      const data = new FormData(); data.append('audio_file', file); data.append('debug_run_id', runId); data.append('debug_field', voiceTarget)
+      const data = new FormData(); data.append('audio_file', file); data.append('debug_run_id', runId); data.append('debug_field', field)
       const result = await apiFetch('/transcriptions', { method: 'POST', body: data }).then(apiJson<{ transcript: string; speech_review: SpeechReview }>)
       if (!result.transcript?.trim() || !result.speech_review?.receipt_id) throw new Error('No speech was transcribed. Try again or type your explanation.')
-      updateDraft({ ...draft, [voiceTarget]: result.transcript, speech_reviews: { ...draft.speech_reviews, [voiceTarget]: result.speech_review } })
+      updateDraft({ ...draft, [field]: result.transcript, speech_reviews: { ...draft.speech_reviews, [field]: result.speech_review } })
       setNotice('Transcript added. Check what was heard before submitting your viva.')
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not transcribe the explanation.') }
   }
@@ -210,14 +212,14 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
     } catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : 'Could not review your viva. Retry shortly.') }
     finally { if (mounted.current) { setWorking(false); setReviewing(false) } }
   }
-  function speechReview(field: AnswerField) {
-    if (!draft?.speech_reviews[field]) return null
-    return <TranscriptReview review={draft.speech_reviews[field]} answer={draft[field]} disabled={busy}
-      onAnswer={value => edit(field, value)}
+  function answerField(field: AnswerField, label: string, recordLabel: string, placeholder?: string) {
+    if (!draft) return null
+    return <DebugAnswerField field={field} label={label} recordLabel={recordLabel} value={draft[field]} placeholder={placeholder}
+      review={draft.speech_reviews[field]} busy={busy} recordingDisabled={working || (activeRecording !== null && activeRecording !== field)}
+      onChange={value => edit(field, value)} onRecording={transcribe} onRecordingBusy={recordingChange} onError={setError}
       onConfirm={value => updateDraft({ ...draft, speech_reviews: { ...draft.speech_reviews, [field]: { ...draft.speech_reviews[field], reviewed: value } } })}
       onTyped={() => { const reviews = { ...draft.speech_reviews }; delete reviews[field]; updateDraft({ ...draft, speech_reviews: reviews }) }} />
   }
-  const phaseChange = useCallback((_phase: RecordingPhase) => {}, [])
   const codeFile = source?.kind === 'text' && /\.(js|mjs|cjs|jsx|ts|tsx|py|java|c|h|cpp|hpp|cs|go|rs|rb|php|swift|kt|sql|sh)$/i.test(source.filename)
   const selectedSection = source?.snippets.find(item => item.id === sectionId) ?? source?.snippets[0]
   async function upload(file?: File) {
@@ -303,14 +305,13 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
       <details className="exercise-hints" open><summary><span>Hints</span><span className="hint-count">{run.hints.length}/{run.total_hints} revealed</span></summary><div className="exercise-hints-content">{run.hints.map((text, index) => <p key={text}><span>{String(index + 1).padStart(2, '0')}</span>{text}</p>)}{run.hints.length === 0 && <p className="field-note">Need a starting point? Reveal one hint at a time.</p>}<button className="text-button" disabled={busy || run.hints.length >= run.total_hints} onClick={() => { void hint() }}>{run.hints.length === run.total_hints ? 'All hints revealed' : 'Reveal next hint'}</button></div></details>
       {scenario.reference_code && <details className="debug-project-context exercise-source"><summary>Compare with uploaded source</summary><p className="field-note">This reveals the original excerpt before the practice bug was introduced.</p><pre>{scenario.reference_code}</pre></details>}
       <section className="debug-reasoning" aria-labelledby="debug-reasoning-heading">
-        <details className="debug-hypothesis"><summary>Your starting hypothesis (optional)</summary><label>Before the fix<textarea aria-label="Your hypothesis" rows={3} maxLength={4000} disabled={busy} value={draft.hypothesis} onChange={event => edit('hypothesis', event.target.value)} /></label>{speechReview('hypothesis')}</details>
+        <details className="debug-hypothesis"><summary onClick={event => { if (activeRecording === 'hypothesis') event.preventDefault() }}>Your starting hypothesis (optional)</summary>{answerField('hypothesis', 'Your hypothesis', 'Record hypothesis', 'What might cause the failure?')}</details>
         <div className="section-heading"><h2 id="debug-reasoning-heading">Defend your repair</h2><span className="muted">Type or speak</span></div>
         <p>{passing ? 'Your repair is accepted. Now show that you understand it.' : 'First repair the code and check your solution. You can draft your answers below.'}</p>
         <div className="debug-explanation-grid">
-          <div><label>Why did it fail, and why does your fix work?<textarea aria-label="Why the fix works" rows={5} maxLength={4000} disabled={busy} value={draft.explanation} onChange={event => edit('explanation', event.target.value)} placeholder="Explain the cause and how your change restores the intended behavior." /></label>{speechReview('explanation')}</div>
-          <div><label>Which input exposes the bug?<textarea aria-label="Input that exposes the bug" rows={5} maxLength={4000} disabled={busy} value={draft.failing_input} onChange={event => edit('failing_input', event.target.value)} placeholder="Give a concrete input, the broken outcome, the repaired outcome, and why they differ." /></label>{speechReview('failing_input')}</div>
+          {answerField('explanation', 'Why the fix works', 'Record explanation', 'Why did it fail, and why does your change restore the intended behavior?')}
+          {answerField('failing_input', 'Input that exposes the bug', 'Record input trace', 'Give an input, the broken and repaired outcomes, and why they differ.')}
         </div>
-        <div className="debug-voice"><label>Put transcript in<select aria-label="Transcript destination" value={voiceTarget} disabled={busy} onChange={event => setVoiceTarget(event.target.value as AnswerField)}><option value="explanation">Why the fix works</option><option value="failing_input">Input that exposes the bug</option><option value="hypothesis">Starting hypothesis</option></select></label><VoiceRecorder disabled={working} onBusyChange={setRecordingBusy} onPhaseChange={phaseChange} onRecording={transcribe} onError={setError} /></div>
         <p className="field-note">Edit and confirm spoken answers before submission. Drafts save automatically. Each new viva review uses 1 answer-review allowance; unchanged submissions reuse the saved review.</p>
         <button className="button button-primary" disabled={busy || !passing || !draft.explanation.trim() || !draft.failing_input.trim() || speechPending || defenseCurrent} onClick={() => { void defend() }}>{reviewing ? <><ActivityOrb state="solving" />Reviewing viva…</> : defenseCurrent ? 'Viva reviewed' : 'Submit viva answers'}</button>
         {speechPending && <p className="field-note">Check and confirm each spoken answer to enable submission.</p>}
