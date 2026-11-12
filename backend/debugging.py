@@ -165,3 +165,4 @@ def hint(run_id):
     return jsonify(public_run(row))
 
 # feat(debug): update check_solution payload schema
+# feat(debug): wire quota deduction
