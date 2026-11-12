@@ -12,6 +12,7 @@ interface Snippet {
   page: number | null
 }
 export interface SourceDocument {
+  prepared_example?: string
   reused?: boolean
   saved_practice?: unknown
   source_id: string
@@ -183,6 +184,19 @@ export default function SourceUpload({
       onBusyChange(false)
     }
   }
+  async function chooseExample() {
+    if (disabled || loading) return
+    setLoading(true); onBusyChange(true); setError('')
+    try {
+      await beforeSourceChange?.()
+      const response = await apiFetch('/sources/example', { method: 'POST' })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Could not open the example.')
+      if (!isDocument(result)) throw new Error('The example could not be read. Retry.')
+      setSource(result); onSourceChange(result); setSelected(0); setNotice('Prepared Python example selected. No AI allowance is used for its questions or True/False feedback.')
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open the example.') }
+    finally { setLoading(false); onBusyChange(false) }
+  }
   async function removeUpload() {
     if (!source || disabled || loading) return
     setLoading(true)
@@ -298,6 +312,8 @@ export default function SourceUpload({
       aria-labelledby="material-heading"
     >
       {!embedded && <UiloraEffect variant="aurora" />}
+      {!compact && !source?.prepared_example && <div className="example-choice"><button type="button" className="button button-secondary" disabled={disabled || loading} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>A short prime checker. Prepared questions and source repair checks are free.</p></div>}
+      {source?.prepared_example && <p className="example-label">Prepared Python example · No AI generation needed</p>}
       {!compact && !embedded && (
         <div className="material-heading">
           <h2 id="material-heading">Start with your material.</h2>
