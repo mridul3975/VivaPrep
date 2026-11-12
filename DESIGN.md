@@ -270,6 +270,16 @@ with the next midnight-UTC reset in local time. See
 
 ### Debugging practice
 
+Guest entry (November 12): the existing sign-in panel offers Try as guest before
+the optional Google control. Inside the app, a compact Guest session bar shows
+real remaining AI uses and a save-before-upgrade action. Study and Debug offer
+Use Python example alongside personal upload. The selected sample is labeled
+prepared and avoids repeated selection prompts. Guest Profile explains temporary
+access and shows actual limits instead of requesting an email/profile form.
+The Google upgrade screen can return to the mounted guest workspace; pending
+drafts save before the header/banner upgrade actions. Real local guest/browser
+evidence is in `.impeccable/review/guests/result.json`.
+
 The active Debug exercise now follows the user's November 12 screenshot and
 pasted HTML. This route has a near-black solid canvas, compact horizontal
 navigation and an Exercises/save toolbar. Newsreader supplies the serif exercise
