@@ -34,7 +34,11 @@ The user requested visual inspiration from https://speakspin-nine.vercel.app/ wi
 
 ## Product Principles
 
-The user also requested the [shadcn.io dot pattern](https://www.shadcn.io/background/dot-pattern) as the page background throughout the site. Muted-silver dots on charcoal must glow and grow near the cursor, with a slow background wave, across sign-in and all study states. Retain solid reading and input surfaces, disable cursor lighting on touch, and respect reduced motion.
+The page background uses Uilora Kinetic Raster across sign-in and all app routes,
+replacing the earlier shadcn dot pattern. Use Aurora silver folds only where a
+surface already used a gradient, including the session and material cards and
+brand marks. Keep reading/input surfaces solid, omit pointer influence on touch,
+and freeze decorative movement under reduced motion.
 
 - Make the next study action clear.
 - Keep source evidence inspectable and unchanged.
