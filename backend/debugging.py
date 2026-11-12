@@ -11,6 +11,7 @@ from backend.account import allowance
 from backend.interview.debug_generator import SOURCE_SCENARIO_ID, generate_debug_challenge, source_excerpt
 from backend.interview.provider import ProviderError
 from backend.interview.debug_checker import check_solution, matches_reference
+from backend import example
 
 debugging = Blueprint('debugging', __name__, url_prefix='/debug')
 
@@ -92,13 +93,17 @@ def runs():
         if not source:
             raise StudyConflict('Material not found.', 404)
         document = source['document']
+        if example.is_example(document):
+            previous = conn.execute('SELECT * FROM repoviva.debug_runs WHERE owner=%s AND source_id=%s AND scenario_id=%s ORDER BY created_at DESC LIMIT 1', (g.user['id'],source_id,SOURCE_SCENARIO_ID)).fetchone()
+            if previous:
+                return jsonify(public_run(previous)), 200
     try:
         source_excerpt(document, data.get('snippet_id'))
     except ValueError as error:
         raise StudyConflict(str(error), 400) from error
     try:
-        with allowance('questions'):
-            exercise = generate_debug_challenge(document, data.get('snippet_id'))
+        with nullcontext() if example.is_example(document) else allowance('questions'):
+            exercise = example.challenge(document) if example.is_example(document) else generate_debug_challenge(document, data.get('snippet_id'))
             hints = exercise.pop('_hints')
             with get_database().connection() as conn:
                 conn.execute('SELECT id FROM repoviva.users WHERE id=%s FOR NO KEY UPDATE', (g.user['id'],))
