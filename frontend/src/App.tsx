@@ -246,7 +246,7 @@ export default function App() {
       const pending = draft.current
       if (pending?.dirty && storageMode === 'postgresql') {
         void apiFetch(`/history/turns/${encodeURIComponent(pending.turnId)}/draft`, {
-          method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: pending.answer }),
+          method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: pending.answer, speech_review: pending.speech_review }),
         }).catch(() => {})
       }
     }
@@ -308,7 +308,7 @@ export default function App() {
         return
       }
       const saved = source.saved_practice
-      setSpeechReviews({ ...Object.fromEntries(Object.entries(saved.results).filter(([,result]) => result.speech_review).map(([id,result]) => [id,result.speech_review!])), ...saved.speech_reviews })
+      setSpeechReviews({ ...Object.fromEntries(Object.entries(saved.results).filter(([id,result]) => result.speech_review && !Object.hasOwn(saved.drafts ?? {},id)).map(([id,result]) => [id,result.speech_review!])), ...saved.speech_reviews })
       const unanswered = saved.questions.findIndex(
         (question) => !saved.results[question.turn_id],
       )
@@ -400,6 +400,7 @@ export default function App() {
       uploadingSource
     )
       return
+    if (speechReview && !speechReview.reviewed) { setError('Check and confirm the transcript before submitting.'); return }
     setSubmittingAnswer(true)
     setError(null)
     setFeedback(null)
@@ -412,6 +413,7 @@ export default function App() {
         body: JSON.stringify({
           turn_id: turn.turn_id,
           answer: answer.trim(),
+          speech_review: speechReview ? {receipt_id:speechReview.receipt_id,reviewed:speechReview.reviewed} : undefined,
         }),
       })
       const data = await readResponse(res)
@@ -490,6 +492,7 @@ export default function App() {
     try {
       const formData = new FormData()
       formData.append('audio_file', file)
+      if (turn) formData.append('turn_id', turn.turn_id)
       const response = await apiFetch('/transcriptions', {
         method: 'POST',
         body: formData,
@@ -513,7 +516,10 @@ export default function App() {
           'The transcript exceeds the 4,000-character answer limit. Try a shorter recording.',
         )
       }
+      const review = 'speech_review' in data ? data.speech_review as SpeechReview : null
+      if (turn && (!review || typeof review.receipt_id !== 'string' || typeof review.reviewed !== 'boolean' || review.original_transcript !== transcript || !Array.isArray(review.checks) || !review.checks.every(check => typeof check.heard === 'string' && typeof check.source_term === 'string' && typeof check.message === 'string'))) throw new Error('The transcript review could not be read. Retry.')
       setAnswer(transcript)
+      if (turn && review) setSpeechReviews(previous => ({...previous,[turn.turn_id]:review}))
       setFeedback(null)
       setTranscriptionNotice(
         'Transcript loaded. Review or edit it, then click Submit Answer.',
@@ -531,6 +537,10 @@ export default function App() {
     } finally {
       setTranscribing(false)
     }
+  }
+  function editAnswer(value: string) {
+    setAnswer(value); setFeedback(null)
+    if (turn && speechReview) setSpeechReviews(previous => ({...previous,[turn.turn_id]:{...speechReview,reviewed:false}}))
   }
   const completed = Object.values(results)
   const totalEarned = completed.reduce(
@@ -950,8 +960,7 @@ export default function App() {
                     aria-describedby="answer-help answer-count"
                     value={answer}
                     onChange={(e) => {
-                      setAnswer(e.target.value)
-                      setFeedback(null)
+                      editAnswer(e.target.value)
                     }}
                     disabled={
                       submittingAnswer ||
@@ -968,6 +977,7 @@ export default function App() {
                     Type here, or edit your voice transcript.
                   </span>
                   {draftError && <p className="inline-error" role="alert">{draftError}<button type="button" className="text-button" onClick={() => { void saveDraft().catch(() => {}) }}>Retry save</button></p>}
+                  {speechReview && turn && <TranscriptReview review={speechReview} answer={answer} disabled={busy} onAnswer={editAnswer} onConfirm={reviewed => setSpeechReviews(previous => ({...previous,[turn.turn_id]:{...speechReview,reviewed}}))} onTyped={() => { setSpeechReviews(previous => { const next={...previous}; delete next[turn.turn_id]; return next }); setFeedback(null) }} />}
                   <div className="answer-draft-meta">
                     <details className="audio-upload">
                       <summary>
@@ -1004,7 +1014,7 @@ export default function App() {
                       type="submit"
                       aria-busy={submittingAnswer}
                       className="button button-primary"
-                      disabled={busy || !answer.trim()}
+                      disabled={busy || !answer.trim() || (!!speechReview && !speechReview.reviewed)}
                     >
                       {submittingAnswer ? (
                         <>
