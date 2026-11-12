@@ -15,7 +15,7 @@ THESIS: A focused study desk with bold two-tone introductory type, a direct uplo
 
 OWN-WORLD: Silver typography and actions on neutral charcoal layers. Self-hosted Geist, 14–16px body text, restrained icons, 12–16px panel radii, crisp neutral borders, and tactile controls. No fabricated history, account, activity, or scores.
 
-PAGE CANVAS: The user's shadcn.io Dot Pattern reference supplies an interactive dot treatment across the entire site: 2px muted-silver dots, 24px spacing, charcoal base. Dots near the cursor brighten and grow to 3.5px within a soft 120px light. A slow CSS wave crosses the dots. Touch omits cursor lighting; reduced motion stops the wave and easing. Keep cards, evidence and inputs solid so their content remains clear. The shared decoration persists before and after Google sign-in and throughout long review pages, without intercepting controls.
+PAGE CANVAS: Uilora Kinetic Raster replaces the old dots across sign-in and all routes, including Debug. Fluid circular cells oscillate and grow near the pointer. Keep the charcoal/silver effect subdued beneath readable content. Uilora Aurora replaces gradients only on existing gradient surfaces (brand marks, session/start and material panels); never put Aurora on the page background. Native WebGL renders at up to 30fps/1.5 DPR, pauses hidden/offscreen and freezes for reduced motion. Effects are decorative and ignore input.
 
 STORY: Upload material, see what was extracted, generate questions, answer in your own words, and review the original source beside feedback.
 
@@ -57,14 +57,14 @@ navigation, Newsreader rose-accented title, Work Sans controls, IBM Plex Mono
 editor, source line numbers and a quiet result panel. All content and result
 colors derive from the actual saved exercise. Place full-width hint/source
 disclosures below the 7:5 editor/result split; stack below 760px. Keep reasoning,
-voice, autosave and quota disclosure. Other routes retain the dotted charcoal
+voice, autosave and quota disclosure. The latest Uilora canvas specification replaces the dotted charcoal
 world. Fonts and their licenses live in `frontend/public/fonts/debug`.
 Verified with production-build Chrome at 1440/1040/390/360px, API fixtures and
 real browser JavaScript tests; evidence is in
 `.impeccable/review/editorial-debug/result.json`. This overrides the older visual
 description for active runs only.
 
-Mode: Operate. The same silver/charcoal, Geist, focus and interactive dot-pattern
+Mode: Operate. The same silver/charcoal, Geist, focus and interactive Kinetic Raster
 world extends to Debug. The entry shows the student's active source file, a new
 upload action, section selector and original excerpt. No source produces a real
 upload empty state. Groq creates a deliberate change to an exact source excerpt,
