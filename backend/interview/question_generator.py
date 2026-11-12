@@ -1,5 +1,6 @@
 from copy import deepcopy
 import json
+import re
 
 from backend.interview.provider import (
     ProviderError, json_completion, object_schema, source_packet,
@@ -30,6 +31,8 @@ def _validate_questions(result, snippets, count):
         if question["question"].casefold() in seen:
             raise ValueError("Repeated question")
         seen.add(question["question"].casefold())
+        if not re.search(r'\b(?:explain|why|how|describe|discuss|compare|justify|trace|reasoning|walk\s+through|analy[sz]e|evaluate)\b', question['question'], re.I) or re.fullmatch(r'(?:true|false|yes|no)[.!\s]*', question['reference_answer'], re.I):
+            raise ValueError('Ask an open-ended question requiring an explanation, not a Boolean, choice or output-only answer')
         rubric = question.get("rubric")
         if not isinstance(rubric, list) or not 1 <= len(rubric) <= 4:
             raise ValueError("Invalid grading rubric")
@@ -57,6 +60,14 @@ def generate_question_set(snippets, count=3):
     prompt = f"""Create up to {count} distinct practice questions and correct reference answers
 using ONLY the following uploaded material. Return a JSON object with a questions array.
 Ask about the actual subject matter, not file metadata or how this app works.
+Every question must be subjective and open-ended: explicitly ask the learner to
+explain, trace, justify, describe, compare, or discuss a source-supported concept.
+Do not ask True/False, yes/no, multiple-choice, or output-only questions. For code,
+ask for the reasoning behind behavior, a step-by-step trace, or an edge case and
+why it behaves that way. For documents, ask for an explanation of the stated ideas
+or relationships. A correct short output alone must not satisfy the rubric.
+Use explanatory reference answers and criteria that assess understanding, not
+matching a single return value. Keep questions focused enough for a 30-60 second answer.
 Use fewer questions if the material only supports fewer distinct questions.
 Each reference answer must fully answer its question using this evidence.
 Only ask for details explicitly present in this packet. A heading or a mention
@@ -92,7 +103,7 @@ UPLOADED EVIDENCE:
         except (ValueError, KeyError, TypeError) as error:
             last_error = error
             if attempt == 0:
-                prompt += (f"\n\nThe prior response failed validation: {error}. Correct the evidence-line ranges. "
+                prompt += (f"\n\nThe prior response failed validation: {error}. Correct the question format and evidence-line ranges. "
                            "Only choose existing, nonblank lines from the selected snippet. "
                            "You may return fewer questions if necessary. Previous response:\n" + json.dumps(result, ensure_ascii=False))
     raise QuestionGenerationError("The AI could not ground its questions in the selected text. Try a smaller section or another file.", "invalid_evidence") from last_error
