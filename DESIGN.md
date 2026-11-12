@@ -270,6 +270,23 @@ with the next midnight-UTC reset in local time. See
 
 ### Debugging practice
 
+The active Debug exercise now follows the user's November 12 screenshot and
+pasted HTML. This route has a near-black solid canvas, compact horizontal
+navigation and an Exercises/save toolbar. Newsreader supplies the serif exercise
+title, with its first two words in rose; Work Sans supplies the UI and IBM Plex
+Mono the editor and source metadata. Fonts are self-hosted in
+`frontend/public/fonts/debug`, with their SIL Open Font Licenses alongside them.
+The source/editor and result use a 7:5 desktop split and stack below 760px.
+The editable textarea has a React-escaped syntax overlay, source line-number
+gutter and synchronized vertical/horizontal scrolling; it remains a native text
+input. Results show one score beside the heading and use green only for a
+current accepted repair. Hints and original-source disclosures span the width
+below; typed/spoken reasoning follows. The shared dotted canvas and Geist remain
+on the other routes. This route-specific direction supersedes the older visual
+details below. Browser evidence: `.impeccable/review/editorial-debug/result.json`
+and desktop/phone captures, using the production build with API fixtures and
+real sandboxed JavaScript execution. No live authentication or voice was tested.
+
 An Operate extension of the study desk, with the editor and concrete test evidence
 carrying the visual weight. Debug starts from the student's active source or a
 direct source upload. The filename, section selector and original excerpt precede
