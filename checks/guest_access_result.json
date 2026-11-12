@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-12",
+  "feature": "Isolated guest sessions and shared prepared Python example",
+  "backend": {"suite": "unittest discover -s checks -p test_*.py", "tests": 117, "status": "passed", "database": "isolated repoviva_test PostgreSQL"},
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "browser": {
+    "status": "passed",
+    "widths": [1440, 390, 360],
+    "checks": ["Try as guest creates actual cookie/session without Google", "Separate visitors have separate files and allowance", "Same Python example in Study and Debug", "Prepared Study questions/feedback and restored Debug solution use zero AI quota", "Correct repair displays 100/100", "Own upload uses normal generation and is limited by personal quota", "Prepared demo remains usable after AI allowance exhaustion", "Upgrade screen and cancel preserve workspace", "Profile and refresh preserve identity", "No overflow or runtime errors"],
+    "boundary": "Real local Flask/PostgreSQL and anonymous guest entry; own-file provider calls are simulated. No real Google account or microphone interaction. Backend Google verifier tests use locally signed fixtures, and transfer/revocation tests use actual isolated database state."
+  },
+  "limits": {"per_guest": {"questions": 1, "answers": 3, "transcriptions": 1}, "shared_guest": {"questions": 60, "answers": 180, "transcriptions": 30}, "new_guest_sessions": 200, "new_sessions_per_network": 10},
+  "migration": "004_guest_limits.sql",
+  "deployment": "Local changes; Render has not been redeployed"
+}
