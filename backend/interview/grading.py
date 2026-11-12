@@ -21,6 +21,11 @@ def grade_answer(question_package, answer, snippets):
     schema = object_schema({"criteria": {"type": "array", "items": criterion_schema}, "claims": {"type": "array", "items": claim_schema}})
     prompt = f"""Compare the STUDENT ANSWER with the AI REFERENCE ANSWER and the original source.
 Accept equivalent wording, including Hinglish. Grade meaning, not keyword overlap.
+When a question asks for an explanation or trace, a bare True/False, numeric output
+or conclusion does not demonstrate its reasoning. Assess the requested cause,
+steps and relationships against the rubric; do not award explanation criteria for
+the conclusion alone. Accept concise correct reasoning without requiring length,
+particular keywords, polished grammar or speech rather than typing.
 For EVERY rubric ID return exactly one status and an explanation:
 met = fully correct; partial = partly correct; missed = the student omitted the required concept
 or answered a different question; contradicted = the student conflicts with the source;
