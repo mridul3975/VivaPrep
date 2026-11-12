@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../components/Icon'
-import UiloraEffect from '../components/UiloraEffect'
+import BrandLogo from '../components/BrandLogo'
 import ActivityOrb from '../components/ActivityOrb'
 import { loadGoogleIdentity } from './google'
 import type { AuthSession } from './context'
@@ -92,12 +92,7 @@ export default function GoogleSignIn({
     <div className="auth-shell">
       <header className="auth-header">
         <a className="brand" href="/" aria-label="RepoViva home">
-          <span className="brand-mark"><UiloraEffect variant="aurora" />
-            <Icon name="book" size={22} />
-          </span>
-          <span>
-            RepoViva<span className="brand-period">.</span>
-          </span>
+          <BrandLogo />
         </a>
       </header>
       <div className="auth-back-bar"><button type="button" className="text-button back-button" disabled={window.history.length <= 1} onClick={() => window.history.back()}><Icon name="arrow" size={17} className="rotate-180" />Back</button></div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import VoiceRecorder, { type RecordingPhase } from './components/VoiceRecorder'
 import VivaPurpose from './components/VivaPurpose'
+import BrandLogo from './components/BrandLogo'
 import DebugPage from './pages/DebugPage'
 import SourceUpload, { type SourceDocument } from './components/SourceUpload'
 import Icon from './components/Icon'
@@ -791,12 +792,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
       </a>
       <header className="app-header">
         <a className="brand" href="#/study" aria-label="RepoViva study desk" onClick={event => { event.preventDefault(); void go({ page: 'study' }) }}>
-          <span className="brand-mark"><UiloraEffect variant="aurora" />
-            <Icon name="book" size={22} />
-          </span>
-          <span>
-            RepoViva<span className="brand-period">.</span>
-          </span>
+          <BrandLogo />
         </a>
         <nav className="workspace-nav">
           <button type="button" className={`nav-item ${studyVisible ? 'is-active' : ''}`} aria-current={studyVisible ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'study' }) }}><Icon name="desk" />Study</button>

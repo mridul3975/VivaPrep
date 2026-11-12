@@ -409,6 +409,8 @@ h3 {
 .brand-period {
   color: #9d9ea8;
 }
+.brand-logo { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: 0 0 auto; overflow: hidden; border-radius: 6px; }
+.brand-logo img { display: block; width: 170%; max-width: none; height: auto; flex-shrink: 0; }
 .header-location {
   display: flex;
   align-items: center;
