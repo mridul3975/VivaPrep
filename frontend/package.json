@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "check:dev-proxy": "node scripts/check-dev-proxy.mjs",
+    "check:connection": "node scripts/check-connection.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
