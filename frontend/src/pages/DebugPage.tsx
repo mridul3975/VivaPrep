@@ -196,6 +196,15 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not upload this file.') }
     finally { setWorking(false) }
   }
+  async function chooseExample() {
+    if (busy) return
+    setWorking(true); setError('')
+    try {
+      const result = await apiFetch('/sources/example', { method: 'POST' }).then(apiJson<SourceDocument>)
+      onSourceChange(result); setSectionId('')
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open the Python example.') }
+    finally { setWorking(false) }
+  }
   const current = draft?.code === testedCode
   const solutionCurrent = draft?.code === checkedCode
   const solution = run?.solution_result
@@ -213,16 +222,17 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
     {error && <div className="error-banner" role="alert"><Icon name="info" /><div><p>{error}</p>{loading === false && !scenario && <><button className="text-button" onClick={() => { setError(''); setLoading(true); setAttempt(value => value + 1) }}>Retry</button>{runId && <button className="text-button" onClick={() => onOpen('')}>Choose your source file</button>}</>}</div></div>}
     {!loading && !runId && <>
       <section className="debug-source-setup" aria-labelledby="debug-source-heading">
+        <div className="example-choice"><button type="button" className="button button-secondary" disabled={busy} onClick={() => { void chooseExample() }}>Use Python example<Icon name="code" size={16} /></button><p>Try the same prime checker from Study, with a prepared bug to repair. No AI generation allowance needed.</p></div>
         <div className="section-heading"><h2 id="debug-source-heading">{source ? source.filename : 'Choose your source file'}</h2><label className="button button-secondary debug-file-picker">{source ? 'Upload another file' : 'Upload source file'}<input aria-label="Upload debugging source" type="file" accept=".py,.js,.jsx,.ts,.tsx,.java,.c,.cpp,.h,.hpp,.mjs,.cjs,.go,.rs,.rb,.php,.cs,.swift,.kt,.sql,.sh" disabled={busy} onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void upload(file) }} /></label></div>
         {!source && <p className="panel-description">Upload the code you implemented. You can also reopen a source file from History and return here.</p>}
         {source && !codeFile && <p className="inline-error" role="status">This material is for Study. Upload a source code file to create a debugging exercise.</p>}
         {codeFile && source && <>
-          <p className="panel-description">AI will introduce one deliberate bug in an excerpt of this file for you to diagnose and repair.</p>
+          <p className="panel-description">{source.prepared_example ? 'Prepared Python example: repair one deliberate bug in the prime checker.' : 'AI will introduce one deliberate bug in an excerpt of this file for you to diagnose and repair.'}</p>
           <label className="debug-section-picker">Start from section<select aria-label="Source section" disabled={busy} value={selectedSection?.id ?? ''} onChange={event => setSectionId(event.target.value)}>{source.snippets.map(item => <option key={item.id} value={item.id}>Lines {item.start_line}–{item.end_line}</option>)}</select></label>
           <p className="field-note">The selected section and up to two following sections are used to find a complete function.</p>
           {selectedSection && <details className="debug-project-context" open><summary>Uploaded code · lines {selectedSection.start_line}–{selectedSection.end_line}</summary><pre>{selectedSection.content.join('\n')}</pre></details>}
           <div className="debug-editor-actions"><button className="button button-primary" disabled={busy} onClick={() => { void start() }}>{working ? <><ActivityOrb state="composing" />Creating your exercise…</> : <>Create debugging exercise<Icon name="arrow" size={18} /></>}</button></div>
-          <p className="field-note">Uses 1 question-set allowance. Check your repair here: JavaScript runs tests; other languages use source comparison or AI review.</p>
+          <p className="field-note">{source.prepared_example ? 'Prepared exercise and restoring the original are free. A different repair may use an AI review allowance.' : 'Uses 1 question-set allowance. Check your repair here: JavaScript runs tests; other languages use source comparison or AI review.'}</p>
         </>}
       </section>
       <section className="debug-saved"><h2>Saved debugging practice</h2>{runs.length ? <div className="history-list">{runs.map(item => <button className="history-file" key={item.id} disabled={busy} onClick={() => onOpen(item.id)}><Icon name="code" size={23} /><span className="history-file-title"><strong>{item.title}</strong><span>{item.filename} · {item.complete ? 'Solution accepted · Explanation saved' : item.solution_passed ? 'Solution accepted · Explanation pending' : 'In progress'} · {date(item.updated_at)}</span></span><span>Resume</span><Icon name="arrow" size={17} /></button>)}</div> : <p className="field-note">Exercises from your files will appear here and in History.</p>}</section>
