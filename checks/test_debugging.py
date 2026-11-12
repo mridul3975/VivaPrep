@@ -142,3 +142,4 @@ class DebuggingTests(unittest.TestCase):
             self.client.environ_base['HTTP_X_CSRF_TOKEN'] = csrf
 
 # test(debug): expand debugging test suite with solution checker
+# test(debug): add assertions for solution_passed
