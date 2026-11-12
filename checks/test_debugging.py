@@ -138,8 +138,55 @@ class DebuggingTests(unittest.TestCase):
         csrf = self.client.environ_base.pop('HTTP_X_CSRF_TOKEN')
         try:
             self.assertEqual(self.client.post(url + '/hint').status_code, 403)
+            self.assertEqual(self.client.post(url + '/check', json={'code': CODE}).status_code, 403)
         finally:
             self.client.environ_base['HTTP_X_CSRF_TOKEN'] = csrf
 
-# test(debug): expand debugging test suite with solution checker
-# test(debug): add assertions for solution_passed
+    def test_reference_check_is_owned_free_persistent_and_stale_after_edit(self):
+        run = self.start()
+        url = '/debug/runs/' + run['id']
+        before = self.client.get('/profile').get_json()['usage']['allowances']['answers']['used']
+        self.assertEqual(self.other.post(url + '/check', json={'code': CODE}).status_code, 404)
+        self.assertEqual(self.client.post(url + '/check', json={'code': CODE}).status_code, 409)
+        for body in ({}, {'code': ''}, {'code': 1}, {'code': 'a' * 12001}):
+            self.assertEqual(self.client.post(url + '/check', json=body).status_code, 400)
+        self.client.patch(url, json={'code': CODE, 'hypothesis': 'Wrong operator', 'explanation': 'Restored addition'})
+        with patch('backend.interview.debug_checker.json_completion') as provider:
+            result = self.client.post(url + '/check', json={'code': CODE}).get_json()
+            provider.assert_not_called()
+        self.assertEqual(result['solution_result']['score'], 100)
+        self.assertTrue(result['complete']); self.assertFalse(result['tests_passed'])
+        self.assertTrue(self.client.get(url).get_json()['solution_current'])
+        self.assertTrue(self.client.get('/debug/runs').get_json()['runs'][0]['solution_passed'])
+        changed = self.client.patch(url, json={'code': CODE + '\n// changed'}).get_json()
+        self.assertFalse(changed['solution_current']); self.assertFalse(changed['complete'])
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['answers']['used'], before)
+
+    def test_alternative_review_quota_cache_failure_refund_and_race(self):
+        run = self.start()
+        url = '/debug/runs/' + run['id']
+        code = 'function addTax(amount) { return 5 + amount; }'
+        self.client.patch(url, json={'code': code})
+        before = self.client.get('/profile').get_json()['usage']['allowances']['answers']['used']
+        with patch('backend.interview.debug_checker.json_completion', side_effect=ProviderError('Unavailable')):
+            self.assertEqual(self.client.post(url + '/check', json={'code': code}).status_code, 502)
+        self.assertNotIn('solution_result', self.client.get(url).get_json())
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['answers']['used'], before)
+        with patch('backend.interview.debug_checker.json_completion', return_value={'verdict': 'correct', 'explanation': 'Addition is commutative.'}) as provider:
+            for _ in range(2):
+                result = self.client.post(url + '/check', json={'code': code})
+                self.assertEqual(result.status_code, 200, result.get_json())
+                self.assertEqual(result.get_json()['solution_result']['method'], 'ai_review')
+            self.assertEqual(provider.call_count, 1)
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['answers']['used'], before + 1)
+        new_code = code + '\n// new'
+        self.client.patch(url, json={'code': new_code})
+        with patch('backend.account.limits', return_value={'questions': 10, 'answers': 0, 'transcriptions': 10}), patch('backend.interview.debug_checker.json_completion') as provider:
+            self.assertEqual(self.client.post(url + '/check', json={'code': new_code}).status_code, 429)
+            provider.assert_not_called()
+        def concurrent_edit(*args):
+            self.client.patch(url, json={'code': code + '\n// edited during review'})
+            return {'verdict': 'incorrect', 'explanation': 'Changed code.'}
+        with patch('backend.interview.debug_checker.json_completion', side_effect=concurrent_edit):
+            self.assertEqual(self.client.post(url + '/check', json={'code': new_code}).status_code, 409)
+        self.assertEqual(self.client.get('/profile').get_json()['usage']['allowances']['answers']['used'], before + 1)
