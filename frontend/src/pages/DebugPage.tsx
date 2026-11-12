@@ -232,3 +232,4 @@ export default function DebugPage({ runId, source, onOpen, onSourceChange, onBus
 // feat(ui): add focus indicator and score pill styling
 // feat(ui): implement Check Solution primary action
 // feat(ui): add auto-scroll and focus
+// feat(ui): render accepted, incorrect, and inconclusive
