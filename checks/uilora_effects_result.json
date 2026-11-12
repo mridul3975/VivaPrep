@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-12",
+  "feature": "Kinetic Raster page canvas and Aurora existing-gradient surfaces",
+  "references": ["https://www.uilora.com/get-started/web/components/backgrounds-visuals/pattern-backgrounds/uilora-kinetic-raster", "https://www.uilora.com/get-started/web/components/backgrounds-visuals/gradients-packs/uilora-aurora"],
+  "build": "passed",
+  "lint": "0 warnings and 0 errors",
+  "browser": {
+    "widths": [1440, 1040, 390, 360],
+    "status": "passed",
+    "checks": ["Raster and surface Aurora WebGL canvases render", "Original DotPattern removed", "Raster pixels change with time and pointer", "Raster pixels stay identical with reduced motion even after pointer movement", "Aurora surface pixels animate", "Code editing, checks, disclosures and navigation remain usable", "Real JavaScript sandbox tests pass", "No overflow or runtime errors"],
+    "boundary": "Production React build in Chrome with API/authentication fixtures; no live OAuth, database or provider calls"
+  },
+  "placement": "Raster is the page backdrop, Aurora is only on existing gradient surfaces",
+  "deployment": "Local changes; Render not redeployed"
+}
