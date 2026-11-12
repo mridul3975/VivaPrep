@@ -47,6 +47,8 @@ export default function AuthGate() {
   const [loading, setLoading] = useState(true)
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState('')
+  const [enteringGuest, setEnteringGuest] = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
   const authGeneration = useRef(0)
   const currentUserId = useRef<string | null>(null)
   const signInPending = useRef(false)
@@ -116,7 +118,7 @@ export default function AuthGate() {
       void refresh()
         .catch(() => {})
         .finally(() =>
-          setError('Your session expired. Sign in with Google again.'),
+          setError('Your session expired. Continue as guest or sign in again.'),
         )
     }
     const timer = window.setTimeout(
@@ -172,6 +174,7 @@ export default function AuthGate() {
         if (generation === authGeneration.current) {
           ++authGeneration.current
           applySession(confirmed)
+          setUpgrading(false)
         }
       } catch (failure) {
         setError(
@@ -206,6 +209,7 @@ export default function AuthGate() {
         headers,
         credentials: 'same-origin',
       })
+      if ((init.method ?? 'GET').toUpperCase() !== 'GET' && /^\/(questions|answers|transcriptions|debug\/runs)/.test(path)) window.dispatchEvent(new Event('repoviva-usage-changed'))
       if (
         response.status === 401 ||
         (response.status === 403 && response.headers.get('X-RepoViva-API'))
@@ -228,8 +232,23 @@ export default function AuthGate() {
     window.google?.accounts.id.disableAutoSelect()
     ++authGeneration.current
     applySession(result)
+    setUpgrading(false)
     setError('')
   }, [csrfToken, applySession])
+
+  async function startGuest() {
+    if (!csrfToken || signInPending.current) return
+    signInPending.current = true; setEnteringGuest(true); setError('')
+    const generation = ++authGeneration.current
+    try {
+      const response = await fetch('/auth/guest', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-Token': csrfToken }, signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS) })
+      const accepted = await readSession(response)
+      const confirmed = await requestSession()
+      if (!accepted.user || confirmed.user?.id !== accepted.user.id) throw new Error('Your guest session could not be kept. Enable cookies and retry.')
+      if (generation === authGeneration.current) { ++authGeneration.current; applySession(confirmed) }
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not open guest access. Retry.'); await refresh().catch(() => {}) }
+    finally { signInPending.current = false; setEnteringGuest(false) }
+  }
 
   if (!session?.user)
     return (
@@ -240,6 +259,8 @@ export default function AuthGate() {
         error={error}
         onCredential={signIn}
         onRetry={reload}
+        onGuest={startGuest}
+        enteringGuest={enteringGuest}
       />
     )
   return (
@@ -249,9 +270,11 @@ export default function AuthGate() {
         storageMode: session.storage_mode ?? 'memory',
         apiFetch,
         signOut,
+        beginSignIn: () => { setError(''); setUpgrading(true) },
       }}
     >
-      <App key={session.user.id} />
+      <div hidden={upgrading}><App key={session.user.id} /></div>
+      {upgrading && <GoogleSignIn session={session} loading={false} signingIn={signingIn} error={error} onCredential={signIn} onRetry={reload} onCancel={() => setUpgrading(false)} />}
     </AuthContext.Provider>
   )
 }
