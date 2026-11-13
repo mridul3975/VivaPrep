@@ -1,0 +1,32 @@
+{
+  "feature": "English and Hinglish Study/viva flow",
+  "environment": "Local development; isolated PostgreSQL; real Prisma and Groq for the browser smoke test",
+  "automated_checks": {
+    "backend": "146 tests passed (unittest discover, including PostgreSQL integration)",
+    "frontend_build": "npm run build passed",
+    "frontend_lint": "npm run lint passed with no errors or warnings",
+    "transcript_edits": "node frontend/scripts/check-transcript.mjs passed",
+    "whitespace": "git diff --check passed"
+  },
+  "live_checks": {
+    "uploaded_material_question_generation": "Groq generated an explanatory Roman-Hinglish question with validated source citations",
+    "contradictory_answer": "Two wrong claims in a Hinglish answer were contradicted; score 0/2",
+    "browser_flow": "Selected Hinglish, uploaded an 11.84-second synthetic mixed-language WAV, reviewed the real Prisma transcript, explicitly submitted the final answer and received source-backed Groq feedback in Roman Hinglish; score 2/2",
+    "saved_work": "Refresh restored language and feedback; prepared follow-up stayed in Hinglish",
+    "responsive": "No page overflow or runtime errors at 1440, 390 and 360 pixel widths"
+  },
+  "issues_found_and_handled": [
+    "A live response ignored the summary language instruction. Added a bounded feedback-only translation fallback and a presentation guard; invalid feedback withholds the score.",
+    "The recorder advertised 60 seconds although the Prisma REST endpoint accepts 30. Aligned recording/upload limits and removed silent truncation.",
+    "Identifier substitution could match inside an already-correct identifier. Added Unicode-aware phrase boundaries and regression checks.",
+    "Two earlier full-suite attempts had intermittent 401 responses in unrelated authentication fixtures. Targeted reruns and the final full 146-test run passed; these failures are not counted as successful runs."
+  ],
+  "limitations": [
+    "Development smoke examples only; not the held-out, manually reviewed feature-4 evaluation.",
+    "Synthetic stock speech exercised the upload/STT path; no real-learner microphone or accent accuracy claim.",
+    "Language markers check presentation, not fluency, acoustic confidence or technical correctness.",
+    "The UI shell and Debug repair assessment remain English. No in-app Timbre playback was added.",
+    "No comparison with a general chatbot has been performed.",
+    "Changes are local and require backend/frontend deployment together."
+  ]
+}
