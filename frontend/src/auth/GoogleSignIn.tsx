@@ -5,6 +5,7 @@ import ActivityOrb from '../components/ActivityOrb'
 import { loadGoogleIdentity } from './google'
 import type { AuthSession } from './context'
 import VivaPurpose from '../components/VivaPurpose'
+import PracticeLanguage, { type PracticeLanguageCode } from '../components/PracticeLanguage'
 
 export default function GoogleSignIn({
   session,
@@ -23,11 +24,12 @@ export default function GoogleSignIn({
   error: string
   onCredential: (credential: string) => Promise<void>
   onRetry: () => void
-  onGuest?: (action?: 'demo' | 'upload') => Promise<void>
+  onGuest?: (action?: 'demo' | 'upload', language?: PracticeLanguageCode) => Promise<void>
   enteringGuest?: boolean
   onCancel?: () => void
 }) {
   const target = useRef<HTMLDivElement>(null)
+  const [language, setLanguage] = useState<PracticeLanguageCode>('en')
   const [scriptError, setScriptError] = useState('')
   const [buttonReady, setButtonReady] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -106,7 +108,7 @@ export default function GoogleSignIn({
           <p>
             {onCancel ? 'Sign in with Google to keep your guest work and get your account allowance.' : 'Explain a prepared Python example, or bring your own project. No Google account needed.'}
           </p>
-          {onGuest && <div className="viva-entry-actions"><button className="button button-primary guest-start" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest('demo') }}>{enteringGuest ? 'Opening your workspace…' : 'Try a spoken viva'}<Icon name="arrow" size={16} /></button><button className="button button-secondary" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest('upload') }}>Upload your project<Icon name="upload" size={16} /></button><p className="guest-entry-note">Guest access · Free prepared questions · Limited AI feedback and transcription</p></div>}
+          {onGuest && <><PracticeLanguage value={language} disabled={loading || signingIn || enteringGuest} onChange={setLanguage} /><div className="viva-entry-actions"><button className="button button-primary guest-start" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest('demo', language) }}>{enteringGuest ? 'Opening your workspace…' : 'Try a spoken viva'}<Icon name="arrow" size={16} /></button><button className="button button-secondary" disabled={loading || signingIn || enteringGuest} onClick={() => { void onGuest('upload', language) }}>Upload your project<Icon name="upload" size={16} /></button><p className="guest-entry-note">Guest access · Free prepared questions · Limited AI feedback and transcription</p></div></>}
           <div
             className="google-sign-in"
             ref={target}
