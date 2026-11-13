@@ -2,6 +2,12 @@
 
 Run these commands from the project root with the project virtual environment active.
 
+The separate [40-case evaluation candidate](../evaluation/README.md) is available
+at `/evaluation`. Its frozen cases are excluded from development examples here.
+Live observations, errors, the general-assistant baseline and a pending human
+review sheet are inspectable. Run `python -m unittest checks.test_evaluation -v`
+for its offline metric and public-route checks; those are not benchmark cases.
+
 ## Local regression tests
 
 ```sh
