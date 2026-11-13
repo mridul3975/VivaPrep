@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import VoiceRecorder, { type RecordingPhase } from './components/VoiceRecorder'
 import VivaPurpose from './components/VivaPurpose'
+import PracticeLanguage from './components/PracticeLanguage'
 import useBackendConnection from './useBackendConnection'
 import BrandLogo from './components/BrandLogo'
 import DebugPage from './pages/DebugPage'
@@ -27,6 +28,7 @@ interface Evidence {
   content: string[]
 }
 interface QuestionResponse {
+  language?: 'en' | 'hinglish'
   parent_turn_id?: string | null
   parent_answer?: string | null
   turn_id: string
@@ -58,6 +60,8 @@ interface Claim {
   quote: string | null
 }
 interface AnswerResponse {
+  summary?: string
+  language?: 'en' | 'hinglish'
   speech_review?: SpeechReview
   turn_id: string
   question: string
@@ -186,11 +190,12 @@ async function readResponse(response: Response): Promise<unknown> {
   return data
 }
 // ── App ────────────────────────────────────────────────────────────────────
-export default function App({ initialAction, onEntryHandled }: { initialAction?: 'demo' | 'upload'; onEntryHandled?: () => void }) {
+export default function App({ initialAction, initialLanguage = 'en', onEntryHandled }: { initialLanguage?: 'en' | 'hinglish'; initialAction?: 'demo' | 'upload'; onEntryHandled?: () => void }) {
   const { apiFetch, storageMode } = useAuth()
   const { route, navigate, back, depth } = useNavigation()
   const { backendReady, backendError, incompatible, retryBackend } = useBackendConnection()
   const entryStarted = useRef(false)
+  const [language, setLanguage] = useState<'en' | 'hinglish'>(initialLanguage)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
   const [submittingAnswer, setSubmittingAnswer] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
@@ -282,6 +287,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
       const resumed = saved.questions.findIndex(question => question.turn_id === saved.resume_turn_id)
       const index = resumed >= 0 ? resumed : unanswered >= 0 ? unanswered : saved.questions.length - 1
       const question = saved.questions[index]
+      setLanguage(question.language ?? 'en')
       setQuestionSet(saved.questions)
       setQuestionIndex(index)
       setTurn(question)
@@ -325,7 +331,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
     const res = await apiFetch('/questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source_id: source.source_id, count: 3 }),
+      body: JSON.stringify({ source_id: source.source_id, count: 3, language }),
     })
     const data = await readResponse(res)
     if (
@@ -349,6 +355,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
         'The question did not match your selected file. Select your material again and retry.',
       )
     }
+    setLanguage(data.questions[0].language ?? language)
     setQuestionSet(data.questions)
     setQuestionIndex(0)
     setResults({})
@@ -672,7 +679,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
   const workspaceHeading = (
     <div className={`workspace-heading ${!turn ? 'study-introduction' : ''}`}>
       <div>
-        {turn ? <h1>Practice</h1> : <><VivaPurpose /><div className="viva-entry-actions"><button className="button button-primary" disabled={!backendReady || busy} onClick={() => { void startDemo() }}>{loadingQuestion ? 'Opening your viva…' : 'Try a spoken viva'}<Icon name="arrow" size={18} /></button><button className="button button-secondary" disabled={!backendReady || busy} onClick={() => focusUpload(true)}>Upload your project<Icon name="upload" size={18} /></button></div><p className="viva-entry-note">Start with a short Python example. Questions are free; AI feedback and speech use your allowance.</p></>}
+        {turn ? <h1>Practice</h1> : <><VivaPurpose /><PracticeLanguage value={language} disabled={busy} onChange={setLanguage} /><div className="viva-entry-actions"><button className="button button-primary" disabled={!backendReady || busy} onClick={() => { void startDemo() }}>{loadingQuestion ? 'Opening your viva…' : 'Try a spoken viva'}<Icon name="arrow" size={18} /></button><button className="button button-secondary" disabled={!backendReady || busy} onClick={() => focusUpload(true)}>Upload your project<Icon name="upload" size={18} /></button></div><p className="viva-entry-note">Start with a short Python example. Questions are free; AI feedback and speech use your allowance.</p></>}
       </div>
       {turn && (
         <div
@@ -901,9 +908,9 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
                     </span>
                   )}
                 </div>
-                <h2 id="question-heading" tabIndex={-1}>{turn.question}</h2>
+                <p className="field-note">{turn.language === 'hinglish' ? 'Hinglish · Hindi + English' : 'English'}</p><h2 id="question-heading" lang={turn.language === 'hinglish' ? 'hi-Latn' : 'en'} tabIndex={-1}>{turn.question}</h2>
                 {turn.parent_turn_id && <details className="viva-parent-answer"><summary>Your earlier answer</summary><p>{turn.parent_answer}</p></details>}
-                {!feedback && <p className="viva-answer-guide">Explain your reasoning in your own words. Record your answer or type below, then review it before submitting.</p>}
+                {!feedback && <p className="viva-answer-guide">{turn.language === 'hinglish' ? 'Hindi aur English mix karke apna reasoning explain karo. Code identifiers, numbers aur nahi/not ko transcript mein check karo.' : 'Explain your reasoning in your own words. Record your answer or type below, then review it before submitting.'}</p>}
               </section>
               <section
                 className="answer-panel"
@@ -972,7 +979,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
                           aria-describedby="audio-help"
                         />
                         <p id="audio-help">
-                          WAV, up to 60 seconds and 10 MiB. Transcription replaces
+                          WAV, up to 30 seconds and 10 MiB. Transcription replaces
                           your draft; review it before submitting.
                         </p>
                       </div>
@@ -1037,6 +1044,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
                       because source evidence is insufficient.
                     </p>
                   )}
+                  {feedback.summary && <section className="feedback-summary" lang={feedback.language === 'hinglish' ? 'hi-Latn' : 'en'} aria-label="Short explanation"><h3>{feedback.language === 'hinglish' ? 'Chhota feedback' : 'Short explanation'}</h3><p>{feedback.summary}</p></section>}
                   <ul className="criteria-list">
                     {feedback.criteria.map((criterion) => (
                       <li key={criterion.id}>
@@ -1109,6 +1117,7 @@ export default function App({ initialAction, onEntryHandled }: { initialAction?:
                       ))
                     )}
                   </details>
+
                   <div className="review-footer">
                     {questionSet.length > 1 && totalPossible > 0 && (
                       <p>
