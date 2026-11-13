@@ -2568,3 +2568,6 @@ pre {
 .feedback-summary { margin-block: 20px; }
 .feedback-summary h3 { font-size: 15px; margin-bottom: 8px; }
 .feedback-summary p { line-height: 1.8; max-width: 70ch; }
+/* Public evidence stays available without opening a practice or signing in. */
+.evaluation-link { text-align: center; padding: 20px 24px 32px; color: var(--muted, #a5a6ae); font-size: 12px; }
+.evaluation-link a { color: inherit; text-underline-offset: 4px; }
