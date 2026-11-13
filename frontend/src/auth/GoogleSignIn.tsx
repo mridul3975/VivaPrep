@@ -156,6 +156,7 @@ export default function GoogleSignIn({
               : 'Practice sessions are temporary. Your material and progress clear after an hour or a server restart.'}
           </p>
           {onCancel && <button className="text-button" disabled={signingIn} onClick={onCancel}>Continue as guest</button>}
+          <a className="text-button" href="/evaluation">Evaluation &amp; limitations</a>
         </section>
       </main>
     </div>
