@@ -1204,6 +1204,7 @@ export default function App({ initialAction, initialLanguage = 'en', onEntryHand
           </div>
         )}
       </main>
+      <footer className="evaluation-link"><a href="/evaluation">Evaluation &amp; limitations</a></footer>
     </div>
   )
 }
