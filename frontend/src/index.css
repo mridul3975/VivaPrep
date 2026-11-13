@@ -2562,3 +2562,9 @@ pre {
     padding: 23px;
   }
 }
+
+.practice-language { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; font-size: 13px; }
+.practice-language select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-width: 100%; }
+.feedback-summary { margin-block: 20px; }
+.feedback-summary h3 { font-size: 15px; margin-bottom: 8px; }
+.feedback-summary p { line-height: 1.8; max-width: 70ch; }
