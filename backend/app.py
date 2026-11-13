@@ -9,6 +9,7 @@ from threading import Lock
 from datetime import timedelta
 from contextlib import nullcontext
 from backend import example
+from backend.languages import language_choice
 
 from flask import Flask, g, jsonify, request, send_from_directory, session
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -70,7 +71,7 @@ turns_lock = Lock()
 TURN_TTL_SECONDS = 3600
 MAX_TURNS = 100
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
-MAX_AUDIO_SECONDS = 60
+MAX_AUDIO_SECONDS = 30
 
 
 @app.get("/")
@@ -180,6 +181,7 @@ def generate_questions():
         return jsonify({"error": "source_id must be a non-empty string."}), 400
     if not source_id:
         return jsonify({"error": "Upload your study material before generating questions."}), 400
+    language = language_choice(data.get("language", "en"))
     count = data.get("count", 3)
     if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 3:
         return jsonify({"error": "Question count must be between 1 and 3."}), 400
@@ -191,11 +193,11 @@ def generate_questions():
         if previous:
             with get_database().connection() as conn:
                 prepared = conn.execute("SELECT bool_and(payload->'question_package'->>'prepared_example'=%s) AS prepared FROM repoviva.turns WHERE practice_id=%s AND owner=%s", (example.QUESTION_VERSION,previous['practice_id'],g.user['id'])).fetchone()['prepared']
-            if prepared:
+            if prepared and all(item.get('language', 'en') == language for item in previous['questions']):
                 return jsonify({'api_version': API_VERSION, 'source_id': source_id, 'source_revision': document['revision'], 'practice_id': previous['practice_id'], 'questions': previous['questions'][:count]})
     elif example.is_example(document):
         with turns_lock:
-            existing = {key: turn for key, turn in turns.items() if turn['owner'] == g.user['id'] and turn['source_id'] == source_id and turn['question_package'].get('prepared_example') == example.QUESTION_VERSION and time.monotonic() - turn['created'] < TURN_TTL_SECONDS}
+            existing = {key: turn for key, turn in turns.items() if turn['owner'] == g.user['id'] and turn['source_id'] == source_id and turn['question_package'].get('prepared_example') == example.QUESTION_VERSION and turn['question_package'].get('language', 'en') == language and time.monotonic() - turn['created'] < TURN_TTL_SECONDS}
         if len(existing) >= count:
             return jsonify({'api_version': API_VERSION, 'source_id': source_id, 'source_revision': document['revision'], 'practice_id': None, 'questions': [public_question(key, turn) for key, turn in list(existing.items())[:count]]})
     try:
@@ -204,9 +206,10 @@ def generate_questions():
             if selected is None:
                 raise StudyConflict("Upload not found or expired. Please upload the file again.", 404)
             snippets, revision = selected
-            packages = example.question_set(snippets, count) if example.is_example(document) else generate_question_set(snippets, count=count)
+            packages = example.question_set(snippets, count, language) if example.is_example(document) else (generate_question_set(snippets, count=count, language=language) if language != 'en' else generate_question_set(snippets, count=count))
             now, records = time.monotonic(), {}
             for package in packages:
+                package['language'] = language
                 turn_id = uuid.uuid4().hex
                 primary_id = package["rubric"][0]["snippet_id"]
                 primary = next(item for item in snippets if str(item["id"]) == primary_id)
@@ -274,7 +277,7 @@ def submit_answer():
         prepared = turn['question_package'].get('prepared_example') == 'prime-v1'
         with nullcontext() if prepared else allowance("answers"):
             result = example.grade(turn['question_package'], answer, turn['snippets']) if prepared else grade_answer(turn["question_package"], answer, turn["snippets"])
-            payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"],
+            payload = {"turn_id": turn_id, "source_id": turn["source_id"], "question": turn["question"], 'language': turn['question_package'].get('language', 'en'),
                        "evidence": turn["snippet"], "evidence_snippets": turn["snippets"], **result}
             if speech_review:
                 payload['speech_review'] = {**speech_review,'final_answer':answer,'corrections_made':answer != speech_review['original_transcript']}
@@ -332,7 +335,7 @@ def transcribe_upload():
             if frames == 0:
                 return jsonify({"error": "The recording contains no audio frames."}), 400
             if duration > MAX_AUDIO_SECONDS:
-                return jsonify({"error": "Recordings must be at most 60 seconds."}), 400
+                return jsonify({"error": "Recordings must be at most 30 seconds."}), 400
             expected_bytes = frames * recording.getnchannels() * recording.getsampwidth()
             if len(recording.readframes(frames)) != expected_bytes:
                 return jsonify({"error": "The WAV recording is incomplete."}), 400
