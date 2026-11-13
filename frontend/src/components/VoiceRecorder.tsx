@@ -164,11 +164,11 @@ export default function VoiceRecorder({
       capture.interval = window.setInterval(
         () =>
           setSeconds(
-            Math.min(60, Math.floor((performance.now() - started) / 1000)),
+            Math.min(30, Math.floor((performance.now() - started) / 1000)),
           ),
         250,
       )
-      capture.timeout = window.setTimeout(stopRecording, 60_000)
+      capture.timeout = window.setTimeout(stopRecording, 29_500)
     } catch (error) {
       stream?.getTracks().forEach((track) => track.stop())
       if (!mountedRef.current || attempt !== attemptRef.current) return
@@ -246,14 +246,14 @@ export default function VoiceRecorder({
             <span className="recording-dot" />
             {String(Math.floor(seconds / 60)).padStart(2, '0')}:
             {String(seconds % 60).padStart(2, '0')}
-            <span className="muted"> / 01:00</span>
+            <span className="muted"> / 00:30</span>
           </span>
         )}
-        {phase === 'idle' && <span className="voice-limit">60s max</span>}
+        {phase === 'idle' && <span className="voice-limit">30s max</span>}
       </div>
       {phase === 'recording' && (
         <p role="status" className="voice-help">
-          Stops automatically at 60 seconds.
+          Stops automatically before 30 seconds.
         </p>
       )}
       {recording && previewUrl && (
