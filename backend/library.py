@@ -171,9 +171,9 @@ def retry_practice(practice_id):
     from backend import example
     if rows and all(row['payload']['question_package'].get('prepared_example') in {'prime-v1', example.QUESTION_VERSION} for row in rows):
         template = rows[0]['payload']
-        rows = [{'payload': {**template, 'question': package['question'], 'question_package': package,
+        rows = [{'payload': {**template, 'question': package['question'], 'question_package': {**package, 'language': template['question_package'].get('language', 'en')},
                              'snippet': next(item for item in template['snippets'] if str(item['id']) == package['rubric'][0]['snippet_id'])}}
-                for package in example.question_set(template['snippets'], min(len(rows), 3))]
+                for package in example.question_set(template['snippets'], min(len(rows), 3), template['question_package'].get('language', 'en'))]
     records = {uuid.uuid4().hex: {**row["payload"], "created": time.monotonic(), "busy": False} for row in rows}
     if not records:
         raise StudyConflict("This practice has no saved questions.", 409)
