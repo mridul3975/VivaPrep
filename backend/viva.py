@@ -39,6 +39,7 @@ def follow_up(turn_id):
         prepared = parent['question_package'].get('prepared_example') in {'prime-v1', example.QUESTION_VERSION}
         with nullcontext() if prepared else allowance('questions'):
             package = example.followup(parent,attempt['answer']) if prepared else generate_followup(parent,attempt['answer'])
+            package['language'] = parent['question_package'].get('language', 'en')
             primary = next(item for item in parent['snippets'] if item['id'] == package['rubric'][0]['snippet_id'])
             payload = {**parent, 'question':package['question'], 'question_package':package, 'snippet':primary,
                        'parent_turn_id':turn_id, 'parent_answer':attempt['answer'], 'created':time.monotonic(), 'busy':False}
