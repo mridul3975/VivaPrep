@@ -1,0 +1,27 @@
+{
+  "created_at": "2026-11-13T09:41:30.832835+00:00",
+  "files": {
+    "evaluation/dataset.json": "ee9d362eac8a4e01c96edaba7a1b6041686d32d0d6abc00c72b793eddc4e817a",
+    "evaluation/baseline.json": "5b3984f059e974471380ec48a296b21d25c03a4286eaefed36670b2289a57ed3",
+    "evaluation/run.py": "3878f5f0e9310317ccaf14be93a9e533231712c0418b922e1efa962d4b3f96a0",
+    "evaluation/metrics.py": "5a010532c742e40ca9daf975ce9a7c86f9601dc4807653d574e56e956e8d56b7",
+    "evaluation/run-repairs.cjs": "0cf64de95e067be763c5a2007809e271ced87f6719745e10e4ae5934acae9d98",
+    "backend/app.py": "6feb3d1fd7d9ffd383b456876ad7384d893f37b332898554598f09ba5a09230e",
+    "backend/database.py": "44de4d49f1a87c3ae44cd9dd8031e15285767004ce499de32c829e07466383ec",
+    "backend/library.py": "7a9308687d18109ad85d35bde99257c39adef5b6f7b94703702454336bb370a6",
+    "backend/account.py": "8469dc22c59e9bf62d795e7bdbaf23bb179b9f60edb6ebf773fca205dad4c517",
+    "backend/auth.py": "ef183329d8f51ace47cd75988df02178cb50a4a664c30202178a7342d3c4f9b3",
+    "backend/interview/grading.py": "bfe628a40af5f6e7f57994a8ef4a01b65da7faf2dc4ca47688bf353bf5afaca9",
+    "backend/interview/debug_checker.py": "764f6dcde3c3d1a68ceed9d0d94fc055ee42f1c8883def692ba977bccf61c4c9",
+    "backend/interview/provider.py": "e930818d7de5e004bc2dfcd21636e380772c7cdd0bebaf87d4df5a6056a2a42e",
+    "backend/languages.py": "b5abde9596f84314b42c39cab0cc4be897e65f1395610bb0bb7709e9570e7bc3",
+    "backend/speech/review.py": "00e79cd069d6d72a85fa7254daf47c24e668ada211a666ca5d2bbcdc853c6fc3",
+    "backend/speech/transcriber.py": "e81f6a9f9e736f27246704d3825df1d1d7622fdacff700ce7ae001799b8fa130",
+    "frontend/src/debug/runner.ts": "b44d3f4f851d270df3d85e9062e6b984a2b45199707c70db82de07601c6c2df3"
+  },
+  "model": "openai/gpt-oss-120b",
+  "temperature": 0.2,
+  "max_tokens": 4000,
+  "retries": 0,
+  "run_policy": "One result per system/case. Errors are retained. No held-out tuning. Human review pending."
+}
