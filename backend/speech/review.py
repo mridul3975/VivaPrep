@@ -10,6 +10,11 @@ receipts = {}
 lock = Lock()
 
 
+def protected_meaning(value):
+    tokens = re.sub(r'([a-z])([A-Z])', r'\1 \2', value).replace('_', ' ').casefold()
+    return set(re.findall(r'\d+|\b(?:not|no|never|true|false|zero|one|two|nahi|nahin|mat)\b|नहीं', tokens))
+
+
 def suggested_checks(transcript, snippets):
     source = '\n'.join('\n'.join(item['content']) for item in snippets)[:12000]
     terms = list(dict.fromkeys(re.findall(r'\b(?:def|class|function)\s+([A-Za-z_]\w*)', source) + re.findall(r'\b[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+\b|\b[a-z]+[A-Z][A-Za-z0-9]*\b', source)))[:60]
@@ -27,6 +32,8 @@ def suggested_checks(transcript, snippets):
                 if end >= len(words):
                     continue
                 phrase = transcript[words[index].start():words[end].end()]
+                if protected_meaning(phrase) != protected_meaning(term):
+                    continue
                 compact = normalize(phrase)
                 if abs(len(compact) - len(target)) > 3:
                     continue
