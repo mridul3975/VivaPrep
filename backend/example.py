@@ -21,7 +21,7 @@ def is_example(document):
     return document.get('prepared_example') == 'prime-v1' and '\n'.join(document['snippets'][0]['content']).rstrip('\n') == CODE.rstrip('\n')
 
 
-def question_set(snippets, count):
+def question_set(snippets, count, language='en'):
     cases = [
         ('Explain how is_prime handles numbers below 2. Walk through input 1 and explain why the loop is never reached.',
          'For 1 the number < 2 condition is true, so the function immediately returns False. The return exits the function before divisor initialization or the loop.',
@@ -33,7 +33,35 @@ def question_set(snippets, count):
          'divisor starts at 2; 4 <= 9 is true and 9 % 2 is nonzero, so divisor becomes 3. Since 3 * 3 <= 9 includes equality, divisor 3 is tested. 9 % 3 is zero, so the function returns False. Without equality, that square-root divisor would be skipped.',
          [('Trace divisor 2 and the increment to 3.', 5, 9), ('Explain the equality boundary and the return when divisor 3 divides 9.', 6, 8)]),
     ]
-    return [_package(snippets, question, reference, criteria) for question, reference, criteria in cases[:count]]
+    packages = [_package(snippets, question, reference, criteria) for question, reference, criteria in cases[:count]]
+    for index, package in enumerate(packages):
+        package['topic'] = ('guard', 'small_prime', 'square')[index]
+        if language == 'hinglish':
+            _hinglish(package, index)
+    return packages
+
+
+def _hinglish(package, variant):
+    question, reference, descriptions = [
+        ('Input 1 par is_prime kaise kaam karta hai? Explain karo ki number < 2 hone par loop tak execution kyun nahi pahunchta.',
+         '1, 2 se chhota hai, isliye number < 2 true hota hai aur function turant False return karta hai. return function se bahar nikaal deta hai, isliye divisor initialize nahi hota aur loop nahi chalta.',
+         ['Input 1 ke liye early return ka reason samjhao.', 'Explain karo ki return ke baad loop kyun nahi chalta.']),
+        ('is_prime(2) ko step by step trace karo. Loop body chale bina True kyun return hota hai?',
+         '2 ke liye number < 2 false hai. divisor 2 se start hota hai, par 2 * 2 <= 2 false hai. Loop skip hota hai aur last return True execute hota hai.',
+         ['Explain karo ki 2 initial guard se kyun pass hota hai.', 'Initial divisor, loop condition aur final return trace karo.']),
+        ('is_prime(9) ka loop trace karo. Divisor kaise milta hai aur <= mein equality kyun zaroori hai?',
+         'Pehle divisor 2 hai aur 9 % 2 nonzero hai, isliye divisor 3 ho jaata hai. 3 * 3 <= 9 true hai aur 9 % 3 zero hai, toh False return hota hai. Equality nahi hoti toh divisor 3 skip ho jaata.',
+         ['Divisor 2 se 3 tak ke steps trace karo.', 'Equality aur divisor 3 par False return ka reason samjhao.']),
+        ('Apne pehle answer se compare karke is_prime(9) trace karo. Square-root boundary par equality kyun matter karti hai?',
+         '9 % 2 nonzero hai, phir divisor 3 hota hai. 3 * 3 <= 9 true hone se 3 test hota hai. 9 % 3 zero hai, isliye False milta hai. Equality hatane se 3 skip hoga.',
+         ['Divisor 2 aur increment se 3 tak trace karo.', 'Equality divisor 3 ko check karwa kar 9 ko reject kaise karti hai, samjhao.']),
+        ('Apne trace ko aage badhao: is_prime(17) final return tak kyun pahunchta hai? Candidate divisors aur stopping condition explain karo.',
+         '17 ke liye 2, 3 aur 4 test hote hain; har remainder nonzero hai. Agla divisor 5 hai, par 25 <= 17 false hai. Koi early return nahi hua, isliye last mein True return hota hai.',
+         ['Test hue divisors aur nonzero remainders trace karo.', 'Divisor 5 par loop rukne aur True return ka reason explain karo.']),
+    ][variant]
+    package.update(question=question, reference_answer=reference, language='hinglish')
+    for item, description in zip(package['rubric'], descriptions):
+        item['description'] = description
 
 
 def _package(snippets, question, reference, criteria):
@@ -74,10 +102,16 @@ def challenge(document):
 
 
 def followup(turn, answer):
-    if 'below 2' in turn['question'] or 'loop body never runs' in turn['question']:
-        return _package(turn['snippets'], 'Contrast your earlier explanation with is_prime(9). Trace the divisor checks and explain why equality in the loop condition matters.',
-                        question_set(turn['snippets'], 3)[2]['reference_answer'],
-                        [('Trace divisor 2 and the increment to 3.', 5, 9), ('Explain why equality allows divisor 3 to reject 9.', 6, 8)])
-    return _package(turn['snippets'], 'Building on your trace, explain why is_prime(17) reaches the final return. Walk through the candidate divisors and the stopping condition.',
-                    'For 17, divisors 2, 3 and 4 are checked and each leaves a nonzero remainder. divisor then becomes 5; 25 <= 17 is false. No divisor caused an early return, so the final return True is reached.',
-                    [('Trace the tested divisors and their nonzero remainders.', 5, 9), ('Explain why divisor 5 stops the loop and execution returns True.', 6, 10)])
+    original = turn.get('question_package', {})
+    contrast = original.get('topic') in {'guard', 'small_prime'} or 'below 2' in turn['question'] or 'loop body never runs' in turn['question']
+    if contrast:
+        package = _package(turn['snippets'], 'Contrast your earlier explanation with is_prime(9). Trace the divisor checks and explain why equality in the loop condition matters.',
+                           question_set(turn['snippets'], 3)[2]['reference_answer'],
+                           [('Trace divisor 2 and the increment to 3.', 5, 9), ('Explain why equality allows divisor 3 to reject 9.', 6, 8)])
+    else:
+        package = _package(turn['snippets'], 'Building on your trace, explain why is_prime(17) reaches the final return. Walk through the candidate divisors and the stopping condition.',
+                           'For 17, divisors 2, 3 and 4 are checked and each leaves a nonzero remainder. divisor then becomes 5; 25 <= 17 is false. No divisor caused an early return, so the final return True is reached.',
+                           [('Trace the tested divisors and their nonzero remainders.', 5, 9), ('Explain why divisor 5 stops the loop and execution returns True.', 6, 10)])
+    if original.get('language') == 'hinglish':
+        _hinglish(package, 3 if contrast else 4)
+    return package
