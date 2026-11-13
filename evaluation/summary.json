@@ -1,0 +1,111 @@
+{
+  "human_approved": 0,
+  "human_disputed": 0,
+  "planned_cases": 40,
+  "metrics": {
+    "assessment": {
+      "repoviva": {
+        "agreed": 4,
+        "planned": 16,
+        "completed": 4,
+        "errors_or_missing": 12,
+        "incorrect_acceptances": [],
+        "negative_cases": 12,
+        "incorrect_rejections": [],
+        "positive_cases": 4,
+        "positive_cases_without_verdict": [
+          "A05",
+          "A09",
+          "A13"
+        ],
+        "exact_point_agreement": 4,
+        "unavailable_cases": [
+          "A04",
+          "A05",
+          "A06",
+          "A08",
+          "A09",
+          "A10",
+          "A11",
+          "A12",
+          "A13",
+          "A14",
+          "A15",
+          "A16"
+        ]
+      },
+      "baseline": {
+        "agreed": 9,
+        "planned": 16,
+        "completed": 9,
+        "errors_or_missing": 7,
+        "incorrect_acceptances": [],
+        "negative_cases": 12,
+        "incorrect_rejections": [],
+        "positive_cases": 4,
+        "positive_cases_without_verdict": [
+          "A13"
+        ],
+        "exact_point_agreement": 9,
+        "unavailable_cases": [
+          "A04",
+          "A06",
+          "A08",
+          "A10",
+          "A12",
+          "A13",
+          "A16"
+        ]
+      }
+    },
+    "repairs": {
+      "repoviva": {
+        "agreed": 12,
+        "planned": 12,
+        "completed": 12,
+        "errors_or_missing": 0,
+        "incorrect_acceptances": [],
+        "negative_cases": 8,
+        "incorrect_rejections": [],
+        "positive_cases": 4,
+        "positive_cases_without_verdict": [],
+        "unavailable_cases": []
+      },
+      "baseline": {
+        "agreed": 12,
+        "planned": 12,
+        "completed": 12,
+        "errors_or_missing": 0,
+        "incorrect_acceptances": [],
+        "negative_cases": 8,
+        "incorrect_rejections": [],
+        "positive_cases": 4,
+        "positive_cases_without_verdict": [],
+        "unavailable_cases": []
+      }
+    }
+  },
+  "browser_tests": {
+    "agreed": 12,
+    "planned": 12,
+    "valid_dataset_hash": true
+  },
+  "speech": {
+    "completed": 8,
+    "planned": 8,
+    "word_edits": 16,
+    "reference_words": 136,
+    "wer": 0.1176,
+    "clips_with_missing_protected_expression": [
+      "S08"
+    ],
+    "real_learner_corrections": 0
+  },
+  "reliability": {
+    "passed": 4,
+    "planned": 4
+  },
+  "status": "Provisional; independent human review pending",
+  "changed_frozen_files": [],
+  "newline_only_differences": []
+}
