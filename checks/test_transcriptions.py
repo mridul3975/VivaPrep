@@ -22,6 +22,13 @@ def wav_bytes(seconds=0.01):
 
 
 class TranscriptionTests(unittest.TestCase):
+    def test_over_thirty_seconds_is_rejected_without_silent_truncation(self):
+        with patch('backend.app.transcribe_wav') as provider:
+            response = self.upload(wav_bytes(30.1))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('30 seconds', response.get_json()['error'])
+        provider.assert_not_called()
+
     def setUp(self):
         self.client = authenticated_client(app)
 
