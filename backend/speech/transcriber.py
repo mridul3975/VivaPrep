@@ -20,7 +20,7 @@ def transcribe_wav(audio: bytes, filename: str) -> str:
             PRISMA_URL,
             headers={"X-API-Key-ID": api_key},
             files={"audio_file": (filename, audio, "audio/wav")},
-            data={"model": "prisma-v3.0", "language_code": "indic-auto"},
+            data={"model": "prisma-v3.0", "language_code": "indic-auto", "format": "codemix", "enable_substitution": "false"},
             timeout=60,
         )
     except requests.RequestException as error:
