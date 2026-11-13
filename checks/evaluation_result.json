@@ -1,0 +1,36 @@
+{
+  "feature": "Inspectable evaluation candidate v1",
+  "status": "Implementation and first live run completed locally; independent human review and a quota-paced assessment replication remain pending",
+  "public_route": "/evaluation",
+  "dataset": {"assessment": 16, "repairs": 12, "speech": 8, "reliability": 4, "total": 40, "human_approved": 0},
+  "checks": {
+    "full_backend_suite": "150 tests passed in 29.208 seconds before adding the newline-verification regression",
+    "final_evaluation_checks": "All 5 checks passed, including the added freeze-verification regression",
+    "frontend_build": "npm run build passed",
+    "frontend_lint": "0 warnings and 0 errors",
+    "development_proxy": "All 15 requests reached the backend, including the report and dataset URLs",
+    "browser": "Entry link, 40 expandable cases, audio metadata/playback source, public artifact links, keyboard focus and 1440/390/360 layouts passed without runtime errors or writes",
+    "frozen_content": "All pre-run input hashes match; no changed code or newline differences in the working checkout"
+  },
+  "observed_results": {
+    "assessment": "RepoViva 4/16 completed, baseline 9/16 completed; returned labels agree with draft expectations, but 12 and 7 HTTP 429 errors respectively make accuracy comparison inconclusive",
+    "static_repair_review": "Both systems agree with the draft expectations on 12/12 cases",
+    "actual_browser_repair_tests": "12/12 candidate verdicts agree with draft expectations; original suites pass 4/4",
+    "speech": "8/8 synthetic clips transcribed; 16 raw word edits over 136 reference words; identifier errors and format differences retained",
+    "reliability": "4/4 passed; no new score, saved draft survives a new authenticated session, lease released and allowance refunded"
+  },
+  "issues_encountered": [
+    "The original six-second Groq gap was insufficient for the observed 8,000-token rate-limit bucket. All failures remain in results.json; no retries replaced them.",
+    "The initial repair browser harness used an insecure blank page; it was corrected to use localhost before freezing the candidate.",
+    "The report browser harness initially assumed a heading's accessible whitespace and an incorrect initial keyboard-focus position; the harness was corrected and passed without product changes.",
+    "Linux ffmpeg was unavailable. Synthetic fixtures were normalized using the already installed Windows ffmpeg; audio hashes and intended scripts are retained.",
+    "Git may convert CRLF on deployment. A verifier distinguishes exact LF/CRLF conversion from code changes without changing the original freeze or evaluation results."
+  ],
+  "limitations": [
+    "Assistant-authored expectations are provisional until independent review. No human-review accuracy is claimed.",
+    "One synthetic voice and intended script references do not establish real-learner speech performance. No actual learner corrections have been collected.",
+    "The baseline is the same Groq model with a general-assistant prompt, not the ChatGPT product.",
+    "Finite tests on four pure JavaScript functions do not establish arbitrary-project correctness.",
+    "Changes have not been committed, pushed or deployed during this task."
+  ]
+}
