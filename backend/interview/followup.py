@@ -1,5 +1,6 @@
 """Generate one answer-aware question against the original immutable evidence."""
 import json
+from backend.languages import language_instruction, is_hinglish
 from backend.interview.provider import json_completion, object_schema, citation_properties, source_packet
 from backend.interview.question_generator import _validate_questions
 
@@ -15,10 +16,12 @@ def generate_followup(turn, answer):
         'Ask for an explanation or a concrete input trace with reasoning, not several questions. Explicitly ask why, how, explain or trace. '
         'Never ask True/False, yes/no, multiple-choice or output-only questions. A bare result cannot satisfy the rubric. Do not repeat the original question. '
         'Return one hidden reference answer and 1-4 equally weighted source-backed rubric criteria. '
-        'Citations use local one-based snippet line numbers. Never invent source details. If no follow-up is grounded, return an empty questions array.',
+        'Citations use local one-based snippet line numbers. Never invent source details. If no follow-up is grounded, return an empty questions array. ' + language_instruction(turn['question_package'].get('language', 'en') if 'question_package' in turn else 'en'),
         json.dumps({'original_question': turn['question'], 'student_answer': answer}, ensure_ascii=False) + '\nORIGINAL EVIDENCE:\n' + source_packet(snippets),
         object_schema({'questions': {'type': 'array', 'items': question}}), 'viva_followup', timeout=40)
     package = _validate_questions(result, snippets, 1)[0]
+    if turn.get('question_package', {}).get('language') == 'hinglish' and not is_hinglish(package['question']):
+        raise ValueError('Follow-up must be in Roman Hinglish')
     if package['question'].casefold() == turn['question'].casefold():
         raise ValueError('Repeated parent question')
     return package
