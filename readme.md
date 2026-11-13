@@ -80,6 +80,11 @@ Keep RAG as a small, explicit pipeline: read source files, split them into cited
 - This file: working agreement, progress and the current assignment.
 - [UPLOADS.md](UPLOADS.md): source/text and PDF upload preview, session isolation,
   limits, question/reference generation, and scoring.
+- [HINGLISH.md](HINGLISH.md): English/Hinglish question, transcript-review and feedback flow.
+- [Evaluation & limitations](evaluation/README.md): 40-case evaluation candidate,
+  reproducible same-model baseline, retained failures and independent review sheet.
+  The public app report is at `/evaluation`. Results remain provisional until
+  independent human review; no superiority to ChatGPT is claimed.
 
 ## Learning workflow
 
@@ -186,7 +191,7 @@ For each session also note the AI help used: explanation, hint, snippet, review 
 
 ## Running the app
 
-The app now requires **Sign in with Google**. Set `GOOGLE_CLIENT_ID` and a stable
+The app supports **Try as a guest** and **Sign in with Google**. Set `GOOGLE_CLIENT_ID` and a stable
 `SESSION_SECRET` in the root `.env`; configure the OAuth client for the exact
 browser origin. See [AUTHENTICATION.md](AUTHENTICATION.md) for setup. The Google
 button flow needs no client secret. Configure `DATABASE_URL` and run
@@ -217,7 +222,7 @@ edit it, then click **Submit Answer** to evaluate it. Uploading alone never
 evaluates an answer. Failed transcription preserves the existing draft.
 
 For direct capture, click **Record answer**, allow microphone access, speak, and
-click **Stop and transcribe**. Recording stops automatically after 60 seconds.
+click **Stop and transcribe**. Recording stops automatically just before 30 seconds.
 The browser decodes its recording and encodes a real mono 16-bit 16 kHz PCM WAV
 before sending it through the same transcription endpoint. The microphone is
 released on stop/cancel. The last recording can be played back or retranscribed
@@ -233,7 +238,7 @@ curl -F "audio_file=@samples/test.wav" http://127.0.0.1:5000/transcriptions
 ```
 
 Use `curl.exe` in Windows PowerShell. This makes a real Prisma call. The endpoint
-accepts uncompressed WAV recordings up to 60 seconds and 10 MiB, and returns
+accepts uncompressed WAV recordings up to 30 seconds and 10 MiB, and returns
 `{"transcript": "..."}`. It returns 400 for missing/empty/incomplete recordings,
 413 for oversized uploads, 415 for unsupported audio, and 502 for provider failures.
 It only transcribes; evaluation still requires a separate answer submission.
