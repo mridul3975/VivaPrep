@@ -30,6 +30,7 @@ try {
     ['POST', '/retrieve'], ['GET', '/profile'], ['PATCH', '/profile'],
     ['GET', '/history/documents'], ['PUT', '/history/turns/example/draft'],
     ['GET', '/debug/challenges'], ['POST', '/debug/runs'],
+    ['GET', '/evaluation'], ['GET', '/evaluation/data/dataset.json'],
   ]) {
     const response = await fetch(origin + path, { method })
     assert.equal(response.headers.get('X-Proxy-Regression'), 'backend', `${method} ${path} must reach Flask instead of Vite's HTML fallback`)
@@ -37,7 +38,7 @@ try {
     assert.deepEqual(await response.json(), { path, method })
     console.log(`PASS ${method} ${path}`)
   }
-  console.log('All 13 development proxy requests reached the backend.')
+  console.log('All 15 development proxy requests reached the backend.')
 } finally {
   await vite?.close()
   await new Promise(resolve => backend.close(resolve))
