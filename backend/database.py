@@ -121,7 +121,7 @@ class PostgresStore:
                 conn.execute('SELECT id FROM repoviva.users WHERE id=%s FOR UPDATE', (guest_owner,))
                 if conn.execute('SELECT 1 FROM repoviva.sources WHERE owner=%s AND active', (user['id'],)).fetchone():
                     conn.execute('UPDATE repoviva.sources SET active=false WHERE owner=%s', (guest_owner,))
-                for table in ('sources', 'practice_sets', 'turns', 'attempts', 'drafts', 'debug_runs', 'api_usage', 'transcript_reviews'):
+                for table in ('sources', 'practice_sets', 'turns', 'attempts', 'drafts', 'debug_runs', 'api_usage', 'transcript_reviews', 'incident_labs', 'incident_usage'):
                     conn.execute(f'UPDATE repoviva.{table} SET owner=%s WHERE owner=%s', (user['id'], guest_owner))
                 conn.execute("UPDATE repoviva.turns SET payload=jsonb_set(payload,'{owner}',to_jsonb(%s::text)) WHERE owner=%s AND payload->>'owner'=%s", (user['id'],user['id'],guest_owner))
                 conn.execute('DELETE FROM repoviva.users WHERE id=%s', (guest_owner,))

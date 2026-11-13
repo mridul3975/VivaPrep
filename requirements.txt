@@ -16,3 +16,4 @@ pypdf==7.0.0
 google-auth[requests]==2.62.1
 psycopg[binary,pool]==3.3.8
 psycopg-pool==3.3.3
+e2b==2.5.0

@@ -49,6 +49,12 @@ sign-in, a live provider round trip, or a deployed Render service.
 
 ## Live provider checks
 
+After configuring `E2B_API_KEY`, `python -m checks.live.incidents` creates three
+real short-lived sandboxes for the prepared booking original/failure/repair.
+It is opt-in, uses provider credits, and is separate from offline incident tests.
+See [INCIDENTS.md](../INCIDENTS.md) before running it. Cloud execution remains
+unverified until that check or the actual E2B-backed browser flow succeeds.
+
 ### Neon deployment check
 
 After `neon deploy`, migrations and `npm run build`, start the app with the

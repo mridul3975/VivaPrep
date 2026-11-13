@@ -106,6 +106,12 @@
     "planned": 4
   },
   "status": "Provisional; independent human review pending",
-  "changed_frozen_files": [],
+  "changed_frozen_files": [
+    "backend/app.py",
+    "backend/database.py",
+    "backend/account.py",
+    "backend/auth.py",
+    "backend/interview/provider.py"
+  ],
   "newline_only_differences": []
 }

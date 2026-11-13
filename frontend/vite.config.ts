@@ -8,6 +8,7 @@ export default defineConfig({
     host: true, // Listens on all addresses (0.0.0.0) so Windows browser can connect to WSL
     watch: { usePolling: true, interval: 300 },
     proxy: {
+      '/incidents': 'http://127.0.0.1:5000',
       '/evaluation': 'http://127.0.0.1:5000',
       '/auth': 'http://127.0.0.1:5000',
       '/retrieve': 'http://127.0.0.1:5000',

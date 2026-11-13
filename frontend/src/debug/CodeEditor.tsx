@@ -8,7 +8,7 @@ export function CodeTokens({ code }: { code: string }) {
   })
 }
 
-export default function CodeEditor({ code, startLine, disabled, onChange }: { code: string; startLine: number; disabled: boolean; onChange: (code: string) => void }) {
+export default function CodeEditor({ code, startLine, disabled, onChange, label = 'Challenge code', maxLength = 12000 }: { code: string; startLine: number; disabled: boolean; onChange: (code: string) => void; label?: string; maxLength?: number }) {
   const highlight = useRef<HTMLPreElement>(null)
   const gutter = useRef<HTMLDivElement>(null)
   const lines = code.split('\n')
@@ -16,7 +16,7 @@ export default function CodeEditor({ code, startLine, disabled, onChange }: { co
     <div className="exercise-gutter" aria-hidden="true"><div ref={gutter}>{lines.map((_, i) => <div key={i}>{startLine + i}</div>)}</div></div>
     <div className="exercise-code-input">
       <pre ref={highlight} aria-hidden="true"><CodeTokens code={code} />{'\n'}</pre>
-      <textarea aria-label="Challenge code" value={code} maxLength={12000} spellCheck={false} autoCapitalize="off" autoCorrect="off" disabled={disabled} onChange={event => onChange(event.target.value)} onScroll={event => {
+      <textarea aria-label={label} value={code} maxLength={maxLength} wrap="off" spellCheck={false} autoCapitalize="off" autoCorrect="off" disabled={disabled} onChange={event => onChange(event.target.value)} onScroll={event => {
         const { scrollTop, scrollLeft } = event.currentTarget
         if (highlight.current) highlight.current.style.transform = `translate(${-scrollLeft}px, ${-scrollTop}px)`
         if (gutter.current) gutter.current.style.transform = `translateY(${-scrollTop}px)`

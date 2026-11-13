@@ -5,6 +5,7 @@ import PracticeLanguage from './components/PracticeLanguage'
 import useBackendConnection from './useBackendConnection'
 import BrandLogo from './components/BrandLogo'
 import DebugPage from './pages/DebugPage'
+import IncidentsPage from './pages/IncidentsPage'
 import SourceUpload, { type SourceDocument } from './components/SourceUpload'
 import Icon from './components/Icon'
 import ActivityOrb from './components/ActivityOrb'
@@ -767,7 +768,7 @@ export default function App({ initialAction, initialLanguage = 'en', onEntryHand
         </a>
         <nav className="workspace-nav">
           <button type="button" className={`nav-item ${studyVisible ? 'is-active' : ''}`} aria-current={studyVisible ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'study' }) }}><Icon name="desk" />Study</button>
-          <button type="button" className={`nav-item ${route.page === 'debug' ? 'is-active' : ''}`} aria-current={route.page === 'debug' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'debug' }) }}><Icon name="code" />Debug</button>
+          <button type="button" className={`nav-item ${route.page === 'debug' || route.page === 'incidents' ? 'is-active' : ''}`} aria-current={route.page === 'debug' || route.page === 'incidents' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'debug' }) }}><Icon name="code" />Debug</button>
           <button type="button" className={`nav-item ${route.page === 'history' ? 'is-active' : ''}`} aria-current={route.page === 'history' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'history' }) }}><Icon name="history" />History</button>
           <button type="button" className={`nav-item ${route.page === 'profile' ? 'is-active' : ''}`} aria-current={route.page === 'profile' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'profile' }) }}><Icon name="profile" />Profile</button>
         </nav>
@@ -796,6 +797,7 @@ export default function App({ initialAction, initialLanguage = 'en', onEntryHand
       }} />}
       {route.page === 'profile' && <ProfilePage />}
       {route.page === 'debug' && <DebugPage key={route.runId || 'catalogue'} runId={route.runId} source={activeSource} onSourceChange={source => { handleSourceChange(source); setSourceOverride(source) }} onOpen={runId => navigate({ page: 'debug', runId: runId || undefined })} onBusyChange={setDebugBusy} onSaveHandler={registerDebugSave} />}
+      {route.page === 'incidents' && <IncidentsPage key={route.runId || 'incidents'} labId={route.runId} source={activeSource} onOpen={runId => navigate({ page: 'incidents', runId: runId || undefined })} onBusyChange={setDebugBusy} onSaveHandler={registerDebugSave} />}
       <main
         id="workspace"
         hidden={!studyVisible}

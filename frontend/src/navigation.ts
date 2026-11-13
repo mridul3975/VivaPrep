@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type Page = 'study' | 'setup' | 'history' | 'profile' | 'debug'
+export type Page = 'study' | 'setup' | 'history' | 'profile' | 'debug' | 'incidents'
 export interface Route { page: Page; sourceId?: string; runId?: string }
 
 function readRoute(): Route {
   const parts = window.location.hash.replace(/^#\/?/, '').split('/')
   if (parts[0] === 'history') return { page: 'history', sourceId: parts[1] === 'file' ? parts[2] : undefined }
   if (parts[0] === 'debug') return { page: 'debug', runId: parts[1] === 'run' ? parts[2] : undefined }
+  if (parts[0] === 'incidents') return { page: 'incidents', runId: parts[1] === 'run' ? parts[2] : undefined }
   if (parts[0] === 'profile' || parts[0] === 'setup') return { page: parts[0] }
   if (parts[0] === 'study') return { page: 'study' }
   return { page: 'setup' }
@@ -33,7 +34,7 @@ export function useNavigation() {
   }, [])
   const back = useCallback(() => {
     if (depth > 0) window.history.back()
-    else navigate(route.sourceId ? { page: 'history' } : route.runId ? { page: 'debug' } : { page: 'study' })
-  }, [depth, navigate, route.sourceId, route.runId])
+    else navigate(route.sourceId ? { page: 'history' } : route.runId ? { page: route.page === 'incidents' ? 'incidents' : 'debug' } : { page: 'study' })
+  }, [depth, navigate, route.page, route.sourceId, route.runId])
   return { route, navigate, back, depth }
 }

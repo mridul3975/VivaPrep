@@ -14,7 +14,7 @@ class ProviderError(RuntimeError):
         self.status_code = status_code
 
 
-def json_completion(system, prompt, schema, name, timeout=45):
+def json_completion(system, prompt, schema, name, timeout=45, max_tokens=4000):
     key = os.getenv("GROQ_API_KEY")
     if not key:
         raise ProviderError("Groq is not configured.")
@@ -28,7 +28,7 @@ def json_completion(system, prompt, schema, name, timeout=45):
                 "response_format": {"type": "json_schema", "json_schema": {
                     "name": name, "strict": True, "schema": schema,
                 }},
-                "max_tokens": 4000,
+                "max_tokens": max_tokens,
                 "temperature": 0.2,
             },
             timeout=timeout,

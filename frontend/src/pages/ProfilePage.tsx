@@ -9,6 +9,7 @@ interface Details { display_name: string; institution: string; course: string; s
 interface Profile {
   name: string; email: string; details: Partial<Details>; joined_at: string | null; storage_mode: string
   usage: { reset_at: string; allowances: Record<Action, { limit: number; used: number; remaining: number }> }
+  incident_runs?: { remaining: number; limit: number; used: number } | null
 }
 const empty: Details = { display_name: '', institution: '', course: '', study_year: '' }
 const fields: { key: keyof Details; label: string; limit: number; placeholder: string }[] = [
@@ -65,7 +66,8 @@ export default function ProfilePage() {
           <h2 id="usage-heading">Daily allowance</h2>
           <p className="panel-description">{user.is_guest ? 'Guest AI uses for today. The prepared Python questions and source comparisons are free. Shared guest provider limits may also apply.' : 'Available uses for today.'}</p>
           <div className="usage-list">{actions.map(action => { const quota = profile.usage.allowances[action.key]; return <div className="usage-row" key={action.key}><div className="usage-topline"><h3>{action.label}</h3><p><strong>{quota.remaining}</strong><span> / {quota.limit} left</span></p></div><progress aria-label={`${action.label} used`} value={Math.min(quota.used, quota.limit)} max={quota.limit || 1} /><p className="usage-caption">{quota.used} used today{quota.remaining === 0 ? ' · Daily limit reached' : ''}</p></div> })}</div>
-          <div className="usage-notes"><p>Resets {new Date(profile.usage.reset_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}.</p><p>Creating a debugging exercise uses one question-set allowance. Opening History, resuming exercises and running tests do not use this allowance. AI answer feedback, reviews of alternative repairs and repair vivas each use one answer-review allowance. Source comparisons and browser tests are free. Provider limits may apply separately.</p></div>
+          {profile.incident_runs && <div className="usage-row"><div className="usage-topline"><h3>Isolated incident runs</h3><p><strong>{profile.incident_runs.remaining}</strong><span> / {profile.incident_runs.limit} left</span></p></div><p className="usage-caption">{profile.incident_runs.used} used today · <a href="#/incidents">Open running incidents</a></p></div>}
+          <div className="usage-notes"><p>Resets {new Date(profile.usage.reset_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}.</p><p>Creating a debugging exercise uses one question-set allowance. Opening History, resuming exercises and running browser tests do not use this allowance. Isolated incident setup and each approved experiment use their separate run allowance. AI investigation responses use an answer review; replay, trace and test-fix shortcuts do not call AI. Provider limits may apply separately.</p></div>
           {profile.storage_mode === 'memory' && <p className="inline-error">Temporary development storage: usage resets if the server restarts.</p>}
         </section>
       </div>}

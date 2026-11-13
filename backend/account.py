@@ -132,5 +132,10 @@ def profile():
         with memory_lock:
             details = dict(memory_profiles.get(owner, {}))
         row, joined = g.user, None
+    incident_runs = None
+    if database_enabled():
+        from backend.incidents.routes import usage as incident_usage
+        with get_database().connection() as conn:
+            incident_runs = incident_usage(conn,owner)
     return jsonify({"name": row["name"], "email": row["email"], "details": details, "joined_at": joined,
-                    "usage": usage(owner), "storage_mode": "postgresql" if database_enabled() else "memory"})
+                    "usage": usage(owner), "incident_runs": incident_runs, "storage_mode": "postgresql" if database_enabled() else "memory"})

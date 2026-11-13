@@ -50,6 +50,12 @@ mode and reloading off.
 
 ## Render
 
+Running application incidents additionally require backend-only `E2B_API_KEY`.
+Migration 007 adds owned project snapshots and bounded compute usage. See
+[INCIDENTS.md](INCIDENTS.md) for setup, limits and the required live sandbox check.
+Without this key, Study and code repairs still work; new running incidents are
+disabled. The Docker image also includes the public evaluation artifacts.
+
 1. This app is configured for Neon PostgreSQL. Keep the pooled `DATABASE_URL`
    and direct `DATABASE_URL_UNPOOLED` from the ignored `.env` for the web service's
    runtime environment. If using Render Postgres instead, choose **New > Postgres**, name the database, select the same region

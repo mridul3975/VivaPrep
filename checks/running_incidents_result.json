@@ -1,0 +1,38 @@
+{
+  "feature": "Running application incidents and responsive cursor glow",
+  "status": "Implemented locally; E2B cloud execution awaits the owner's API key and live verification",
+  "entry": "Debug -> Running incidents",
+  "scope": "Python HTTP projects with disposable local data and optional SQLite; prepared booking app, .py uploads, ZIP uploads and owned Study source reuse",
+  "verification": {
+    "backend": "164 regression tests passed on a fresh isolated PostgreSQL cluster; additional negation/count/method/payload routing assertions passed separately",
+    "frontend": "npm run build and npm run lint passed with 0 errors and warnings",
+    "proxy": "All 17 development proxy requests reached the backend",
+    "actual_execution": "Trusted supervisor executed in disposable Linux mount/PID/network namespaces and chroot with an unprivileged application; real HTTP requests, SQLite snapshots and line observations",
+    "prepared_original": "4/4 checks passed",
+    "controlled_failure": "Concurrent last-seat requests both returned 201, created two bookings and left seats=-1",
+    "restored_repair": "4/4 incident/regression checks passed; concurrent requests returned one 201 and one 409, one booking and seats=0",
+    "plausible_wrong_repair": "Failed the actual reviewed checks",
+    "uploaded_project": "An uploaded copy of the booking source under student_booking.py used live Groq source-matched mutation/check generation; the original passed and the mutation failed without substituting a prepared project",
+    "speech_and_conversation": "Synthetic stock Hinglish audio passed through real Prisma, explicit transcript confirmation and reviewed concurrent-request planning. A typed causal hypothesis received live Groq feedback with validated source quotations. No actual learner voice or learning outcome is claimed.",
+    "persistence": "Patch, investigation draft, confirmation and verified evidence survived reload; guest upgrade retained an in-flight project and personal usage",
+    "quota": "Failed jobs refund personal allowance while retaining anonymous shared provider-attempt entries; deleting an account does not reset the shared ceiling",
+    "ui": "No runtime errors or page overflow at 1440/390/360px; unconfigured runner disables starting new incidents while saved code and evidence remain readable",
+    "code_editor": "Highlight, textarea and line-number gutter use the same 24px line height without soft wrapping",
+    "cursor": "The first redraw used the exact new cursor coordinates without interpolation; one headless sample reached the uniform in 0.5 ms. This is not a device-wide frame-rate benchmark. Reduced motion remained non-reactive."
+  },
+  "issues_found_and_fixed": [
+    "Tracing every standard-library line made startup too slow. Tracing now filters project paths before subscribing to line events.",
+    "The model initially treated a Hindi imperative as an explanation request. Added bounded reuse of the validated concurrent pair, explicit action priority and guards for negation, counts, methods, paths and payloads. No request executes without separate approval.",
+    "New observation preformatted-text styles interfered with the code editor's line height and wrapping. Scoped those styles and verified gutter alignment on mobile.",
+    "Shared compute credit could have been reset by account deletion or repeated personal refunds. The ledger now retains anonymized failed/deleted-owner attempts.",
+    "A concurrent Git operation removed the uncommitted feature. Recovered exact patch history in an isolated checkout, then restored it to the main checkout after the user explicitly requested restoration. Published evaluation commits were preserved."
+  ],
+  "boundaries": [
+    "E2B SDK configuration and cleanup are covered with mocks; no E2B_API_KEY was supplied and no real microVM was created. Native local isolation does not certify cloud isolation.",
+    "The private local execution adapter is not shipped and is never a production fallback. Flask production code runs uploaded code only through E2B.",
+    "Finite source-backed checks and bounded line coverage are not proof for every input or arbitrary-project compatibility. AI hypothesis feedback remains advisory.",
+    "Every experiment starts with clean app data; persistent cross-experiment live sessions, external services and automatic dependency installs are unsupported.",
+    "The previous frozen evaluation remains unchanged; its report now identifies changed production files rather than implying those results evaluated this feature.",
+    "Changes have not been committed, pushed or deployed during this task."
+  ]
+}

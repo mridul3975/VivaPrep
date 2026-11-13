@@ -69,7 +69,7 @@ def _valid_csrf():
 
 def protect_study_routes():
     endpoint = request.endpoint or ""
-    if endpoint not in {"retrieve_snippets", "generate_questions", "submit_answer", "transcribe_upload", "practice_history"} and not endpoint.startswith(("sources.", "library.", "account.", "debugging.", "viva.")):
+    if endpoint not in {"retrieve_snippets", "generate_questions", "submit_answer", "transcribe_upload", "practice_history"} and not endpoint.startswith(("sources.", "library.", "account.", "debugging.", "viva.", "incidents.")):
         return None
     user, _ = current_identity()
     if user is None:

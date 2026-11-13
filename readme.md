@@ -74,6 +74,9 @@ Keep RAG as a small, explicit pipeline: read source files, split them into cited
 
 ## Documents
 
+- [INCIDENTS.md](INCIDENTS.md): reviewed voice-to-experiment plans, isolated
+  Python HTTP/SQLite incident replay, actual execution evidence and E2B setup.
+
 - [PRD.md](PRD.md): users, problem, scope, user journey and product acceptance.
 - [architecture.md](architecture.md): components, data flow, boundaries and trade-offs.
 - [trd.md](trd.md): technical requirements, proposed contracts, acceptance checks and milestones.

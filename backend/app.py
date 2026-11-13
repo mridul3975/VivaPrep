@@ -31,6 +31,7 @@ from backend.library import library
 from backend.debugging import debugging
 from backend.viva import viva
 from backend.evaluation import evaluation
+from backend.incidents.routes import incidents
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
@@ -67,6 +68,7 @@ app.register_blueprint(library)
 app.register_blueprint(debugging)
 app.register_blueprint(viva)
 app.register_blueprint(evaluation)
+app.register_blueprint(incidents)
 app.register_error_handler(UsageLimit, quota_error)
 turns = {}
 turns_lock = Lock()
