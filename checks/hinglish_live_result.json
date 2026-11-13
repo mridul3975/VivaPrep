@@ -1,0 +1,143 @@
+{
+  "generated_questions": [
+    {
+      "question": "is_prime function ka logic explain karo, kaise ye decide karta hai ki koi number prime hai ya nahi, aur har step ka purpose kya hai?",
+      "reference_answer": "Function sabse pehle check karta hai ki number 2 se chhota hai ya nahi (lines 3‑4). Agar hai to turant False return hota hai, kyunki prime numbers ki definition ke mutabik 2 se kam koi bhi integer prime nahi hota. Phir divisor ko 2 se initialise kiya jata hai aur while loop chalaya jata hai jab tak divisor ka square (divisor * divisor) number se chhota ya barabar hota hai (line 6). Ye condition isliye use hoti hai kyunki agar number ka koi factor sqrt(number) se bada hoga to uska complementary factor sqrt(number) se chhota hoga, isliye sqrt tak hi check karna sufficient hai. Loop ke andar har iteration mein number % divisor se remainder check kiya jata hai (line 7). Agar remainder zero ho to iska matlab divisor number ka exact factor hai, isliye function False return karta hai. Agar remainder zero nahi hota to divisor ko 1 se badhaya jata hai (line 9) aur next possible factor test hota hai. Jab tak loop finish ho jata hai aur koi divisor nahi milta, tab function line 10 par True return karta hai, jo indicate karta hai ki number prime hai.",
+      "rubric": [
+        {
+          "description": "Explain the handling of numbers less than 2 and why the function returns False immediately.",
+          "snippet_id": "prime:1",
+          "line_start": 3,
+          "line_end": 4,
+          "quote": "    if number < 2:\n        return False",
+          "id": "c1"
+        },
+        {
+          "description": "Describe the purpose of the while loop condition `divisor * divisor <= number`.",
+          "snippet_id": "prime:1",
+          "line_start": 6,
+          "line_end": 6,
+          "quote": "    while divisor * divisor <= number:",
+          "id": "c2"
+        },
+        {
+          "description": "Detail the modulo check and divisor increment inside the loop, and how they detect non‑prime numbers.",
+          "snippet_id": "prime:1",
+          "line_start": 7,
+          "line_end": 9,
+          "quote": "        if number % divisor == 0:\n            return False\n        divisor += 1",
+          "id": "c3"
+        },
+        {
+          "description": "State why the final `return True` is reached only when no divisor was found.",
+          "snippet_id": "prime:1",
+          "line_start": 10,
+          "line_end": 10,
+          "quote": "    return True",
+          "id": "c4"
+        }
+      ]
+    }
+  ],
+  "wrong_claim_review": {
+    "summary": "Student ne kaha ki Input 1 par is_prime True return karta hai aur loop chalta hai, jo source ke mutabik galat hai. Correct answer: number < 2 hone par False return hota hai aur return ke baad loop execute nahi hota.",
+    "language": "hinglish",
+    "claims": [
+      {
+        "claim": "Input 1 par is_prime True return karta hai",
+        "label": "contradicted",
+        "explanation": "Source line 3-4 dikhata hai ki number < 2 par return False hota hai, isliye True return nahi hota.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "evidence": {
+          "id": "prime:1",
+          "path": "prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      },
+      {
+        "claim": "Input 1 par loop chalta hai",
+        "label": "contradicted",
+        "explanation": "Return False ke baad function exit ho jata hai, isliye divisor initialize nahi hota aur while loop nahi chalta (lines 5-6).",
+        "snippet_id": "prime:1",
+        "line_start": 5,
+        "line_end": 6,
+        "quote": "    divisor = 2\n    while divisor * divisor <= number:",
+        "evidence": {
+          "id": "prime:1",
+          "path": "prime.py",
+          "start_line": 5,
+          "end_line": 6,
+          "content": [
+            "    divisor = 2",
+            "    while divisor * divisor <= number:"
+          ]
+        }
+      }
+    ],
+    "criteria": [
+      {
+        "id": "c1",
+        "description": "Input 1 ke liye early return ka reason samjhao.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 4,
+        "quote": "    if number < 2:\n        return False",
+        "status": "missed",
+        "points": 0,
+        "max_points": 1,
+        "explanation": "Student ne early return ka reason nahi diya; source dikhata hai ki number < 2 par return False hota hai.",
+        "evidence": {
+          "id": "prime:1",
+          "path": "prime.py",
+          "start_line": 3,
+          "end_line": 4,
+          "content": [
+            "    if number < 2:",
+            "        return False"
+          ]
+        }
+      },
+      {
+        "id": "c2",
+        "description": "Explain karo ki return ke baad loop kyun nahi chalta.",
+        "snippet_id": "prime:1",
+        "line_start": 3,
+        "line_end": 6,
+        "quote": "    if number < 2:\n        return False\n    divisor = 2\n    while divisor * divisor <= number:",
+        "status": "missed",
+        "points": 0,
+        "max_points": 1,
+        "explanation": "Student ne galat kaha ki return ke baad loop chalta hai; source ke mutabik return ke baad loop execute nahi hota.",
+        "evidence": {
+          "id": "prime:1",
+          "path": "prime.py",
+          "start_line": 3,
+          "end_line": 6,
+          "content": [
+            "    if number < 2:",
+            "        return False",
+            "    divisor = 2",
+            "    while divisor * divisor <= number:"
+          ]
+        }
+      }
+    ],
+    "reference_answer": "1, 2 se chhota hai, isliye number < 2 true hota hai aur function turant False return karta hai. return function se bahar nikaal deta hai, isliye divisor initialize nahi hota aur loop nahi chalta.",
+    "score": {
+      "earned": 0,
+      "possible": 2,
+      "percentage": 0,
+      "excluded_criteria": 0
+    }
+  },
+  "speech_sample_text": "Input one पर is prime function में number two से छोटा है, इसलिए False return होता है. Return function को exit कर देता है, तो divisor initialize नहीं होता और loop नहीं चलता.",
+  "boundary": "Development smoke examples only. Synthetic stock speech, not a real learner or a held-out evaluation. No comparative accuracy claim."
+}
