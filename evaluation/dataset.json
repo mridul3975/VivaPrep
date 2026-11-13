@@ -1,0 +1,133 @@
+{
+  "version": "1.0",
+  "split": "frozen-evaluation-candidate",
+  "review_status": "Assistant-authored and inspected; independent human review pending",
+  "sources": {
+    "shipping": {
+      "path": "shipping.py",
+      "code": "def shipping_cost(total):\n    if total >= 500:\n        return 0\n    return 40",
+      "question": "Explain the shipping cost for totals of 500 and 499, including why the boundary matters.",
+      "reference_answer": "500 qualifies for free shipping because >= includes equality. 499 falls through to return 40.",
+      "rubric": [
+        {"id": "c1", "description": "Explain that total 500 returns 0 because >= includes equality.", "line_start": 2, "line_end": 3},
+        {"id": "c2", "description": "Explain that total 499 fails the condition and returns 40.", "line_start": 2, "line_end": 4}
+      ]
+    },
+    "average": {
+      "path": "average.py",
+      "code": "def mean_score(scores):\n    if not scores:\n        return None\n    return sum(scores) / len(scores)",
+      "question": "Explain why an empty scores list returns None and why [2, 4] returns 3.0.",
+      "reference_answer": "An empty list is falsy so the early return produces None and avoids dividing by zero. For [2,4], 6 divided by 2 is 3.0.",
+      "rubric": [
+        {"id": "c1", "description": "Explain the empty-list early return of None before division.", "line_start": 2, "line_end": 3},
+        {"id": "c2", "description": "Explain that [2,4] uses sum 6 divided by length 2 to return 3.0.", "line_start": 4, "line_end": 4}
+      ]
+    },
+    "retry": {
+      "path": "retry.py",
+      "code": "def can_retry(attempts, cancelled):\n    return attempts < 3 and not cancelled",
+      "question": "Explain why can_retry(2, False) is True but can_retry(2, True) is False.",
+      "reference_answer": "2 is below 3 and not False is True, so both operands are True in the first call. In the second call not True is False, so cancellation blocks retry despite a low attempt count.",
+      "rubric": [
+        {"id": "c1", "description": "Explain that 2 < 3 and not False are both true for the first call.", "line_start": 2, "line_end": 2},
+        {"id": "c2", "description": "Explain that cancelled=True makes not cancelled false and blocks the second call.", "line_start": 2, "line_end": 2}
+      ]
+    },
+    "tag": {
+      "path": "tag.py",
+      "code": "def normalize_tag(value):\n    cleaned = value.strip().lower()\n    if not cleaned:\n        return 'untagged'\n    return cleaned",
+      "question": "Trace normalize_tag for '  PyTHON  ' and for a string containing only spaces. Explain both results.",
+      "reference_answer": "strip removes the outer spaces and lower converts PyTHON to python, which is returned. Spaces only become an empty string, so the fallback returns untagged.",
+      "rubric": [
+        {"id": "c1", "description": "Explain strip plus lower turning padded PyTHON into python and returning it.", "line_start": 2, "line_end": 5},
+        {"id": "c2", "description": "Explain that spaces become empty and trigger the untagged fallback.", "line_start": 2, "line_end": 4}
+      ]
+    }
+  },
+  "assessment": [
+    {"id": "A01", "source": "shipping", "language": "en", "kind": "correct", "answer": "500 satisfies >= 500, including equality, so it returns zero. 499 fails that condition and falls through to return 40.", "expected_label": "supported", "expected_points": 2, "rationale": "Both boundary branches are correctly explained."},
+    {"id": "A02", "source": "shipping", "language": "en", "kind": "partial", "answer": "500 is included by >= and returns zero. I cannot explain the other input.", "expected_label": "partial", "expected_points": 1, "rationale": "First requested branch explained; second omitted."},
+    {"id": "A03", "source": "shipping", "language": "hinglish", "kind": "contradictory", "answer": "500 par shipping_cost 40 return karta hai kyunki equality free shipping mein included nahi hai. 499 par zero milta hai.", "expected_label": "contradicted", "expected_points": 0, "rationale": "Both outcomes and the equality condition conflict with the source."},
+    {"id": "A04", "source": "shipping", "language": "en", "kind": "unsupported", "answer": "It logs the delivery address to a remote analytics service.", "expected_label": "unsupported", "expected_points": 0, "rationale": "No logging or address behavior exists in this source; neither requested branch explained."},
+    {"id": "A05", "source": "average", "language": "hinglish", "kind": "correct", "answer": "Empty scores falsy hai, isliye mean_score division se pehle None return karta hai. [2, 4] ka sum 6 aur length 2 hai, toh division se 3.0 milta hai.", "expected_label": "supported", "expected_points": 2, "rationale": "Explains the guard and the nonempty calculation."},
+    {"id": "A06", "source": "average", "language": "en", "kind": "partial", "answer": "The empty list makes not scores true, so it returns None before the division. I do not know what happens for [2,4].", "expected_label": "partial", "expected_points": 1, "rationale": "Only the guard explanation is demonstrated."},
+    {"id": "A07", "source": "average", "language": "en", "kind": "contradictory", "answer": "Empty scores returns zero, then [2,4] returns 6 because the code never divides by the length.", "expected_label": "contradicted", "expected_points": 0, "rationale": "Contradicts the literal None and the explicit division."},
+    {"id": "A08", "source": "average", "language": "hinglish", "kind": "unsupported", "answer": "Ye function result ko database mein save karta hai aur teacher ko email bhejta hai.", "expected_label": "unsupported", "expected_points": 0, "rationale": "Persistence and email are absent from the provided source."},
+    {"id": "A09", "source": "retry", "language": "en", "kind": "correct", "answer": "In (2,False), 2 is less than 3 and not False is true, so the conjunction is true. In (2,True), not cancelled is false, so the conjunction is false and retry is blocked.", "expected_label": "supported", "expected_points": 2, "rationale": "Both operands and the cancellation negation are explained."},
+    {"id": "A10", "source": "retry", "language": "hinglish", "kind": "partial", "answer": "Pehle call mein 2 < 3 aur not False dono true hain, isliye can_retry True deta hai. Dusre call ka reason mujhe nahi pata.", "expected_label": "partial", "expected_points": 1, "rationale": "First call explained; second deliberately omitted."},
+    {"id": "A11", "source": "retry", "language": "en", "kind": "contradictory", "answer": "(2,False) is False because 2 is not below 3. (2,True) is True because cancellation enables retries.", "expected_label": "contradicted", "expected_points": 0, "rationale": "Both answers and the meaning of cancellation are reversed."},
+    {"id": "A12", "source": "retry", "language": "en", "kind": "unsupported", "answer": "It waits ten seconds and sends a notification before each retry.", "expected_label": "unsupported", "expected_points": 0, "rationale": "No delay or notification appears in the source."},
+    {"id": "A13", "source": "tag", "language": "hinglish", "kind": "correct", "answer": "strip outer spaces hatata hai aur lower PyTHON ko python banata hai, jo return hota hai. Sirf spaces wali string strip ke baad empty hai, isliye fallback untagged return karta hai.", "expected_label": "supported", "expected_points": 2, "rationale": "Both transformations and the empty fallback are explained."},
+    {"id": "A14", "source": "tag", "language": "en", "kind": "partial", "answer": "strip removes the surrounding spaces, lower converts PyTHON to python, then it returns python. I cannot explain the spaces-only case.", "expected_label": "partial", "expected_points": 1, "rationale": "Explains only the nonempty path."},
+    {"id": "A15", "source": "tag", "language": "en", "kind": "contradictory", "answer": "It preserves outer spaces and uppercases PyTHON. Spaces-only input is returned unchanged because there is no fallback.", "expected_label": "contradicted", "expected_points": 0, "rationale": "Contradicts strip, lower and the explicit fallback."},
+    {"id": "A16", "source": "tag", "language": "en", "kind": "unsupported", "answer": "normalize_tag translates the tag to French using an external translation API.", "expected_label": "unsupported", "expected_points": 0, "rationale": "No translation API or language conversion exists in the source."}
+  ],
+  "repair_families": {
+    "clamp": {
+      "language": "JavaScript", "function_name": "clamp_value",
+      "contract": "Return value bounded inclusively by low and high; inputs are finite numbers with low <= high.",
+      "reference_code": "function clamp_value(value, low, high) { return Math.min(high, Math.max(low, value)); }",
+      "starter_code": "function clamp_value(value, low, high) { return Math.max(high, Math.max(low, value)); }",
+      "correct_code": "function clamp_value(value, low, high) { if (value < low) return low; if (value > high) return high; return value; }",
+      "wrong_code": "function clamp_value(value, low, high) { return Math.max(low, value); }",
+      "tests": [{"id": "t1", "name": "below", "args": [-2,0,10], "expected": 0}, {"id": "t2", "name": "inside", "args": [4,0,10], "expected": 4}, {"id": "t3", "name": "above", "args": [12,0,10], "expected": 10}, {"id": "t4", "name": "boundary", "args": [10,0,10], "expected": 10}]
+    },
+    "positives": {
+      "language": "JavaScript", "function_name": "sum_positive",
+      "contract": "Sum only strictly positive finite numbers from an array. Empty input returns 0.",
+      "reference_code": "function sum_positive(values) { return values.filter(x => x > 0).reduce((a,b) => a+b, 0); }",
+      "starter_code": "function sum_positive(values) { return values.filter(x => x < 0).reduce((a,b) => a+b, 0); }",
+      "correct_code": "function sum_positive(values) { let total = 0; for (const x of values) { if (x > 0) total += x; } return total; }",
+      "wrong_code": "function sum_positive(values) { return values.reduce((a,b) => a + Math.abs(b), 0); }",
+      "tests": [{"id": "t1", "name": "mixed", "args": [[-2,0,3,4]], "expected": 7}, {"id": "t2", "name": "empty", "args": [[]], "expected": 0}, {"id": "t3", "name": "negative", "args": [[-4,-1]], "expected": 0}, {"id": "t4", "name": "positive", "args": [[1,2]], "expected": 3}]
+    },
+    "age": {
+      "language": "JavaScript", "function_name": "age_label",
+      "contract": "For a nonnegative integer age, return adult for age >= 18, otherwise minor.",
+      "reference_code": "function age_label(age) { return age >= 18 ? 'adult' : 'minor'; }",
+      "starter_code": "function age_label(age) { return age > 18 ? 'adult' : 'minor'; }",
+      "correct_code": "function age_label(age) { if (age < 18) return 'minor'; return 'adult'; }",
+      "wrong_code": "function age_label(age) { return age >= 21 ? 'adult' : 'minor'; }",
+      "tests": [{"id": "t1", "name": "seventeen", "args": [17], "expected": "minor"}, {"id": "t2", "name": "eighteen", "args": [18], "expected": "adult"}, {"id": "t3", "name": "twenty", "args": [20], "expected": "adult"}, {"id": "t4", "name": "zero", "args": [0], "expected": "minor"}]
+    },
+    "divide": {
+      "language": "JavaScript", "function_name": "safe_divide",
+      "contract": "Divide finite numbers a by b. Return null when b is zero, including when a is also zero.",
+      "reference_code": "function safe_divide(a,b) { if (b === 0) return null; return a/b; }",
+      "starter_code": "function safe_divide(a,b) { if (b === 0) return 0; return a/b; }",
+      "correct_code": "function safe_divide(a,b) { return b !== 0 ? a / b : null; }",
+      "wrong_code": "function safe_divide(a,b) { if (a === 0 || b === 0) return null; return a/b; }",
+      "tests": [{"id": "t1", "name": "ordinary", "args": [6,2], "expected": 3}, {"id": "t2", "name": "zero divisor", "args": [6,0], "expected": null}, {"id": "t3", "name": "zero numerator", "args": [0,2], "expected": 0}, {"id": "t4", "name": "both zero", "args": [0,0], "expected": null}]
+    }
+  },
+  "repairs": [
+    {"id":"D01","family":"clamp","variant":"correct_code","expected":"correct","rationale":"Equivalent branching preserves both bounds."},
+    {"id":"D02","family":"clamp","variant":"starter_code","expected":"incorrect","rationale":"Returns high for values below high."},
+    {"id":"D03","family":"clamp","variant":"wrong_code","expected":"incorrect","rationale":"Fails to cap values above high."},
+    {"id":"D04","family":"positives","variant":"correct_code","expected":"correct","rationale":"Loop sums exactly the positive elements."},
+    {"id":"D05","family":"positives","variant":"starter_code","expected":"incorrect","rationale":"Adds negative numbers instead of positives."},
+    {"id":"D06","family":"positives","variant":"wrong_code","expected":"incorrect","rationale":"Absolute values incorrectly add negative inputs."},
+    {"id":"D07","family":"age","variant":"correct_code","expected":"correct","rationale":"The complementary branch includes equality at 18."},
+    {"id":"D08","family":"age","variant":"starter_code","expected":"incorrect","rationale":"Rejects the boundary age 18."},
+    {"id":"D09","family":"age","variant":"wrong_code","expected":"incorrect","rationale":"Misclassifies ages 18 to 20."},
+    {"id":"D10","family":"divide","variant":"correct_code","expected":"correct","rationale":"Equivalent ternary preserves denominator-zero handling."},
+    {"id":"D11","family":"divide","variant":"starter_code","expected":"incorrect","rationale":"Returns 0 instead of null for zero denominator."},
+    {"id":"D12","family":"divide","variant":"wrong_code","expected":"incorrect","rationale":"Incorrectly returns null for zero numerator and nonzero denominator."}
+  ],
+  "speech": [
+    {"id":"S01","source":"shipping","language":"en","spoken":"shipping cost returns zero when total is five hundred. It does not charge forty at that boundary.","reference":"shipping cost returns zero when total is five hundred. It does not charge forty at that boundary.","intended_correction":"shipping_cost returns zero when total is five hundred. It does not charge forty at that boundary.","protected":[["not","n't"],["zero","0"],["five hundred","500"],["forty","40"]]},
+    {"id":"S02","source":"average","language":"en","spoken":"mean score returns None for an empty list, not zero. Two and four give three.","reference":"mean score returns None for an empty list, not zero. Two and four give three.","intended_correction":"mean_score returns None for an empty list, not zero. Two and four give three.","protected":[["none"],["not","n't"],["two","2"],["four","4"],["three","3"]]},
+    {"id":"S03","source":"retry","language":"en","spoken":"can retry returns false when cancelled is true. Two attempts alone do not guarantee a retry.","reference":"can retry returns false when cancelled is true. Two attempts alone do not guarantee a retry.","intended_correction":"can_retry returns false when cancelled is true. Two attempts alone do not guarantee a retry.","protected":[["false"],["true"],["not","n't"],["two","2"]]},
+    {"id":"S04","source":"tag","language":"en","spoken":"normalize tag strips spaces and uses lowercase. Blank input does not stay blank; it returns untagged.","reference":"normalize tag strips spaces and uses lowercase. Blank input does not stay blank; it returns untagged.","intended_correction":"normalize_tag strips spaces and uses lowercase. Blank input does not stay blank; it returns untagged.","protected":[["not","n't"],["untagged"]]},
+    {"id":"S05","source":"shipping","language":"hinglish","spoken":"shipping cost में total पाँच सौ है तो zero मिलता है। इस boundary पर forty charge नहीं होता।","reference":"shipping cost में total पाँच सौ है तो zero मिलता है। इस boundary पर forty charge नहीं होता।","intended_correction":"shipping_cost में total पाँच सौ है तो zero मिलता है। इस boundary पर forty charge नहीं होता।","protected":[["नहीं","nahi","nahin"],["zero","0","ज़ीरो","जीरो"],["पाँच सौ","पांच सौ","500"],["forty","40","फोर्टी"]]},
+    {"id":"S06","source":"average","language":"hinglish","spoken":"mean score empty list पर None देता है, zero नहीं। दो और चार का mean तीन है।","reference":"mean score empty list पर None देता है, zero नहीं। दो और चार का mean तीन है।","intended_correction":"mean_score empty list पर None देता है, zero नहीं। दो और चार का mean तीन है।","protected":[["none","नन"],["नहीं","nahi","nahin"],["दो","2"],["चार","4"],["तीन","3"]]},
+    {"id":"S07","source":"retry","language":"hinglish","spoken":"can retry में cancelled true है तो result false है। सिर्फ दो attempts होने से retry allow नहीं होता।","reference":"can retry में cancelled true है तो result false है। सिर्फ दो attempts होने से retry allow नहीं होता।","intended_correction":"can_retry में cancelled true है तो result false है। सिर्फ दो attempts होने से retry allow नहीं होता।","protected":[["true","ट्रू"],["false","फॉल्स","फाल्स"],["नहीं","nahi","nahin"],["दो","2"]]},
+    {"id":"S08","source":"tag","language":"hinglish","spoken":"normalize tag पहले spaces हटाता है और lowercase करता है। Blank input blank नहीं रहता, untagged मिलता है।","reference":"normalize tag पहले spaces हटाता है और lowercase करता है। Blank input blank नहीं रहता, untagged मिलता है।","intended_correction":"normalize_tag पहले spaces हटाता है और lowercase करता है। Blank input blank नहीं रहता, untagged मिलता है।","protected":[["नहीं","nahi","nahin"],["untagged","अनटैग्ड"]]}
+  ],
+  "reliability": [
+    {"id":"R01","fault":"silence","expected":"No usable transcript, no score, saved draft survives","rationale":"A silent WAV must not establish a learner answer."},
+    {"id":"R02","fault":"provider_failure","expected":"502, no new score, saved draft survives, turn lease released and allowance refunded","rationale":"A provider outage cannot establish correctness."},
+    {"id":"R03","fault":"malformed_feedback","expected":"502, no new score, saved draft survives, turn lease released and allowance refunded","rationale":"Malformed model data must fail closed."},
+    {"id":"R04","fault":"invalid_citation","expected":"502, no new score, saved draft survives, turn lease released and allowance refunded","rationale":"An invented source line cannot support a score."}
+  ]
+}
