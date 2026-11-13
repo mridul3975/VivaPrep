@@ -3,7 +3,8 @@ export async function recordingToWav(recording: Blob): Promise<File> {
   // decodeAudioData resamples to this context's sample rate without audio playback.
   const context = new OfflineAudioContext(1, 1, 16000)
   const audio = await context.decodeAudioData(await recording.arrayBuffer())
-  const frames = Math.min(audio.length, audio.sampleRate * 60)
+  if (audio.duration > 30) throw new Error('Keep recordings under 30 seconds. Please record a shorter answer; audio was not truncated.')
+  const frames = audio.length
   if (frames < audio.sampleRate / 4) {
     throw new Error('The recording is too short. Please record at least a second.')
   }
