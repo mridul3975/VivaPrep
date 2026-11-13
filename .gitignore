@@ -16,3 +16,4 @@ samples/*.wav
 *.log
 .neon
 node_modules/
+.eval-tools/
