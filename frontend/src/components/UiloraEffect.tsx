@@ -51,14 +51,15 @@ export default function UiloraEffect({ variant }: { variant: 'aurora' | 'raster'
     }
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     let visible = true, frame = 0, last = -100, elapsed = 0
-    let mouseX = -2, mouseY = -2, targetX = -2, targetY = -2
+    let mouseX = -2, mouseY = -2, pointerChanged = false
     const draw = (now: number) => {
       frame = 0
       if (document.hidden || !visible || gl.isContextLost()) return
-      if (now - last >= 33 || reduced.matches) {
+      // Pointer updates bypass the idle 30 fps throttle; no easing tail.
+      if (pointerChanged || now - last >= 33 || reduced.matches) {
         if (!reduced.matches) elapsed += Math.min(100, Math.max(0, now - last)) / 1000
         last = now
-        mouseX += (targetX - mouseX) * .14; mouseY += (targetY - mouseY) * .14
+        pointerChanged = false
         gl.uniform1f(timeUniform, reduced.matches ? 0 : elapsed)
         gl.uniform2f(mouseUniform, reduced.matches ? -2 : mouseX, reduced.matches ? -2 : mouseY)
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT)
@@ -76,10 +77,11 @@ export default function UiloraEffect({ variant }: { variant: 'aurora' | 'raster'
     const move = (event: PointerEvent) => {
       if (event.pointerType === 'touch' || reduced.matches) return
       const rect = node.getBoundingClientRect()
-      targetX = (event.clientX - rect.left) / Math.max(1, rect.width)
-      targetY = 1 - (event.clientY - rect.top) / Math.max(1, rect.height)
+      mouseX = (event.clientX - rect.left) / Math.max(1, rect.width)
+      mouseY = 1 - (event.clientY - rect.top) / Math.max(1, rect.height)
+      pointerChanged = true
     }
-    const leave = () => { targetX = -2; targetY = -2 }
+    const leave = () => { mouseX = -2; mouseY = -2; pointerChanged = true }
     const lost = (event: Event) => { event.preventDefault(); cancelAnimationFrame(frame); delete node.dataset.rendered }
     const restored = () => restart(value => value + 1)
     const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; schedule() })
