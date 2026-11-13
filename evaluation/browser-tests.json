@@ -1,0 +1,497 @@
+{
+  "dataset_sha256": "ee9d362eac8a4e01c96edaba7a1b6041686d32d0d6abc00c72b793eddc4e817a",
+  "runner_sha256": "b44d3f4f851d270df3d85e9062e6b984a2b45199707c70db82de07601c6c2df3",
+  "boundary": "Actual browser sandbox; synthetic JavaScript fixtures only. Four finite test suites are not proof for every possible input.",
+  "references": {
+    "clamp": {
+      "results": [
+        {
+          "id": "t1",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": 4,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 10,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": 10,
+          "error": "",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    "positives": {
+      "results": [
+        {
+          "id": "t1",
+          "actual": 7,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    "age": {
+      "results": [
+        {
+          "id": "t1",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": "adult",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": "adult",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    "divide": {
+      "results": [
+        {
+          "id": "t1",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": null,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": null,
+          "error": "",
+          "passed": true
+        }
+      ],
+      "passed": true
+    }
+  },
+  "results": [
+    {
+      "id": "D01",
+      "verdict": "correct",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": 4,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 10,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": 10,
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 10,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t2",
+          "actual": 10,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t3",
+          "actual": 12,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t4",
+          "actual": 10,
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": 4,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 12,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t4",
+          "actual": 10,
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D04",
+      "verdict": "correct",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 7,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D05",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": -2,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t2",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": -5,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t4",
+          "actual": 0,
+          "error": "",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "D06",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 9,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t2",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 5,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t4",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D07",
+      "verdict": "correct",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": "adult",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": "adult",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D08",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": "minor",
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t3",
+          "actual": "adult",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D09",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": "minor",
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t3",
+          "actual": "minor",
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t4",
+          "actual": "minor",
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D10",
+      "verdict": "correct",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": null,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": null,
+          "error": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "id": "D11",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": 0,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t3",
+          "actual": 0,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t4",
+          "actual": 0,
+          "error": "",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "id": "D12",
+      "verdict": "incorrect",
+      "agrees_with_draft_label": true,
+      "observations": [
+        {
+          "id": "t1",
+          "actual": 3,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t2",
+          "actual": null,
+          "error": "",
+          "passed": true
+        },
+        {
+          "id": "t3",
+          "actual": null,
+          "error": "",
+          "passed": false
+        },
+        {
+          "id": "t4",
+          "actual": null,
+          "error": "",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}
