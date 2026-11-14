@@ -766,9 +766,10 @@ export default function App({ initialAction, initialLanguage = 'en', onEntryHand
         <a className="brand" href="#/study" aria-label="RepoViva study desk" onClick={event => { event.preventDefault(); void go({ page: 'study' }) }}>
           <BrandLogo />
         </a>
-        <nav className="workspace-nav">
+        <nav className="workspace-nav" aria-label="Main navigation">
           <button type="button" className={`nav-item ${studyVisible ? 'is-active' : ''}`} aria-current={studyVisible ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'study' }) }}><Icon name="desk" />Study</button>
-          <button type="button" className={`nav-item ${route.page === 'debug' || route.page === 'incidents' ? 'is-active' : ''}`} aria-current={route.page === 'debug' || route.page === 'incidents' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'debug' }) }}><Icon name="code" />Debug</button>
+          <button type="button" className={`nav-item ${route.page === 'debug' ? 'is-active' : ''}`} aria-current={route.page === 'debug' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'debug' }) }}><Icon name="code" />Debug</button>
+          <button type="button" className={`nav-item ${route.page === 'incidents' ? 'is-active' : ''}`} aria-current={route.page === 'incidents' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'incidents' }) }}><Icon name="activity" />Incidents</button>
           <button type="button" className={`nav-item ${route.page === 'history' ? 'is-active' : ''}`} aria-current={route.page === 'history' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'history' }) }}><Icon name="history" />History</button>
           <button type="button" className={`nav-item ${route.page === 'profile' ? 'is-active' : ''}`} aria-current={route.page === 'profile' ? 'page' : undefined} disabled={busy} onClick={() => { void go({ page: 'profile' }) }}><Icon name="profile" />Profile</button>
         </nav>
