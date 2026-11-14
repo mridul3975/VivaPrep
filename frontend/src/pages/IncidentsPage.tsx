@@ -151,7 +151,6 @@ export default function IncidentsPage({ labId, source, onOpen, onBusyChange, onS
   const proposal = lab?.plan
   const canExecute = proposal && ['replay', 'test_fix', 'experiment'].includes(proposal.action)
   return <main className="workspace incident-page" id="incidents-page" tabIndex={-1}>
-    <div className="incident-mode-switch"><a href="#/debug">Code repairs</a><span aria-current="page">Running incidents</span></div>
     <div className="page-heading"><div><h1>{lab ? lab.title : 'Investigate a running app'}</h1><p>{lab?.scenario?.description ?? 'Speak a hypothesis, run an experiment, inspect the evidence and test your repair.'}</p></div>{labId && <button className="text-button" disabled={busy} onClick={() => { void save().then(() => onOpen('')).catch(() => setError('Save the patch before leaving.')) }}>All incidents</button>}</div>
     {error && <div className="incident-error" role="alert"><p>{error}</p><button className="text-button" disabled={busy} onClick={() => { void save().then(() => { setLoading(true); setError(''); setRetry(value => value + 1) }).catch(() => setError('Your patch is still here. Retry saving before reloading the project.')) }}>Retry connection</button></div>}
     {loading && <p role="status">Opening incident projects…</p>}
