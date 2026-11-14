@@ -1,7 +1,7 @@
 from copy import deepcopy
 import json
 import re
-from backend.languages import language_instruction, is_hinglish
+from backend.languages import language_instruction, matches_language
 
 from backend.interview.provider import (
     ProviderError, json_completion, object_schema, source_packet,
@@ -32,7 +32,8 @@ def _validate_questions(result, snippets, count):
         if question["question"].casefold() in seen:
             raise ValueError("Repeated question")
         seen.add(question["question"].casefold())
-        if not re.search(r'\b(?:explain|why|how|describe|discuss|compare|justify|trace|reasoning|walk\s+through|analy[sz]e|evaluate|kyun|kyon|kaise|samjhao|samjhaiye|batao)\b', question['question'], re.I) or re.fullmatch(r'(?:true|false|yes|no)[.!\s]*', question['reference_answer'], re.I):
+        explanatory = re.search(r'\b(?:explain|why|how|describe|discuss|compare|justify|trace|reasoning|walk\s+through|analy[sz]e|evaluate|kyun|kyon|kaise|samjhao|samjhaiye|batao)\b|समझा|क्यों|कैसे|तुलना|समजाव|सांगा|कसे|விளக்க|ஏன்|எப்படி|ব্যাখ্যা|কেন|কীভাবে|వివరించ|ఎందుకు|ఎలా|ವಿವರಿಸಿ|ಏಕೆ|ಹೇಗೆ', question['question'], re.I)
+        if not explanatory or re.fullmatch(r'(?:true|false|yes|no)[.!\s]*', question['reference_answer'], re.I):
             raise ValueError('Ask an open-ended question requiring an explanation, not a Boolean, choice or output-only answer')
         rubric = question.get("rubric")
         if not isinstance(rubric, list) or not 1 <= len(rubric) <= 4:
@@ -101,8 +102,8 @@ UPLOADED EVIDENCE:
             raise QuestionGenerationError("The AI service could not complete this request. Please retry.", "provider_failure") from error
         try:
             questions = _validate_questions(deepcopy(result), snippets, count)
-            if language == 'hinglish' and any(not is_hinglish(item['question']) for item in questions):
-                raise ValueError('Questions must use natural Roman Hinglish, not English alone')
+            if any(not matches_language(item['question'], language) or not matches_language(item['reference_answer'], language) for item in questions):
+                raise ValueError('Questions and reference answers must use the selected language')
             return questions
         except (ValueError, KeyError, TypeError) as error:
             last_error = error
