@@ -1,3 +1,4 @@
+import type { PracticeLanguageCode } from '../components/PracticeLanguage'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import App from '../App'
 import GoogleSignIn from './GoogleSignIn'
@@ -47,7 +48,7 @@ export default function AuthGate() {
   const [enteringGuest, setEnteringGuest] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [entryAction, setEntryAction] = useState<'demo' | 'upload' | undefined>()
-  const [entryLanguage, setEntryLanguage] = useState<'en' | 'hinglish'>('en')
+  const [entryLanguage, setEntryLanguage] = useState<PracticeLanguageCode>('en')
   const entryHandled = useCallback(() => setEntryAction(undefined), [])
   const authGeneration = useRef(0)
   const currentUserId = useRef<string | null>(null)
@@ -242,7 +243,7 @@ export default function AuthGate() {
     setError('')
   }, [csrfToken, applySession])
 
-  async function startGuest(action?: 'demo' | 'upload', language: 'en' | 'hinglish' = 'en') {
+  async function startGuest(action?: 'demo' | 'upload', language: PracticeLanguageCode = 'en') {
     if (!csrfToken || signInPending.current) return
     signInPending.current = true; setEnteringGuest(true); setError('')
     const generation = ++authGeneration.current
