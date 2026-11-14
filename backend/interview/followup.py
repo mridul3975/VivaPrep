@@ -1,6 +1,6 @@
 """Generate one answer-aware question against the original immutable evidence."""
 import json
-from backend.languages import language_instruction, is_hinglish
+from backend.languages import language_instruction, matches_language
 from backend.interview.provider import json_completion, object_schema, citation_properties, source_packet
 from backend.interview.question_generator import _validate_questions
 
@@ -20,8 +20,9 @@ def generate_followup(turn, answer):
         json.dumps({'original_question': turn['question'], 'student_answer': answer}, ensure_ascii=False) + '\nORIGINAL EVIDENCE:\n' + source_packet(snippets),
         object_schema({'questions': {'type': 'array', 'items': question}}), 'viva_followup', timeout=40)
     package = _validate_questions(result, snippets, 1)[0]
-    if turn.get('question_package', {}).get('language') == 'hinglish' and not is_hinglish(package['question']):
-        raise ValueError('Follow-up must be in Roman Hinglish')
+    language = turn.get('question_package', {}).get('language', 'en')
+    if not matches_language(package['question'], language) or not matches_language(package['reference_answer'], language):
+        raise ValueError('Follow-up must use the selected language')
     if package['question'].casefold() == turn['question'].casefold():
         raise ValueError('Repeated parent question')
     return package
