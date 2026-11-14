@@ -1,6 +1,6 @@
 # Running application incidents
 
-Open **Debug → Running incidents**. This is separate from static code-repair
+Open **Incidents** in the main navigation. This is separate from static code-repair
 practice. Start the explicitly prepared booking incident, use a runnable Python
 source already uploaded in Study, or upload a `.py` app / project ZIP.
 
@@ -137,7 +137,7 @@ previous execution remain inspectable while the runner is unavailable.
    existing Groq/Gnani/database/session settings. The container startup migrates
    PostgreSQL. Keep one service instance; the database admission lock coordinates
    bounded jobs. No client-side `VITE_` sandbox key is used.
-5. Open Debug → Running incidents → Start booking incident. Confirm original
+5. Open Incidents → Start booking incident. Confirm original
    checks pass, the last-seat incident fails, and a reviewed spoken instruction
    triggers real requests only after approval. Restore the conditional update,
    approve Test my fix and verify all four checks pass. This is the required live
@@ -146,7 +146,10 @@ previous execution remain inspectable while the runner is unavailable.
 Optional local operator check after adding the key: `python -m checks.live.incidents`.
 It makes real E2B calls and creates three short-lived VMs to check the original,
 controlled failure and restored repair. This uses provider credits directly,
-outside a learner's application quota. It has not been run without the key.
+outside a learner's application quota. On 2026-11-14 this check passed against
+real E2B sandboxes: original 4/4, concurrent oversell reproduced, restored repair
+4/4. Shutdown was requested after each batch. Execution evidence is saved
+privately in `.impeccable/review/incident-e2b-live.json`.
 
 Without a key, the app shows that running incidents are unavailable and disables
 starting them. Existing code repairs remain available. It never substitutes a
@@ -165,7 +168,9 @@ real concurrent HTTP requests and SQLite. The original and restored app pass;
 the controlled race and a plausible wrong repair fail. This local development
 adapter is private, not shipped, not a production fallback and not a microVM
 certification. Browser development checks use that adapter with actual Prisma
-and Groq and synthetic stock speech. The E2B API key is intentionally pending
-the owner's setup; cloud creation/network isolation/cleanup remain unverified.
+and Groq and synthetic stock speech. The separate live E2B operator check passed
+on 2026-11-14, establishing cloud creation and the original/failure/repair flow.
+It does not verify a deployed browser session, real learner speech, adversarial
+network isolation or independently confirm sandbox deletion after shutdown.
 
 Provider API reference: [E2B Sandbox SDK 2.5.0](https://docs.e2b.dev/sdk-reference/python-sdk/v2.5.0/sandbox_sync).

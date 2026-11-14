@@ -1,13 +1,14 @@
 {
   "feature": "Running application incidents and responsive cursor glow",
-  "status": "Implemented locally; E2B cloud execution awaits the owner's API key and live verification",
-  "entry": "Debug -> Running incidents",
+  "status": "Implemented and pushed; real E2B original/failure/repair operator check passed on 2026-11-14; deployed browser flow remains unverified",
+  "entry": "Main navigation -> Incidents",
   "scope": "Python HTTP projects with disposable local data and optional SQLite; prepared booking app, .py uploads, ZIP uploads and owned Study source reuse",
   "verification": {
     "backend": "164 regression tests passed on a fresh isolated PostgreSQL cluster; additional negation/count/method/payload routing assertions passed separately",
     "frontend": "npm run build and npm run lint passed with 0 errors and warnings",
     "proxy": "All 17 development proxy requests reached the backend",
-    "actual_execution": "Trusted supervisor executed in disposable Linux mount/PID/network namespaces and chroot with an unprivileged application; real HTTP requests, SQLite snapshots and line observations",
+    "actual_execution": "Trusted supervisor executed both in local disposable Linux namespaces and, on 2026-11-14, three real E2B sandbox batches with an unprivileged application; real HTTP requests, SQLite snapshots and line observations",
+    "live_e2b": "python -m checks.live.incidents exited 0: original passed 4 checks, oversell reproduced with two HTTP 201 responses and two bookings, repair passed 4 checks. Shutdown requested after each batch. Full evidence retained privately.",
     "prepared_original": "4/4 checks passed",
     "controlled_failure": "Concurrent last-seat requests both returned 201, created two bookings and left seats=-1",
     "restored_repair": "4/4 incident/regression checks passed; concurrent requests returned one 201 and one 409, one booking and seats=0",
@@ -28,11 +29,11 @@
     "A concurrent Git operation removed the uncommitted feature. Recovered exact patch history in an isolated checkout, then restored it to the main checkout after the user explicitly requested restoration. Published evaluation commits were preserved."
   ],
   "boundaries": [
-    "E2B SDK configuration and cleanup are covered with mocks; no E2B_API_KEY was supplied and no real microVM was created. Native local isolation does not certify cloud isolation.",
+    "Real E2B creation and prepared-app execution passed on 2026-11-14. This operator check does not verify a deployed browser session, adversarial network isolation or independently confirm deletion after shutdown.",
     "The private local execution adapter is not shipped and is never a production fallback. Flask production code runs uploaded code only through E2B.",
     "Finite source-backed checks and bounded line coverage are not proof for every input or arbitrary-project compatibility. AI hypothesis feedback remains advisory.",
     "Every experiment starts with clean app data; persistent cross-experiment live sessions, external services and automatic dependency installs are unsupported.",
     "The previous frozen evaluation remains unchanged; its report now identifies changed production files rather than implying those results evaluated this feature.",
-    "Changes have not been committed, pushed or deployed during this task."
+    "Implementation was pushed to origin/master at 8667aaf; this verification-record update is pending commit. Render environment configuration and deployed browser execution have not been verified."
   ]
 }
