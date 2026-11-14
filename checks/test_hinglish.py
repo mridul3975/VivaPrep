@@ -22,7 +22,7 @@ class HinglishUnitTests(unittest.TestCase):
             short_feedback('False is correct for input 1.', 'hinglish')
 
     def test_only_supported_language_codes(self):
-        for value in (None, {}, 'hi', 'french', '<instructions>'):
+        for value in (None, {}, 'xx', 'french', '<instructions>'):
             with self.assertRaises(StudyConflict): language_choice(value)
 
     def test_spelling_suggestion_does_not_correct_wrong_claim_negation_or_number(self):
