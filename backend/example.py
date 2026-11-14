@@ -38,6 +38,9 @@ def question_set(snippets, count, language='en'):
         package['topic'] = ('guard', 'small_prime', 'square')[index]
         if language == 'hinglish':
             _hinglish(package, index)
+        elif language != 'en':
+            from backend.example_languages import localize
+            localize(package, language, index)
     return packages
 
 
@@ -114,4 +117,7 @@ def followup(turn, answer):
                            [('Trace the tested divisors and their nonzero remainders.', 5, 9), ('Explain why divisor 5 stops the loop and execution returns True.', 6, 10)])
     if original.get('language') == 'hinglish':
         _hinglish(package, 3 if contrast else 4)
+    elif original.get('language', 'en') != 'en':
+        from backend.example_languages import localize
+        localize(package, original['language'], 2 if contrast else 3)
     return package
