@@ -18,7 +18,9 @@ export type IconName =
   | 'profile'
   | 'search'
   | 'code'
+  | 'activity'
 const paths: Record<IconName, ReactNode> = {
+  activity: <><path d="M3 12h4l3-8 4 16 3-8h4" /></>,
   code: <><path d="m8 6-6 6 6 6m8-12 6 6-6 6M14 3l-4 18" /></>,
   history: <><path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7" /><path d="M12 7v5l3 2" /></>,
   profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
