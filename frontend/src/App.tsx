@@ -2,6 +2,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import VoiceRecorder, { type RecordingPhase } from './components/VoiceRecorder'
 import VivaPurpose from './components/VivaPurpose'
 import PracticeLanguage from './components/PracticeLanguage'
+import { practiceLanguage, type PracticeLanguageCode } from './practiceLanguages'
 import useBackendConnection from './useBackendConnection'
 import BrandLogo from './components/BrandLogo'
 import DebugPage from './pages/DebugPage'
@@ -29,7 +30,7 @@ interface Evidence {
   content: string[]
 }
 interface QuestionResponse {
-  language?: 'en' | 'hinglish'
+  language?: PracticeLanguageCode
   parent_turn_id?: string | null
   parent_answer?: string | null
   turn_id: string
@@ -62,7 +63,7 @@ interface Claim {
 }
 interface AnswerResponse {
   summary?: string
-  language?: 'en' | 'hinglish'
+  language?: PracticeLanguageCode
   speech_review?: SpeechReview
   turn_id: string
   question: string
@@ -191,12 +192,12 @@ async function readResponse(response: Response): Promise<unknown> {
   return data
 }
 // ── App ────────────────────────────────────────────────────────────────────
-export default function App({ initialAction, initialLanguage = 'en', onEntryHandled }: { initialLanguage?: 'en' | 'hinglish'; initialAction?: 'demo' | 'upload'; onEntryHandled?: () => void }) {
+export default function App({ initialAction, initialLanguage = 'en', onEntryHandled }: { initialLanguage?: PracticeLanguageCode; initialAction?: 'demo' | 'upload'; onEntryHandled?: () => void }) {
   const { apiFetch, storageMode } = useAuth()
   const { route, navigate, back, depth } = useNavigation()
   const { backendReady, backendError, incompatible, retryBackend } = useBackendConnection()
   const entryStarted = useRef(false)
-  const [language, setLanguage] = useState<'en' | 'hinglish'>(initialLanguage)
+  const [language, setLanguage] = useState<PracticeLanguageCode>(initialLanguage)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
   const [submittingAnswer, setSubmittingAnswer] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
@@ -911,7 +912,7 @@ export default function App({ initialAction, initialLanguage = 'en', onEntryHand
                     </span>
                   )}
                 </div>
-                <p className="field-note">{turn.language === 'hinglish' ? 'Hinglish · Hindi + English' : 'English'}</p><h2 id="question-heading" lang={turn.language === 'hinglish' ? 'hi-Latn' : 'en'} tabIndex={-1}>{turn.question}</h2>
+                <p className="field-note">{practiceLanguage(turn.language).label}</p><h2 id="question-heading" lang={practiceLanguage(turn.language).lang} tabIndex={-1}>{turn.question}</h2>
                 {turn.parent_turn_id && <details className="viva-parent-answer"><summary>Your earlier answer</summary><p>{turn.parent_answer}</p></details>}
                 {!feedback && <p className="viva-answer-guide">{turn.language === 'hinglish' ? 'Hindi aur English mix karke apna reasoning explain karo. Code identifiers, numbers aur nahi/not ko transcript mein check karo.' : 'Explain your reasoning in your own words. Record your answer or type below, then review it before submitting.'}</p>}
               </section>
@@ -1047,7 +1048,7 @@ export default function App({ initialAction, initialLanguage = 'en', onEntryHand
                       because source evidence is insufficient.
                     </p>
                   )}
-                  {feedback.summary && <section className="feedback-summary" lang={feedback.language === 'hinglish' ? 'hi-Latn' : 'en'} aria-label="Short explanation"><h3>{feedback.language === 'hinglish' ? 'Chhota feedback' : 'Short explanation'}</h3><p>{feedback.summary}</p></section>}
+                  {feedback.summary && <section className="feedback-summary" lang={practiceLanguage(feedback.language).lang} aria-label="Short explanation"><h3>{feedback.language === 'hinglish' ? 'Chhota feedback' : 'Short explanation'}</h3><p>{feedback.summary}</p></section>}
                   <ul className="criteria-list">
                     {feedback.criteria.map((criterion) => (
                       <li key={criterion.id}>
