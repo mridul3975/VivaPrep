@@ -62,7 +62,7 @@ The proposed user flow is:
 5. Read claim-level feedback and click cited snippets.
 6. Continue for up to three questions and see a summary of what to revise.
 
-English and Hinglish are the target input languages. Actual language quality, supported formats and latency must be tested; no performance or accuracy claims are established yet.
+Practice supports English, Hinglish, Hindi, Tamil, Bengali, Telugu, Marathi and Kannada. The six new native-script options have initial question/feedback support; native-speaker and real-speech validation remain pending. See [LANGUAGES.md](LANGUAGES.md) for the verification boundaries. No performance or accuracy claims are established yet.
 
 ## Stack
 
